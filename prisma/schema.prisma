@@ -1,0 +1,170 @@
+// prisma/schema.prisma
+// Provider: sqlite (для переходу на PostgreSQL — змінити provider + DATABASE_URL)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// У SQLite немає підтримки enums, тому використовуємо String
+// Role: "ADMIN_ANALYST" | "PROCESS_MANAGER" | "PROCESS_OWNER"
+// ProcessStatus: "DRAFT" | "IN_REVIEW_ANALYST" | "IN_REVIEW_OWNER" | "APPROVED" | "ARCHIVED"
+// WorkflowStage: "ANALYST_REVIEW" | "OWNER_REVIEW" | "FINAL_APPROVAL"
+// ProcessType: "MANAGERIAL" | "MAIN" | "SERVICE"
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   @default("password123") // Зберігаємо в plain text для демо, в реальності потрібен хеш (bcrypt)
+  fullName  String
+  role      String   @default("PROCESS_MANAGER")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+
+  // Relations
+  ownedProcesses   Process[] @relation("ProcessOwner")
+  managedProcesses Process[] @relation("ProcessManager")
+  historyLogs      ProcessHistoryLog[]
+  adminLevels      ProcessLevel[] @relation("LevelAdmin")
+  notifications    Notification[]
+}
+
+model ProcessLevel {
+  id       String @id @default(cuid())
+  name     String
+  depth    Int    @default(1) // 1=L1, 2=L2, 3=L3
+  parentId String?
+
+  // Самопосилання для ієрархії L1 → L2 → L3
+  parent   ProcessLevel?  @relation("LevelHierarchy", fields: [parentId], references: [id])
+  children ProcessLevel[] @relation("LevelHierarchy")
+
+  // Процеси можуть бути прив'язані тільки до L2 або L3
+  processes Process[]
+
+  // Адміністратор, що керує цим рівнем
+  adminId  String?
+  admin    User?   @relation("LevelAdmin", fields: [adminId], references: [id])
+}
+
+model Process {
+  id    String @id @default(cuid())
+  code  String? // Код процесу, напр. "P-001"
+  title String
+
+  // Тип процесу (String замість enum)
+  processType String @default("MAIN")
+
+  // ── Паспорт процесу (з шаблону template.xlsx) ──
+  objective          String? // Мета процесу
+  input              String? // Вхід
+  output             String? // Вихід
+  participants       String? // Учасники процесу (текст)
+  clients            String? // Клієнти процесу (внутрішні та зовнішні)
+  inputSupplier      String? // Постачальник входу
+  upstreamProcesses  String? // Який бізнес-процес(-и) іде перед ним
+  downstreamProcesses String? // Який бізнес-процес(-и) після нього
+
+  // ── BPMN ──
+  bpmnUrl String? // Посилання на BPMN схему
+
+  // ── Ієрархія та власність ──
+  levelId   String?
+  level     ProcessLevel? @relation(fields: [levelId], references: [id])
+  ownerId   String?
+  owner     User?         @relation("ProcessOwner", fields: [ownerId], references: [id])
+  managerId String?
+  manager   User?         @relation("ProcessManager", fields: [managerId], references: [id])
+
+  // ── Версіонування ──
+  version           Int           @default(1)
+  status            String        @default("DRAFT")
+  previousVersionId String?       @unique
+  previousVersion   Process?      @relation("VersionChain", fields: [previousVersionId], references: [id])
+  nextVersion       Process?      @relation("VersionChain")
+
+  // ── Часові мітки ──
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  approvedAt DateTime? // Дата затвердження
+
+  // ── Відносини ──
+  steps       ProcessStep[]
+  kpis        ProcessKPI[]
+  workflow    ApprovalWorkflow[]
+  historyLogs ProcessHistoryLog[]
+}
+
+model ProcessStep {
+  id        String  @id @default(cuid())
+  processId String
+  process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  orderIndex       Int
+  phase            String? // "Ініціювання процесу" | "Аналіз AS IS" | "Моніторинг"
+  name             String  // Крок
+  description      String? // Опис кроку
+  executorRole     String? // Хто виконує
+  participantsNote String? // Додаткова примітка
+  docUrl           String? // Шаблон документу — ТІЛЬКИ URL
+  comment          String? // Коментар
+}
+
+model ProcessKPI {
+  id        String  @id @default(cuid())
+  processId String
+  process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  name        String  // Назва показника
+  unit        String? // Одиниця виміру
+  dataSource  String? // Джерело
+  frequency   String? // Частота вимірювання
+  targetValue String? // Цільове значення / KPI
+}
+
+model ApprovalWorkflow {
+  id        String  @id @default(cuid())
+  processId String
+  process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  stage          String
+  assignedToRole String
+  isCompleted    Boolean   @default(false)
+  completedAt    DateTime?
+  comment        String?
+
+  createdAt DateTime @default(now())
+}
+
+model ProcessHistoryLog {
+  id        String  @id @default(cuid())
+  processId String
+  process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  action    String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  comment   String?
+  timestamp DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title     String
+  message   String
+  linkUrl   String?
+  isRead    Boolean  @default(false)
+  
+  createdAt DateTime @default(now())
+}
