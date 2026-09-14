@@ -27,7 +27,7 @@ export default function TopBar({ title, fullName }: TopBarProps) {
     } else {
       params.delete('q');
     }
-    router.push(`${pathname}?${params.toString()}`);
+    router.push(pathname + '?' + params.toString());
   };
 
   return (
