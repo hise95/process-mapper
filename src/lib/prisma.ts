@@ -6,10 +6,11 @@ import path from 'path'
 import fs from 'fs'
 
 function getDatabaseUrl() {
-  if (process.env.DATABASE_URL) return process.env.DATABASE_URL
+  if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('file:')) {
+    return process.env.DATABASE_URL
+  }
   if (process.env.VERCEL) {
     const tmpDbPath = path.join('/tmp', 'dev.db')
-    // Якщо файл у /tmp ще не створено, копіюємо початковий dev.db
     if (!fs.existsSync(tmpDbPath)) {
       const rootDbPath = path.join(process.cwd(), 'prisma', 'dev.db')
       if (fs.existsSync(rootDbPath)) {
@@ -22,16 +23,14 @@ function getDatabaseUrl() {
     }
     return `file:${tmpDbPath}`
   }
-  return 'file:./dev.db'
+  return `file:${path.join(process.cwd(), 'prisma', 'dev.db')}`
 }
+
+const activeDbUrl = getDatabaseUrl()
+process.env.DATABASE_URL = activeDbUrl
 
 function makePrismaClient() {
   return new PrismaClient({
-    datasources: {
-      db: {
-        url: getDatabaseUrl(),
-      },
-    },
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
   })
 }
