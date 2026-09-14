@@ -25,14 +25,14 @@ export default function LoginPage() {
         body: JSON.stringify({ email, password }),
       })
       if (!res.ok) {
-        const data = await res.json()
-        setError(data.error ?? 'Помилка входу')
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Невірний email або пароль')
         return
       }
       router.push('/dashboard')
       router.refresh()
     } catch {
-      setError('Помилка мережі. Спробуйте знову.')
+      setError('Помилка з\'єднання з сервером. Спробуйте ще раз.')
     } finally {
       setLoading(false)
     }
