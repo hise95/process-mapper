@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --accept-data-loss && ts-node -O \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed.ts && next build",
+    "build": "DATABASE_URL=\"${DATABASE_URL:-file:./dev.db}\" prisma generate && DATABASE_URL=\"${DATABASE_URL:-file:./dev.db}\" prisma db push --accept-data-loss && DATABASE_URL=\"${DATABASE_URL:-file:./dev.db}\" ts-node -O \"{\\\"module\\\":\\\"CommonJS\\\"}\" prisma/seed.ts && next build",
     "start": "next start",
     "lint": "eslint",
     "db:push": "prisma db push",
