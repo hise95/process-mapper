@@ -1,4 +1,4 @@
-'use client';
+ï»¿'use client';
 
 import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
@@ -27,7 +27,7 @@ export default function TopBar({ title, fullName }: TopBarProps) {
     } else {
       params.delete('q');
     }
-    router.push(${pathname}?${params.toString()});
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   return (
@@ -37,7 +37,7 @@ export default function TopBar({ title, fullName }: TopBarProps) {
         <form onSubmit={handleSearch}>
           <Input 
             type="search" 
-            placeholder="Ïîøóê..." 
+            placeholder="ÐŸÐ¾ÑˆÑƒÐº..." 
             className="w-64" 
             value={query} 
             onChange={(e) => setQuery(e.target.value)} 
