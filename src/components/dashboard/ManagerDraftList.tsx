@@ -54,34 +54,34 @@ export default function ManagerDraftList({ processes }: ManagerDraftListProps) {
       </div>
 
       {processes.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center text-slate-500">
+        <Card className="bg-card border border-border">
+          <CardContent className="p-8 text-center text-muted-foreground">
             Немає чернеток. Створіть перший процес.
           </CardContent>
         </Card>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {processes.map(process => (
-            <Card key={process.id} className="hover:shadow-md transition-shadow flex flex-col group">
+            <Card key={process.id} className="hover:shadow-md transition-shadow flex flex-col group bg-card border border-border">
               <CardHeader className="pb-2">
                 <div className="flex justify-between items-start gap-2">
-                  <CardTitle className="text-lg leading-tight">{process.title}</CardTitle>
+                  <CardTitle className="text-lg leading-tight text-foreground">{process.title}</CardTitle>
                   <div className="flex flex-col items-end gap-1">
-                    <Badge className="bg-gray-500 shrink-0 text-[10px] py-0">{getStatusLabel(process.status)}</Badge>
+                    <Badge className="bg-muted text-muted-foreground border border-border shrink-0 text-[10px] py-0">{getStatusLabel(process.status)}</Badge>
                     <button 
                       onClick={(e) => { e.preventDefault(); handleDelete(process.id); }}
                       disabled={deletingId === process.id}
-                      className="text-red-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                      className="text-destructive/70 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
                       title="Видалити чернетку"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-                <div className="text-sm font-mono text-slate-500">{process.code || '—'}</div>
+                <div className="text-sm font-mono text-muted-foreground">{process.code || '—'}</div>
               </CardHeader>
               <CardContent className="mt-auto pt-4">
-                <div className="text-sm text-slate-500 mb-4">
+                <div className="text-sm text-muted-foreground mb-4">
                   Оновлено: {new Date(process.updatedAt).toLocaleDateString('uk-UA')}
                 </div>
                 <Link href={`/processes/${process.id}/edit`} className="block w-full">

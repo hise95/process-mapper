@@ -17,7 +17,7 @@ async function main() {
   // ── Користувачі (mock auth) ──
   const admin = await prisma.user.upsert({
     where: { email: 'admin@company.com' },
-    update: { role: "ADMIN" },
+    update: { role: "ADMIN", fullName: 'Системний Адміністратор' },
     create: {
       email: 'admin@company.com',
       password: 'password123',
@@ -28,44 +28,44 @@ async function main() {
 
   const analyst = await prisma.user.upsert({
     where: { email: 'analyst@company.com' },
-    update: { role: "PROCESS_ANALYST" },
+    update: { role: "PROCESS_ANALYST", fullName: 'Іваненко Олена' },
     create: {
       email: 'analyst@company.com',
       password: 'password123',
-      fullName: 'Іваненко Олена (Процесний аналітик)',
+      fullName: 'Іваненко Олена',
       role: "PROCESS_ANALYST",
     },
   })
 
   const manager = await prisma.user.upsert({
     where: { email: 'manager@company.com' },
-    update: {},
+    update: { fullName: 'Коваленко Микола' },
     create: {
       email: 'manager@company.com',
       password: 'password123',
-      fullName: 'Коваленко Микола (Менеджер процесу)',
+      fullName: 'Коваленко Микола',
       role: "PROCESS_MANAGER",
     },
   })
 
   const owner = await prisma.user.upsert({
     where: { email: 'owner@company.com' },
-    update: {},
+    update: { fullName: 'Шевченко Василь' },
     create: {
       email: 'owner@company.com',
       password: 'password123',
-      fullName: 'Шевченко Василь (Власник процесу)',
+      fullName: 'Шевченко Василь',
       role: "PROCESS_OWNER",
     },
   })
 
   const employee = await prisma.user.upsert({
     where: { email: 'employee@company.com' },
-    update: {},
+    update: { fullName: 'Петренко Анна' },
     create: {
       email: 'employee@company.com',
       password: 'password123',
-      fullName: 'Петренко Анна (Працівник)',
+      fullName: 'Петренко Анна',
       role: "EMPLOYEE",
     },
   })
@@ -435,7 +435,105 @@ async function main() {
     },
   })
 
-  console.log('✅ Демо-процеси створені (APPROVED, DRAFT, IN_REVIEW)')
+  // ── Генерація додаткових процесів (разом ~30 процесів) ──
+  const statuses = [
+    'DRAFT', 
+    'PASSPORT_REVIEW_ANALYST', 
+    'PASSPORT_REVIEW_OWNER', 
+    'STEPS_DRAFT',
+    'STEPS_REVIEW_ANALYST',
+    'STEPS_REVIEW_OWNER',
+    'KPIS_DRAFT',
+    'KPIS_REVIEW_ANALYST',
+    'KPIS_REVIEW_OWNER',
+    'FINAL_APPROVAL_ANALYST',
+    'APPROVED',
+    'ARCHIVED'
+  ]
+
+  const processTypes = ['MAIN', 'MANAGERIAL', 'SERVICE']
+  const availableLevels = [l2_sales, l2_hr, l2_finance, l3_retail]
+
+  const prefixes = ['Управління', 'Оптимізація', 'Забезпечення', 'Аналіз', 'Контроль', 'Розробка']
+  const subjects = ['якості', 'ресурсів', 'персоналу', 'інфраструктури', 'продажів', 'клієнтського досвіду', 'ризиків']
+
+  for (let i = 1; i <= 25; i++) {
+    const status = statuses[i % statuses.length]
+    const type = processTypes[i % processTypes.length]
+    const lvl = availableLevels[i % availableLevels.length]
+    const title = `${prefixes[i % prefixes.length]} ${subjects[i % subjects.length]} ${i}`
+
+    const proc = await prisma.process.create({
+      data: {
+        code: `P-1${i.toString().padStart(2, '0')}`,
+        title,
+        processType: type,
+        objective: `Мета для ${title}`,
+        input: 'Вхідні дані процесу',
+        output: 'Результат виконання',
+        levelId: lvl.id,
+        ownerId: owner.id,
+        managerId: manager.id,
+        version: 1,
+        status: status,
+        approvedAt: status === 'APPROVED' ? new Date() : null,
+      }
+    })
+
+    if (status !== 'DRAFT' && status !== 'PASSPORT_REVIEW_ANALYST' && status !== 'PASSPORT_REVIEW_OWNER') {
+      await prisma.processStep.create({
+        data: {
+          processId: proc.id,
+          orderIndex: 1,
+          name: 'Початковий крок',
+          description: 'Опис першого кроку виконання процесу',
+          executorRole: 'Відповідальний виконавець',
+        }
+      })
+    }
+
+    if (status.includes('REVIEW') || status.includes('FINAL')) {
+      let stage = ''
+      let assignedRole = ''
+      
+      if (status.includes('PASSPORT')) {
+        stage = status.includes('ANALYST') ? 'PASSPORT_ANALYST_REVIEW' : 'PASSPORT_OWNER_REVIEW'
+        assignedRole = status.includes('ANALYST') ? 'PROCESS_ANALYST' : 'PROCESS_OWNER'
+      } else if (status.includes('STEPS')) {
+        stage = status.includes('ANALYST') ? 'STEPS_ANALYST_REVIEW' : 'STEPS_OWNER_REVIEW'
+        assignedRole = status.includes('ANALYST') ? 'PROCESS_ANALYST' : 'PROCESS_OWNER'
+      } else if (status.includes('KPIS')) {
+        stage = status.includes('ANALYST') ? 'KPIS_ANALYST_REVIEW' : 'KPIS_OWNER_REVIEW'
+        assignedRole = status.includes('ANALYST') ? 'PROCESS_ANALYST' : 'PROCESS_OWNER'
+      } else if (status === 'FINAL_APPROVAL_ANALYST') {
+        stage = 'FINAL_APPROVAL'
+        assignedRole = 'PROCESS_ANALYST'
+      }
+
+      if (stage) {
+        await prisma.approvalWorkflow.create({
+          data: {
+            processId: proc.id,
+            stage,
+            assignedToRole: assignedRole,
+            isCompleted: false,
+          }
+        })
+      }
+    }
+  }
+
+  // Створення тестового сповіщення для менеджера
+  await prisma.notification.create({
+    data: {
+      userId: manager.id,
+      title: 'Тестове сповіщення',
+      message: 'Це тестове сповіщення для перевірки роботи лічильника та сторінки сповіщень.',
+      isRead: false,
+    }
+  })
+
+  console.log('✅ Демо-процеси створені (30 процесів, APPROVED, DRAFT, IN_REVIEW)')
   console.log('')
   console.log('🎉 Seed завершено успішно!')
   console.log('')
