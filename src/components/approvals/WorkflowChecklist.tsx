@@ -67,15 +67,15 @@ export function WorkflowChecklist({
                        canApproveKpisAnalyst || canApproveKpisOwner || canFinalApprove
 
   return (
-    <Card className="border border-slate-200 overflow-hidden shadow-sm bg-white mb-6">
-      <div className="bg-slate-50 p-2.5 border-b border-slate-200 flex items-center justify-between">
-        <span className="text-xs font-semibold text-slate-700">Панель погодження</span>
+    <Card className="border border-border overflow-hidden shadow-sm bg-card mb-6">
+      <div className="bg-muted/50 p-2.5 border-b border-border flex items-center justify-between">
+        <span className="text-xs font-semibold text-foreground">Панель погодження</span>
         
         <Button 
           variant="ghost" 
           size="sm" 
           onClick={() => setShowHistory(!showHistory)}
-          className="text-xs text-slate-600 gap-1 h-7 px-2"
+          className="text-xs text-muted-foreground hover:text-foreground gap-1 h-7 px-2"
         >
           <History className="w-3.5 h-3.5" />
           <span>Історія ({process.historyLogs?.length || 0})</span>
@@ -84,34 +84,34 @@ export function WorkflowChecklist({
       </div>
 
       {showHistory && (
-        <div className="p-3 bg-slate-100/80 border-b max-h-40 overflow-y-auto space-y-2 text-xs">
+        <div className="p-3 bg-muted/30 border-b border-border max-h-40 overflow-y-auto space-y-2 text-xs">
           {process.historyLogs && process.historyLogs.length > 0 ? (
             process.historyLogs.map((history: any, idx: number) => (
-              <div key={idx} className="flex items-start justify-between gap-2 border-b border-slate-200 pb-1.5 last:border-0">
+              <div key={idx} className="flex items-start justify-between gap-2 border-b border-border/50 pb-1.5 last:border-0">
                 <div>
-                  <span className="font-semibold text-slate-800">{history.user?.fullName || "Користувач"}</span>:{" "}
-                  <span className="text-slate-600 font-medium">{history.action}</span>
-                  {history.comment && <p className="italic text-slate-500 mt-0.5">"{history.comment}"</p>}
+                  <span className="font-semibold text-foreground">{history.user?.fullName || "Користувач"}</span>:{" "}
+                  <span className="text-muted-foreground font-medium">{history.action}</span>
+                  {history.comment && <p className="italic text-muted-foreground/80 mt-0.5">"{history.comment}"</p>}
                 </div>
-                <span className="text-[10px] text-slate-400 whitespace-nowrap">
+                <span className="text-[10px] text-muted-foreground/70 whitespace-nowrap">
                   {new Date(history.timestamp).toLocaleString("uk-UA")}
                 </span>
               </div>
             ))
           ) : (
-            <p className="text-slate-500 text-center">Історія поки порожня</p>
+            <p className="text-muted-foreground text-center">Історія поки порожня</p>
           )}
         </div>
       )}
 
-      <div className="p-3.5 space-y-3 bg-white">
+      <div className="p-3.5 space-y-3 bg-card">
         {hasAnyAction ? (
           <div className="space-y-2.5">
             <Textarea
               placeholder="Коментар (обов'язково для відхилення)..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="resize-none h-10 min-h-[38px] py-2 text-xs w-full border-slate-300 focus-visible:ring-[#fa4616]"
+              className="resize-none h-10 min-h-[38px] py-2 text-xs w-full border-border bg-background text-foreground focus-visible:ring-primary"
             />
 
             <div className="flex flex-wrap items-center gap-2">
@@ -195,7 +195,7 @@ export function WorkflowChecklist({
             </div>
           </div>
         ) : (
-          <div className="text-xs text-center text-slate-500 py-2 bg-slate-50 rounded border border-dashed">
+          <div className="text-xs text-center text-muted-foreground py-2 bg-muted/40 rounded border border-dashed border-border">
             {process.status === "APPROVED" ? "Процес вже затверджено та опубліковано" : "Немає доступних дій погодження для вашої ролі на цьому етапі"}
           </div>
         )}

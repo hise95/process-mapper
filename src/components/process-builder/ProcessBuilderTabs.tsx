@@ -16,7 +16,10 @@ import {
   Layers,
   Lock,
   Send,
-  Sparkles
+  Sparkles,
+  ListChecks,
+  Share2,
+  Activity
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getStatusLabel } from '@/lib/enums';
@@ -77,9 +80,9 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
       <div className="w-full lg:flex-1 space-y-6">
         
         {/* Панель стану та дій */}
-        <div className="flex flex-wrap justify-between items-center bg-white p-4 rounded-xl border border-slate-200 mb-6 gap-4 shadow-sm">
+        <div className="flex flex-wrap justify-between items-center bg-card p-4 rounded-xl border border-border mb-6 gap-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="px-3 py-1 font-semibold text-slate-700">
+            <Badge variant="outline" className="px-3 py-1 font-semibold text-foreground">
               Статус: {getStatusLabel(process.status)}
             </Badge>
             {process.code && (
@@ -94,18 +97,18 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
               <Button 
                 onClick={() => handleSubmitStage('SUBMIT_PASSPORT_ANALYST')} 
                 disabled={submitting}
-                className="bg-[#fa4616] hover:bg-[#d93a10] text-white font-medium gap-2"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium gap-2"
               >
                 <Send className="w-4 h-4" />
                 <span>{submitting ? 'Відправка...' : 'Подати паспорт на перевірку'}</span>
               </Button>
             )}
 
-            {(activeTab === 'steps' || activeTab === 'bpmn') && process.status === 'STEPS_DRAFT' && (
+            {activeTab === 'steps' && process.status === 'STEPS_DRAFT' && (
               <Button 
                 onClick={() => handleSubmitStage('SUBMIT_STEPS_ANALYST')} 
                 disabled={submitting}
-                className="bg-[#fa4616] hover:bg-[#d93a10] text-white font-medium gap-2"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium gap-2"
               >
                 <Send className="w-4 h-4" />
                 <span>{submitting ? 'Відправка...' : 'Подати кроки на перевірку'}</span>
@@ -116,7 +119,7 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
               <Button 
                 onClick={() => handleSubmitStage('SUBMIT_KPIS_ANALYST')} 
                 disabled={submitting}
-                className="bg-[#fa4616] hover:bg-[#d93a10] text-white font-medium gap-2"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground font-medium gap-2"
               >
                 <Send className="w-4 h-4" />
                 <span>{submitting ? 'Відправка...' : 'Подати показники на перевірку'}</span>
@@ -126,40 +129,43 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="w-full justify-start border-b rounded-none p-0 h-auto bg-transparent mb-6 gap-2">
+          <TabsList className="bg-muted border border-border p-1 rounded-xl mb-6 grid grid-cols-4 w-full h-auto">
             <TabsTrigger 
-              value="passport"
-              className="data-[state=active]:border-b-2 data-[state=active]:border-[#fa4616] data-[state=active]:text-[#fa4616] rounded-none px-4 py-3 font-semibold gap-2"
+              value="passport" 
+              className="py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
             >
               <FileText className="w-4 h-4" />
-              <span>1. Паспорт процесу</span>
+              <span>1. Паспорт</span>
             </TabsTrigger>
 
             <TabsTrigger 
-              value="steps"
+              value="steps" 
               disabled={!isStepsUnlocked}
-              className="data-[state=active]:border-b-2 data-[state=active]:border-[#fa4616] data-[state=active]:text-[#fa4616] rounded-none px-4 py-3 font-semibold gap-2 disabled:opacity-50"
+              className="py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40"
             >
-              {!isStepsUnlocked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <GitCommit className="w-4 h-4" />}
+              <ListChecks className="w-4 h-4" />
               <span>2. Кроки AS-IS</span>
+              {!isStepsUnlocked && <Lock className="w-3 h-3 ml-0.5 text-muted-foreground" />}
             </TabsTrigger>
 
             <TabsTrigger 
-              value="bpmn"
+              value="bpmn" 
               disabled={!isStepsUnlocked}
-              className="data-[state=active]:border-b-2 data-[state=active]:border-[#fa4616] data-[state=active]:text-[#fa4616] rounded-none px-4 py-3 font-semibold gap-2 disabled:opacity-50"
+              className="py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40"
             >
-              {!isStepsUnlocked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <Layers className="w-4 h-4" />}
-              <span>BPMN Схема</span>
+              <Share2 className="w-4 h-4" />
+              <span>3. BPMN Схема</span>
+              {!isStepsUnlocked && <Lock className="w-3 h-3 ml-0.5 text-muted-foreground" />}
             </TabsTrigger>
 
             <TabsTrigger 
-              value="kpis"
+              value="kpis" 
               disabled={!isKpisUnlocked}
-              className="data-[state=active]:border-b-2 data-[state=active]:border-[#fa4616] data-[state=active]:text-[#fa4616] rounded-none px-4 py-3 font-semibold gap-2 disabled:opacity-50"
+              className="py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40"
             >
-              {!isKpisUnlocked ? <Lock className="w-3.5 h-3.5 text-slate-400" /> : <BarChart3 className="w-4 h-4" />}
-              <span>3. Показники процесу</span>
+              <Activity className="w-4 h-4" />
+              <span>4. Показники</span>
+              {!isKpisUnlocked && <Lock className="w-3 h-3 ml-0.5 text-muted-foreground" />}
             </TabsTrigger>
           </TabsList>
 
@@ -183,25 +189,25 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
       
       {/* Інформаційна панель */}
       <aside className="w-full lg:w-80 shrink-0 space-y-4">
-        <div className="p-5 border border-slate-200 rounded-xl bg-white shadow-sm space-y-4">
-          <h3 className="font-bold text-slate-800 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-[#fa4616]" />
+        <div className="p-5 border border-border rounded-xl bg-card shadow-sm space-y-4">
+          <h3 className="font-bold text-foreground flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-primary" />
             <span>Життєвий цикл</span>
           </h3>
           
-          <div className="space-y-3 text-xs leading-relaxed text-slate-600">
-            <div className={`p-3 rounded-lg border ${!isStepsUnlocked ? 'bg-amber-50 border-amber-200' : 'bg-green-50 border-green-200'}`}>
-              <p className="font-semibold text-slate-800 mb-1">Фаза 1: Паспорт</p>
+          <div className="space-y-3 text-xs leading-relaxed text-muted-foreground">
+            <div className={`p-3 rounded-lg border ${!isStepsUnlocked ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200' : 'bg-green-500/10 border-green-500/20 text-green-900 dark:text-green-200'}`}>
+              <p className="font-semibold text-foreground mb-1">Фаза 1: Паспорт</p>
               <p>Менеджер заповнює базову інформацію, аналітик та власник погоджують.</p>
             </div>
 
-            <div className={`p-3 rounded-lg border ${isStepsUnlocked && !isKpisUnlocked ? 'bg-amber-50 border-amber-200' : isKpisUnlocked ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
-              <p className="font-semibold text-slate-800 mb-1">Фаза 2: Кроки та BPMN</p>
+            <div className={`p-3 rounded-lg border ${isStepsUnlocked && !isKpisUnlocked ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200' : isKpisUnlocked ? 'bg-green-500/10 border-green-500/20 text-green-900 dark:text-green-200' : 'bg-muted/40 border-border'}`}>
+              <p className="font-semibold text-foreground mb-1">Фаза 2: Кроки та BPMN</p>
               <p>Деталізація процесу (кроки) та додавання посилання на схему BPMN.</p>
             </div>
 
-            <div className={`p-3 rounded-lg border ${isKpisUnlocked && process.status !== 'APPROVED' ? 'bg-amber-50 border-amber-200' : process.status === 'APPROVED' ? 'bg-green-50 border-green-200' : 'bg-slate-50 border-slate-200'}`}>
-              <p className="font-semibold text-slate-800 mb-1">Фаза 3: Показники процесу</p>
+            <div className={`p-3 rounded-lg border ${isKpisUnlocked && process.status !== 'APPROVED' ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200' : process.status === 'APPROVED' ? 'bg-green-500/10 border-green-500/20 text-green-900 dark:text-green-200' : 'bg-muted/40 border-border'}`}>
+              <p className="font-semibold text-foreground mb-1">Фаза 3: Показники процесу</p>
               <p>Додавання показників результативності та фінальне затвердження.</p>
             </div>
           </div>

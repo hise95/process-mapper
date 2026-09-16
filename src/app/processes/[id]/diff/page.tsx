@@ -37,19 +37,19 @@ export default async function ProcessDiffPage({ params }: { params: Promise<{ id
   const DiffField = ({ label, oldVal, newVal }: { label: string, oldVal: string | null, newVal: string | null }) => {
     if (oldVal === newVal) {
       return (
-        <div className="py-2 border-b last:border-0">
-          <span className="font-semibold text-slate-700">{label}:</span> <span className="text-slate-600">{newVal || '-'}</span>
+        <div className="py-2 border-b border-border last:border-0">
+          <span className="font-semibold text-foreground">{label}:</span> <span className="text-muted-foreground">{newVal || '-'}</span>
         </div>
       );
     }
     return (
-      <div className="py-2 border-b last:border-0">
-        <span className="font-semibold text-slate-700">{label}:</span>
+      <div className="py-2 border-b border-border last:border-0">
+        <span className="font-semibold text-foreground">{label}:</span>
         <div className="mt-1 flex flex-col gap-1 text-sm">
-          <div className="bg-red-50 text-red-700 p-2 rounded line-through border border-red-100">
+          <div className="bg-destructive/10 text-destructive p-2 rounded line-through border border-destructive/20">
             {oldVal || '(порожньо)'}
           </div>
-          <div className="bg-green-50 text-green-700 p-2 rounded border border-green-100">
+          <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-2 rounded border border-emerald-500/20">
             {newVal || '(порожньо)'}
           </div>
         </div>
@@ -61,13 +61,13 @@ export default async function ProcessDiffPage({ params }: { params: Promise<{ id
     <div className="container mx-auto py-8 max-w-5xl space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold mb-2">Порівняння версій</h1>
+          <h1 className="text-2xl font-bold mb-2 text-foreground">Порівняння версій</h1>
           <div className="flex items-center gap-3 text-sm">
-            <Badge variant="outline" className="bg-slate-100">
+            <Badge variant="outline" className="bg-muted text-muted-foreground">
               Попередня: v{prev.version} ({getStatusLabel(prev.status)})
             </Badge>
-            <ArrowRight className="w-4 h-4 text-slate-400" />
-            <Badge className="bg-[#fa4616] text-white">
+            <ArrowRight className="w-4 h-4 text-muted-foreground" />
+            <Badge className="bg-primary text-primary-foreground">
               Поточна: v{current.version} ({getStatusLabel(current.status)})
             </Badge>
           </div>
@@ -77,8 +77,8 @@ export default async function ProcessDiffPage({ params }: { params: Promise<{ id
         </Link>
       </div>
 
-      <Card>
-        <CardHeader><CardTitle>Паспорт процесу</CardTitle></CardHeader>
+      <Card className="bg-card border border-border">
+        <CardHeader><CardTitle className="text-foreground">Паспорт процесу</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
           <DiffField label="Назва" oldVal={prev.title} newVal={current.title} />
           <DiffField label="Код" oldVal={prev.code} newVal={current.code} />
@@ -91,33 +91,33 @@ export default async function ProcessDiffPage({ params }: { params: Promise<{ id
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Зміни в кроках (AS-IS)</CardTitle></CardHeader>
+      <Card className="bg-card border border-border">
+        <CardHeader><CardTitle className="text-foreground">Зміни в кроках (AS-IS)</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <h3 className="font-semibold text-slate-700">Було (v{prev.version}):</h3>
-            <div className="bg-slate-50 p-4 rounded-md border text-sm space-y-2">
+            <h3 className="font-semibold text-foreground">Було (v{prev.version}):</h3>
+            <div className="bg-muted/40 p-4 rounded-md border border-border text-sm space-y-2">
               {prev.steps.length === 0 && <p className="text-muted-foreground">Немає кроків</p>}
               {prev.steps.map((s, i) => (
                 <div key={s.id} className="flex gap-2">
-                  <span className="font-mono text-slate-400">{i + 1}.</span>
-                  <span className="font-medium">{s.name}</span>
-                  <span className="text-slate-500">— {s.executorRole}</span>
+                  <span className="font-mono text-muted-foreground">{i + 1}.</span>
+                  <span className="font-medium text-foreground">{s.name}</span>
+                  <span className="text-muted-foreground">— {s.executorRole}</span>
                 </div>
               ))}
             </div>
 
-            <h3 className="font-semibold text-slate-700 mt-6">Стало (v{current.version}):</h3>
-            <div className="bg-slate-50 p-4 rounded-md border text-sm space-y-2">
+            <h3 className="font-semibold text-foreground mt-6">Стало (v{current.version}):</h3>
+            <div className="bg-muted/40 p-4 rounded-md border border-border text-sm space-y-2">
               {current.steps.length === 0 && <p className="text-muted-foreground">Немає кроків</p>}
               {current.steps.map((s, i) => {
                 // Шукаємо цей крок у старій версії за назвою, щоб підсвітити як новий
                 const isNew = !prev.steps.find(ps => ps.name === s.name);
                 return (
-                  <div key={s.id} className={`flex gap-2 p-1 rounded ${isNew ? 'bg-green-100 text-green-800' : ''}`}>
-                    <span className="font-mono text-slate-400">{i + 1}.</span>
-                    <span className="font-medium">{s.name} {isNew && <Badge className="ml-2 bg-green-500 text-[10px]">Новий</Badge>}</span>
-                    <span className="text-slate-500">— {s.executorRole}</span>
+                  <div key={s.id} className={`flex gap-2 p-1 rounded ${isNew ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : ''}`}>
+                    <span className="font-mono text-muted-foreground">{i + 1}.</span>
+                    <span className="font-medium text-foreground">{s.name} {isNew && <Badge className="ml-2 bg-emerald-600 text-[10px]">Новий</Badge>}</span>
+                    <span className="text-muted-foreground">— {s.executorRole}</span>
                   </div>
                 )
               })}
@@ -126,30 +126,30 @@ export default async function ProcessDiffPage({ params }: { params: Promise<{ id
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader><CardTitle>Показники процесу</CardTitle></CardHeader>
+      <Card className="bg-card border border-border">
+        <CardHeader><CardTitle className="text-foreground">Показники процесу</CardTitle></CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <h3 className="font-semibold text-slate-700">Було (v{prev.version}):</h3>
-            <div className="bg-slate-50 p-4 rounded-md border text-sm space-y-2">
+            <h3 className="font-semibold text-foreground">Було (v{prev.version}):</h3>
+            <div className="bg-muted/40 p-4 rounded-md border border-border text-sm space-y-2">
               {prev.kpis.length === 0 && <p className="text-muted-foreground">Немає показників</p>}
               {prev.kpis.map((k) => (
                 <div key={k.id} className="flex gap-2">
-                  <span className="font-medium">{k.name}</span>
-                  <span className="text-slate-500">— {k.targetValue || '-'} ({k.unit || '-'})</span>
+                  <span className="font-medium text-foreground">{k.name}</span>
+                  <span className="text-muted-foreground">— {k.targetValue || '-'} ({k.unit || '-'})</span>
                 </div>
               ))}
             </div>
 
-            <h3 className="font-semibold text-slate-700 mt-6">Стало (v{current.version}):</h3>
-            <div className="bg-slate-50 p-4 rounded-md border text-sm space-y-2">
+            <h3 className="font-semibold text-foreground mt-6">Стало (v{current.version}):</h3>
+            <div className="bg-muted/40 p-4 rounded-md border border-border text-sm space-y-2">
               {current.kpis.length === 0 && <p className="text-muted-foreground">Немає показників</p>}
               {current.kpis.map((k) => {
                 const isNew = !prev.kpis.find(pk => pk.name === k.name);
                 return (
-                  <div key={k.id} className={`flex gap-2 p-1 rounded ${isNew ? 'bg-green-100 text-green-800' : ''}`}>
-                    <span className="font-medium">{k.name} {isNew && <Badge className="ml-2 bg-green-500 text-[10px]">Новий</Badge>}</span>
-                    <span className="text-slate-500">— {k.targetValue || '-'} ({k.unit || '-'})</span>
+                  <div key={k.id} className={`flex gap-2 p-1 rounded ${isNew ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20' : ''}`}>
+                    <span className="font-medium text-foreground">{k.name} {isNew && <Badge className="ml-2 bg-emerald-600 text-[10px]">Новий</Badge>}</span>
+                    <span className="text-muted-foreground">— {k.targetValue || '-'} ({k.unit || '-'})</span>
                   </div>
                 )
               })}

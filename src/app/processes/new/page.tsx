@@ -54,13 +54,13 @@ export default function NewProcessPage() {
 
   return (
     <div className="max-w-2xl mx-auto py-8">
-      <Card className="border border-slate-200 shadow-md">
-        <CardHeader className="bg-slate-50/50 border-b border-slate-100">
-          <div className="flex items-center gap-2 text-[#fa4616] font-semibold text-sm mb-1">
+      <Card className="border border-border shadow-md bg-card">
+        <CardHeader className="bg-muted/40 border-b border-border">
+          <div className="flex items-center gap-2 text-primary font-semibold text-sm mb-1">
             <Sparkles className="w-4 h-4" />
             <span>Крок 1: Ініціація процесу</span>
           </div>
-          <CardTitle className="text-2xl text-slate-800">Створити новий процес</CardTitle>
+          <CardTitle className="text-2xl text-foreground">Створити новий процес</CardTitle>
           <CardDescription>
             Вкажіть базову назву та мету процесу. Детальні кроки та метрики заповнюються на наступних етапах, а код і тип процесу призначає процесний аналітик після затвердження.
           </CardDescription>
@@ -68,8 +68,8 @@ export default function NewProcessPage() {
         <CardContent className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="space-y-2">
-              <Label htmlFor="title" className="text-sm font-medium text-slate-700">
-                Назва процесу <span className="text-red-500">*</span>
+              <Label htmlFor="title" className="text-sm font-medium text-foreground">
+                Назва процесу <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="title"
@@ -78,12 +78,12 @@ export default function NewProcessPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="Наприклад: Процес адаптації нового співробітника"
-                className="h-11 focus-visible:ring-[#fa4616]"
+                className="h-11 focus-visible:ring-primary"
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="objective" className="text-sm font-medium text-slate-700">
+              <Label htmlFor="objective" className="text-sm font-medium text-foreground">
                 Попередня мета процесу
               </Label>
               <Textarea
@@ -93,11 +93,11 @@ export default function NewProcessPage() {
                 onChange={(e) => setObjective(e.target.value)}
                 placeholder="Опишіть, чого має досягти цей процес і яку цінність він створює..."
                 rows={4}
-                className="focus-visible:ring-[#fa4616]"
+                className="focus-visible:ring-primary"
               />
             </div>
 
-            <div className="p-4 rounded-lg bg-amber-50/80 border border-amber-200/60 text-xs text-amber-800 leading-relaxed">
+            <div className="p-4 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-900 dark:text-amber-200 leading-relaxed">
               💡 <strong>Як це працює:</strong> Після створення ви перейдете до заповнення <strong>Паспорта процесу</strong>. Коли ви його заповните і подасте — аналітик або власник погодить його, і вам відкриється доступ до опису <strong>Кроків (AS-IS)</strong>, а згодом — до <strong>Показників процесу</strong>.
             </div>
 

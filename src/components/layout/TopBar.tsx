@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Input } from '@/components/ui/input';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
@@ -31,8 +31,8 @@ export default function TopBar({ title, fullName }: TopBarProps) {
   };
 
   return (
-    <header className="flex items-center justify-between px-6 py-4 bg-white border-b">
-      <h1 className="text-xl font-semibold">{title}</h1>
+    <header className="flex items-center justify-between px-6 py-4 bg-background border-b border-border">
+      <h1 className="text-xl font-semibold text-foreground">{title}</h1>
       <div className="flex items-center gap-4">
         <form onSubmit={handleSearch}>
           <Input 

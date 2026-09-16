@@ -30,19 +30,19 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
   const typeLabel = process.processType ? (PROCESS_TYPE_LABELS[process.processType] || process.processType) : "Тип не вказано";
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden relative border border-slate-200 shadow-sm bg-white">
+    <Card className="h-full flex flex-col overflow-hidden relative border border-border shadow-sm bg-card">
       {/* Sticky Top Bar */}
-      <div className="sticky top-0 z-10 bg-white border-b p-3 flex items-center justify-between shadow-xs gap-2">
+      <div className="sticky top-0 z-10 bg-card border-b border-border p-3 flex items-center justify-between shadow-xs gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <Badge variant="secondary" className="text-xs px-2 py-0.5 font-mono shrink-0 bg-slate-100 text-slate-800">
+          <Badge variant="secondary" className="text-xs px-2 py-0.5 font-mono shrink-0 bg-muted text-foreground">
             {process.code || "БЕЗ КОДУ"}
           </Badge>
-          <h2 className="text-sm sm:text-base font-bold truncate text-slate-900">{process.title}</h2>
+          <h2 className="text-sm sm:text-base font-bold truncate text-foreground">{process.title}</h2>
           <Badge variant="outline" className="text-[11px] shrink-0">v{process.version || "1.0"}</Badge>
         </div>
         
         <div className="flex items-center gap-2 shrink-0">
-          <Badge variant="outline" className="text-xs text-slate-600 whitespace-nowrap">{typeLabel}</Badge>
+          <Badge variant="outline" className="text-xs text-muted-foreground whitespace-nowrap">{typeLabel}</Badge>
           <Badge className={`${statusMeta.className} border-none text-xs font-semibold whitespace-nowrap shadow-xs`}>
             {statusMeta.label}
           </Badge>
@@ -51,7 +51,7 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
             variant="ghost" 
             size="sm" 
             onClick={() => window.open(`/processes/${process.id}`, '_blank')}
-            className="text-xs h-7 px-2 text-[#fa4616] hover:bg-orange-50 font-medium gap-1"
+            className="text-xs h-7 px-2 text-primary hover:bg-primary/10 font-medium gap-1"
             title="Відкрити процес на окремій сторінці"
           >
             <span>Відкрити</span>
@@ -64,59 +64,59 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
           
           {/* Паспорт процесу */}
           <section className="space-y-3">
-            <h3 className="text-base font-bold border-b pb-2 text-slate-800 flex items-center gap-2">
-              <ShieldCheck className="w-4 h-4 text-[#fa4616]" />
+            <h3 className="text-base font-bold border-b border-border pb-2 text-foreground flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 text-primary" />
               Паспорт процесу
             </h3>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-3 bg-muted/40 rounded-lg border border-border">
                 <span className="text-xs font-semibold text-muted-foreground block mb-1">Менеджер процесу</span>
-                <span className="font-medium text-slate-800">{process.manager?.fullName || "—"}</span>
+                <span className="font-medium text-foreground">{process.manager?.fullName || "—"}</span>
               </div>
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-3 bg-muted/40 rounded-lg border border-border">
                 <span className="text-xs font-semibold text-muted-foreground block mb-1">Власник процесу</span>
-                <span className="font-medium text-slate-800">{process.owner?.fullName || "—"}</span>
+                <span className="font-medium text-foreground">{process.owner?.fullName || "—"}</span>
               </div>
 
-              <div className="md:col-span-2 p-3 bg-muted/30 rounded-lg border">
+              <div className="md:col-span-2 p-3 bg-muted/40 rounded-lg border border-border">
                 <span className="text-xs font-semibold text-muted-foreground block mb-1">Мета процесу</span>
-                <p className="whitespace-pre-wrap text-slate-700">{process.objective || "—"}</p>
+                <p className="whitespace-pre-wrap text-foreground/90">{process.objective || "—"}</p>
               </div>
 
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-3 bg-muted/40 rounded-lg border border-border">
                 <span className="text-xs font-semibold text-muted-foreground block mb-1">Вхід (що запускає процес)</span>
-                <p className="whitespace-pre-wrap text-slate-700">{process.input || "—"}</p>
+                <p className="whitespace-pre-wrap text-foreground/90">{process.input || "—"}</p>
               </div>
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-3 bg-muted/40 rounded-lg border border-border">
                 <span className="text-xs font-semibold text-muted-foreground block mb-1">Вихід (результат роботи)</span>
-                <p className="whitespace-pre-wrap text-slate-700">{process.output || "—"}</p>
+                <p className="whitespace-pre-wrap text-foreground/90">{process.output || "—"}</p>
               </div>
 
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-3 bg-muted/40 rounded-lg border border-border">
                 <span className="text-xs font-semibold text-muted-foreground block mb-1">Постачальник входу</span>
-                <p className="text-slate-700">{process.inputSupplier || "—"}</p>
+                <p className="text-foreground/90">{process.inputSupplier || "—"}</p>
               </div>
-              <div className="p-3 bg-muted/30 rounded-lg border">
+              <div className="p-3 bg-muted/40 rounded-lg border border-border">
                 <span className="text-xs font-semibold text-muted-foreground block mb-1">Клієнти процесу</span>
-                <p className="whitespace-pre-wrap text-slate-700">{process.clients || "—"}</p>
+                <p className="whitespace-pre-wrap text-foreground/90">{process.clients || "—"}</p>
               </div>
 
-              <div className="md:col-span-2 p-3 bg-muted/30 rounded-lg border">
+              <div className="md:col-span-2 p-3 bg-muted/40 rounded-lg border border-border">
                 <span className="text-xs font-semibold text-muted-foreground block mb-1">Учасники процесу</span>
-                <p className="whitespace-pre-wrap text-slate-700">{process.participants || "—"}</p>
+                <p className="whitespace-pre-wrap text-foreground/90">{process.participants || "—"}</p>
               </div>
 
               {process.upstreamProcesses && (
-                <div className="p-3 bg-muted/30 rounded-lg border">
+                <div className="p-3 bg-muted/40 rounded-lg border border-border">
                   <span className="text-xs font-semibold text-muted-foreground block mb-1">Попередній процес</span>
-                  <p className="text-slate-700">{process.upstreamProcesses}</p>
+                  <p className="text-foreground/90">{process.upstreamProcesses}</p>
                 </div>
               )}
               {process.downstreamProcesses && (
-                <div className="p-3 bg-muted/30 rounded-lg border">
+                <div className="p-3 bg-muted/40 rounded-lg border border-border">
                   <span className="text-xs font-semibold text-muted-foreground block mb-1">Наступний процес</span>
-                  <p className="text-slate-700">{process.downstreamProcesses}</p>
+                  <p className="text-foreground/90">{process.downstreamProcesses}</p>
                 </div>
               )}
             </div>
@@ -124,9 +124,9 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
 
           {/* Кроки процесу */}
           <section className="space-y-3">
-            <h3 className="text-base font-bold border-b pb-2 text-slate-800">Кроки процесу AS-IS</h3>
+            <h3 className="text-base font-bold border-b border-border pb-2 text-foreground">Кроки процесу AS-IS</h3>
             {process.steps && process.steps.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden text-sm">
+              <div className="border border-border rounded-lg overflow-hidden text-sm bg-card">
                 <table className="w-full text-left">
                   <thead className="bg-muted/60 text-muted-foreground text-xs uppercase font-semibold">
                     <tr>
@@ -137,16 +137,16 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
                       <th className="p-2.5">Документ</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
+                  <tbody className="divide-y divide-border">
                     {process.steps.map((step: any, index: number) => (
-                      <tr key={step.id || index} className="hover:bg-muted/20">
+                      <tr key={step.id || index} className="hover:bg-muted/30">
                         <td className="p-2.5 text-center font-mono text-xs text-muted-foreground">{index + 1}</td>
-                        <td className="p-2.5 font-medium text-slate-800">{step.name}</td>
-                        <td className="p-2.5 text-slate-600">{step.description || "—"}</td>
-                        <td className="p-2.5 text-slate-700">{step.executorRole || "—"}</td>
+                        <td className="p-2.5 font-medium text-foreground">{step.name}</td>
+                        <td className="p-2.5 text-muted-foreground">{step.description || "—"}</td>
+                        <td className="p-2.5 text-foreground/80">{step.executorRole || "—"}</td>
                         <td className="p-2.5">
                           {step.docUrl ? (
-                            <a href={step.docUrl} target="_blank" rel="noreferrer" className="text-[#fa4616] hover:underline text-xs">
+                            <a href={step.docUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs">
                               Посилання ↗
                             </a>
                           ) : (
@@ -159,7 +159,7 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground italic bg-muted/20 p-4 rounded-lg text-center">
+              <p className="text-sm text-muted-foreground italic bg-muted/20 p-4 rounded-lg text-center border border-border">
                 Кроки ще не додані або знаходяться на етапі заповнення
               </p>
             )}
@@ -167,9 +167,9 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
 
           {/* Показники процесу */}
           <section className="space-y-3">
-            <h3 className="text-base font-bold border-b pb-2 text-slate-800">Показники процесу</h3>
+            <h3 className="text-base font-bold border-b border-border pb-2 text-foreground">Показники процесу</h3>
             {process.kpis && process.kpis.length > 0 ? (
-              <div className="border rounded-lg overflow-hidden text-sm">
+              <div className="border border-border rounded-lg overflow-hidden text-sm bg-card">
                 <table className="w-full text-left">
                   <thead className="bg-muted/60 text-muted-foreground text-xs uppercase font-semibold">
                     <tr>
@@ -180,21 +180,21 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
                       <th className="p-2.5">Цільове значення</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y">
+                  <tbody className="divide-y divide-border">
                     {process.kpis.map((kpi: any, index: number) => (
-                      <tr key={kpi.id || index} className="hover:bg-muted/20">
-                        <td className="p-2.5 font-medium text-slate-800">{kpi.name}</td>
-                        <td className="p-2.5 text-slate-600">{kpi.unit || "—"}</td>
-                        <td className="p-2.5 text-slate-600">{kpi.dataSource || "—"}</td>
-                        <td className="p-2.5 text-slate-600">{kpi.frequency || "—"}</td>
-                        <td className="p-2.5 font-semibold text-slate-800">{kpi.targetValue || "—"}</td>
+                      <tr key={kpi.id || index} className="hover:bg-muted/30">
+                        <td className="p-2.5 font-medium text-foreground">{kpi.name}</td>
+                        <td className="p-2.5 text-muted-foreground">{kpi.unit || "—"}</td>
+                        <td className="p-2.5 text-muted-foreground">{kpi.dataSource || "—"}</td>
+                        <td className="p-2.5 text-muted-foreground">{kpi.frequency || "—"}</td>
+                        <td className="p-2.5 font-semibold text-foreground">{kpi.targetValue || "—"}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground italic bg-muted/20 p-4 rounded-lg text-center">
+              <p className="text-sm text-muted-foreground italic bg-muted/20 p-4 rounded-lg text-center border border-border">
                 Показники процесу ще не внесені
               </p>
             )}
@@ -203,16 +203,16 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
           {/* BPMN Схема */}
           {process.bpmnUrl && (
             <section className="space-y-3 pt-2">
-              <div className="flex items-center justify-between p-3 bg-muted/30 border rounded-lg">
+              <div className="flex items-center justify-between p-3 bg-muted/40 border border-border rounded-lg">
                 <div>
-                  <h4 className="font-semibold text-sm text-slate-800">Схема процесу BPMN</h4>
+                  <h4 className="font-semibold text-sm text-foreground">Схема процесу BPMN</h4>
                   <p className="text-xs text-muted-foreground">Доступна зовнішня інтерактивна діаграма</p>
                 </div>
                 <Button 
                   variant="outline" 
                   size="sm"
                   onClick={() => window.open(process.bpmnUrl || '', '_blank')}
-                  className="border-[#fa4616] text-[#fa4616] hover:bg-[#fa4616] hover:text-white"
+                  className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 >
                   Відкрити BPMN <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
                 </Button>

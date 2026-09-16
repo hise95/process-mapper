@@ -41,7 +41,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
   return (
     <div className="space-y-6">
       {/* Інформаційна плашка про автозбереження */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground bg-slate-100/80 px-4 py-2.5 rounded-md border border-slate-200">
+      <div className="flex items-center justify-between text-xs text-muted-foreground bg-muted/40 px-4 py-2.5 rounded-md border border-border">
         <div className="flex items-center gap-2">
           <Info className="w-4 h-4 text-blue-500 shrink-0" />
           <span>Зміни в полях зберігаються автоматично після завершення введення.</span>
@@ -168,7 +168,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
           </div>
 
           <div className="space-y-2">
-            <Label className="font-semibold text-slate-700">Який бізнес-процес іде після нього</Label>
+            <Label className="font-semibold text-foreground">Який бізнес-процес іде після нього</Label>
             <Input
               value={data.downstreamProcesses || ''}
               onChange={e => handleChange('downstreamProcesses', e.target.value)}
@@ -179,14 +179,14 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
       </Card>
 
       {/* Блок класифікації аналітиком (інформаційний для менеджера) */}
-      <div className="p-4 rounded-lg bg-slate-100/90 border border-dashed border-slate-300">
+      <div className="p-4 rounded-lg bg-muted/40 border border-dashed border-border">
         <div className="flex items-start gap-3">
-          <span className="p-1.5 rounded-full bg-slate-200 text-slate-700">
+          <span className="p-1.5 rounded-full bg-muted text-foreground">
             <Info className="w-4 h-4" />
           </span>
           <div className="text-xs space-y-1">
-            <p className="font-semibold text-slate-800">Службова класифікація (Код, Тип, Рівень L1-L3)</p>
-            <p className="text-slate-600 leading-relaxed">
+            <p className="font-semibold text-foreground">Службова класифікація (Код, Тип, Рівень L1-L3)</p>
+            <p className="text-muted-foreground leading-relaxed">
               Код процесу ({data.code || 'ще не присвоєно'}), офіційний тип процесу ({data.processType ? (PROCESS_TYPE_LABELS[data.processType] || data.processType) : 'не призначено'}) та рівень в ієрархії компанії будуть заповнені <strong>Процесним аналітиком</strong> на фінальному етапі після успішного погодження паспорта, кроків і показників.
             </p>
           </div>
