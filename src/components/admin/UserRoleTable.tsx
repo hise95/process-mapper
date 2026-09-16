@@ -67,10 +67,13 @@ export function UserRoleTable({ currentUser }: { currentUser: any }) {
   }
 
   const roleLabels: Record<string, string> = {
-    "ADMIN_ANALYST": "Адміністратор-аналітик",
+    "ADMIN": "Адміністратор",
+    "PROCESS_ANALYST": "Процесний аналітик",
+    "ADMIN_ANALYST": "Процесний аналітик",
     "PROCESS_OWNER": "Власник процесу",
     "PROCESS_MANAGER": "Менеджер процесу",
-    "USER": "Користувач"
+    "EMPLOYEE": "Працівник",
+    "USER": "Працівник"
   }
 
   if (loading) return <div className="flex justify-center p-8"><Loader2 className="w-8 h-8 animate-spin" /></div>
@@ -95,7 +98,7 @@ export function UserRoleTable({ currentUser }: { currentUser: any }) {
 
             return (
               <tr key={user.id} className={`hover:bg-muted/20 ${isSelf ? "bg-muted/10" : ""}`}>
-                <td className="p-4 font-medium">{user.name || "—"} {isSelf && "(Ви)"}</td>
+                <td className="p-4 font-medium">{user.fullName || user.name || "—"} {isSelf && "(Ви)"}</td>
                 <td className="p-4 text-muted-foreground">{user.email}</td>
                 <td className="p-4">
                   <span className="px-2 py-1 bg-secondary rounded text-xs font-medium">
@@ -112,10 +115,11 @@ export function UserRoleTable({ currentUser }: { currentUser: any }) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="ADMIN_ANALYST">Адміністратор-аналітик</SelectItem>
+                      <SelectItem value="ADMIN">Адміністратор</SelectItem>
+                      <SelectItem value="PROCESS_ANALYST">Процесний аналітик</SelectItem>
                       <SelectItem value="PROCESS_OWNER">Власник процесу</SelectItem>
                       <SelectItem value="PROCESS_MANAGER">Менеджер процесу</SelectItem>
-                      <SelectItem value="USER">Користувач</SelectItem>
+                      <SelectItem value="EMPLOYEE">Працівник</SelectItem>
                     </SelectContent>
                   </Select>
                 </td>

@@ -21,6 +21,14 @@ export async function POST(
     return NextResponse.json({ error: 'Нову версію може створити тільки менеджер або аналітик для затвердженого процесу' }, { status: 403 })
   }
 
+  const existingNext = await prisma.process.findFirst({
+    where: { previousVersionId: id, status: { not: 'ARCHIVED' } },
+    select: { id: true }
+  })
+  if (existingNext) {
+    return NextResponse.json({ error: 'Чернетка нової версії вже створена', newVersionId: existingNext.id }, { status: 409 })
+  }
+
   const newId = await createNewVersion(id, session)
 
   return NextResponse.json({ newVersionId: newId }, { status: 201 })

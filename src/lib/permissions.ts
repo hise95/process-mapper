@@ -5,22 +5,30 @@ import type { Process } from '@prisma/client'
 import { Role } from './enums';
 
 // ── Ролі ──
-export const ROLES_UA: Record<Role, string> = {
-  ADMIN_ANALYST: 'Адміністратор-аналітик',
+export const ROLES_UA: Record<string, string> = {
+  ADMIN: 'Адміністратор',
+  PROCESS_ANALYST: 'Процесний аналітик',
+  ADMIN_ANALYST: 'Процесний аналітик',
   PROCESS_MANAGER: 'Менеджер процесу',
   PROCESS_OWNER: 'Власник процесу',
   EMPLOYEE: 'Працівник',
 }
 
+// ── Допоміжна перевірка аналітика ──
+export const isAnalystOrAdmin = (role: string) => 
+  role === Role.PROCESS_ANALYST || role === Role.ADMIN_ANALYST || role === Role.ADMIN
+
+export const isAnalystRole = isAnalystOrAdmin;
+
 // ── Перевірки ──
 
 export function canCreateProcess(user: SessionUser): boolean {
-  return user.role === Role.ADMIN_ANALYST || user.role === Role.PROCESS_MANAGER || user.role === Role.PROCESS_OWNER
+  return isAnalystOrAdmin(user.role) || user.role === Role.PROCESS_MANAGER || user.role === Role.PROCESS_OWNER
 }
 
 export function canEditProcess(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
   if (process.status === 'APPROVED' || process.status === 'ARCHIVED') return false
-  if (user.role === Role.ADMIN_ANALYST) return true
+  if (isAnalystOrAdmin(user.role)) return true
   if (user.role === Role.PROCESS_MANAGER) {
     return !process.managerId || process.managerId === user.id
   }
@@ -31,25 +39,26 @@ export function canEditProcess(user: SessionUser, process: Pick<Process, 'manage
 }
 
 export function canSubmitForReview(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
-  if (process.status !== 'DRAFT') return false
-  if (user.role === Role.ADMIN_ANALYST) return true
+  const draftStatuses = ['DRAFT', 'STEPS_DRAFT', 'KPIS_DRAFT']
+  if (!draftStatuses.includes(process.status)) return false
+  if (isAnalystOrAdmin(user.role)) return true
   if (user.role === Role.PROCESS_MANAGER && process.managerId === user.id) return true
   if (user.role === Role.PROCESS_OWNER && process.ownerId === user.id) return true
   return false
 }
 
 export function canApproveAsAnalyst(user: SessionUser): boolean {
-  return user.role === Role.ADMIN_ANALYST
+  return isAnalystOrAdmin(user.role)
 }
 
 export function canApproveAsOwner(user: SessionUser, process: Pick<Process, 'ownerId'>): boolean {
-  if (user.role === Role.ADMIN_ANALYST) return true
+  if (isAnalystOrAdmin(user.role)) return true
   if (user.role === Role.PROCESS_OWNER && process.ownerId === user.id) return true
   return false
 }
 
 export function canViewAdminPanel(user: SessionUser): boolean {
-  return user.role === Role.ADMIN_ANALYST
+  return user.role === Role.ADMIN
 }
 
 export function canViewRepository(_user: SessionUser): boolean {
@@ -59,7 +68,7 @@ export function canViewRepository(_user: SessionUser): boolean {
 /** Чи може користувач створити нову версію APPROVED процесу */
 export function canCreateNewVersion(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
   if (process.status !== 'APPROVED') return false
-  if (user.role === Role.ADMIN_ANALYST) return true
+  if (isAnalystOrAdmin(user.role)) return true
   if (user.role === Role.PROCESS_MANAGER && process.managerId === user.id) return true
   if (user.role === Role.PROCESS_OWNER && process.ownerId === user.id) return true
   return false

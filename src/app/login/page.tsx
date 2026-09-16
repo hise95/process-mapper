@@ -39,21 +39,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <div className="text-5xl mb-4">🗺️</div>
-          <h1 className="text-3xl font-bold tracking-tight text-slate-800">Process Mapper</h1>
-          <p className="text-slate-500 mt-2">Авторизація в системі</p>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Process Mapper</h1>
+          <p className="text-muted-foreground mt-2">Авторизація в системі</p>
         </div>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-md text-sm text-center mb-6 border border-red-200">
+          <div className="bg-destructive/10 text-destructive p-3 rounded-md text-sm text-center mb-6 border border-destructive/20">
             {error}
           </div>
         )}
 
-        <Card className="shadow-lg border-0 ring-1 ring-slate-200">
+        <Card className="shadow-lg border-0 ring-1 ring-border">
           <CardContent className="pt-8 pb-8 px-8">
             <form onSubmit={handleLogin} className="space-y-5">
               <div className="space-y-2">
@@ -65,7 +65,7 @@ export default function LoginPage() {
                   required 
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  className="bg-slate-50 focus-visible:ring-[#fa4616]"
+                  className="bg-muted focus-visible:ring-primary"
                 />
               </div>
               
@@ -77,25 +77,25 @@ export default function LoginPage() {
                   required 
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="bg-slate-50 focus-visible:ring-[#fa4616]"
+                  className="bg-muted focus-visible:ring-primary"
                 />
               </div>
 
-              <Button type="submit" className="w-full bg-[#fa4616] hover:bg-[#d93a10] text-white py-6 text-lg mt-2 shadow-md transition-all" disabled={loading}>
+              <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-6 text-lg mt-2 shadow-md transition-all" disabled={loading}>
                 {loading ? 'Зачекайте...' : 'Увійти'}
               </Button>
             </form>
           </CardContent>
         </Card>
 
-        <div className="mt-8 text-center text-sm text-slate-500 bg-white p-4 rounded-xl border">
-          <p className="font-semibold mb-2">Демонстраційні акаунти (пароль: password123):</p>
+        <div className="mt-8 text-center text-sm text-muted-foreground bg-card p-4 rounded-xl border border-border">
+          <p className="font-semibold text-foreground mb-2">Демонстраційні акаунти (пароль: password123):</p>
           <ul className="text-xs space-y-1">
-            <li><strong>Адміністратор:</strong> admin@company.com</li>
-            <li><strong>Аналітик:</strong> analyst@company.com</li>
-            <li><strong>Власник:</strong> owner@company.com</li>
-            <li><strong>Менеджер:</strong> manager@company.com</li>
-            <li><strong>Працівник:</strong> employee@company.com</li>
+            <li><strong className="text-foreground">Адміністратор:</strong> admin@company.com</li>
+            <li><strong className="text-foreground">Аналітик:</strong> analyst@company.com</li>
+            <li><strong className="text-foreground">Власник:</strong> owner@company.com</li>
+            <li><strong className="text-foreground">Менеджер:</strong> manager@company.com</li>
+            <li><strong className="text-foreground">Працівник:</strong> employee@company.com</li>
           </ul>
         </div>
       </div>

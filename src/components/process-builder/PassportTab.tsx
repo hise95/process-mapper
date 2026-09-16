@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Info, CheckCircle2, Loader2 } from 'lucide-react';
 import type { ProcessForEdit } from '@/lib/types';
+import { PROCESS_TYPE_LABELS } from '@/lib/enums';
 
 export default function PassportTab({ process }: { process: ProcessForEdit }) {
   const [data, setData] = useState(process);
@@ -186,7 +187,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
           <div className="text-xs space-y-1">
             <p className="font-semibold text-slate-800">Службова класифікація (Код, Тип, Рівень L1-L3)</p>
             <p className="text-slate-600 leading-relaxed">
-              Код процесу ({data.code || 'ще не присвоєно'}), офіційний тип процесу ({data.processType || 'не призначено'}) та рівень в ієрархії компанії будуть заповнені <strong>Процесним аналітиком</strong> на фінальному етапі після успішного погодження паспорта, кроків і показників.
+              Код процесу ({data.code || 'ще не присвоєно'}), офіційний тип процесу ({data.processType ? (PROCESS_TYPE_LABELS[data.processType] || data.processType) : 'не призначено'}) та рівень в ієрархії компанії будуть заповнені <strong>Процесним аналітиком</strong> на фінальному етапі після успішного погодження паспорта, кроків і показників.
             </p>
           </div>
         </div>

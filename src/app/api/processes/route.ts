@@ -21,11 +21,10 @@ export async function GET(req: NextRequest) {
   const where: Record<string, unknown> = {}
 
   if (pending === 'true') {
-    // Режим "черги на погодження" для Аналітика та Власника
-    if (session.role === Role.ADMIN_ANALYST) {
-      where.status = { in: ['IN_REVIEW_ANALYST', 'IN_REVIEW_OWNER'] }
+    if (session.role === Role.PROCESS_ANALYST || session.role === Role.ADMIN_ANALYST || session.role === Role.ADMIN) {
+      where.status = { in: ['PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST'] }
     } else if (session.role === Role.PROCESS_OWNER) {
-      where.status = 'IN_REVIEW_OWNER'
+      where.status = { in: ['PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'] }
       where.ownerId = session.id
     }
   } else if (status) {
@@ -85,7 +84,7 @@ export async function POST(req: NextRequest) {
   const process = await prisma.process.create({
     data: {
       title,
-      processType: processType ?? 'ОСНОВНИЙ',
+      processType: processType ?? 'MAIN',
       levelId: levelId || null,
       ownerId: ownerId || null,
       managerId: managerId || session.id,

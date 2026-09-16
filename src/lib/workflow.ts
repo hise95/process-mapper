@@ -1,74 +1,128 @@
 // src/lib/workflow.ts
-// Машина станів для процесу погодження AS-IS
+// Логіка життєвого циклу процесів (3 фази: Паспорт -> Кроки -> Показники)
 import { ProcessStatus, WorkflowStage, Role } from './enums';
 import { prisma } from './prisma'
 import type { SessionUser } from './auth'
 
 export type WorkflowTransition =
-  | 'SUBMIT_FOR_ANALYST'
-  | 'ANALYST_APPROVE'
-  | 'ANALYST_REJECT'
-  | 'OWNER_APPROVE'
-  | 'OWNER_REJECT'
+  | 'SUBMIT_PASSPORT_ANALYST'
+  | 'APPROVE_PASSPORT_ANALYST'
+  | 'REJECT_PASSPORT_ANALYST'
+  | 'APPROVE_PASSPORT_OWNER'
+  | 'REJECT_PASSPORT_OWNER'
+  
+  | 'SUBMIT_STEPS_ANALYST'
+  | 'APPROVE_STEPS_ANALYST'
+  | 'REJECT_STEPS_ANALYST'
+  | 'APPROVE_STEPS_OWNER'
+  | 'REJECT_STEPS_OWNER'
+  
+  | 'SUBMIT_KPIS_ANALYST'
+  | 'APPROVE_KPIS_ANALYST'
+  | 'REJECT_KPIS_ANALYST'
+  | 'APPROVE_KPIS_OWNER'
+  | 'REJECT_KPIS_OWNER'
+  
   | 'FINAL_APPROVE'
+  | 'FINAL_REJECT'
 
-/** Наступний статус після переходу */
 export const TRANSITION_MAP: Record<WorkflowTransition, ProcessStatus> = {
-  SUBMIT_FOR_ANALYST: 'IN_REVIEW_ANALYST',
-  ANALYST_APPROVE: 'IN_REVIEW_OWNER',
-  ANALYST_REJECT: 'DRAFT',
-  OWNER_APPROVE: 'IN_REVIEW_ANALYST', // повертається до аналітика для фінального затвердження
-  OWNER_REJECT: 'DRAFT',
+  // Фаза 1
+  SUBMIT_PASSPORT_ANALYST: 'PASSPORT_REVIEW_ANALYST',
+  APPROVE_PASSPORT_ANALYST: 'PASSPORT_REVIEW_OWNER',
+  REJECT_PASSPORT_ANALYST: 'DRAFT',
+  APPROVE_PASSPORT_OWNER: 'STEPS_DRAFT',
+  REJECT_PASSPORT_OWNER: 'DRAFT',
+  
+  // Фаза 2
+  SUBMIT_STEPS_ANALYST: 'STEPS_REVIEW_ANALYST',
+  APPROVE_STEPS_ANALYST: 'STEPS_REVIEW_OWNER',
+  REJECT_STEPS_ANALYST: 'STEPS_DRAFT',
+  APPROVE_STEPS_OWNER: 'KPIS_DRAFT',
+  REJECT_STEPS_OWNER: 'STEPS_DRAFT',
+  
+  // Фаза 3
+  SUBMIT_KPIS_ANALYST: 'KPIS_REVIEW_ANALYST',
+  APPROVE_KPIS_ANALYST: 'KPIS_REVIEW_OWNER',
+  REJECT_KPIS_ANALYST: 'KPIS_DRAFT',
+  APPROVE_KPIS_OWNER: 'FINAL_APPROVAL_ANALYST',
+  REJECT_KPIS_OWNER: 'KPIS_DRAFT',
+  
+  // Фінал
   FINAL_APPROVE: 'APPROVED',
+  FINAL_REJECT: 'KPIS_DRAFT', // Або можна повернути на будь-який драфт, але зазвичай на останній етап
 }
 
-/** Українські назви дій для History Log */
 export const TRANSITION_LABEL: Record<WorkflowTransition, string> = {
-  SUBMIT_FOR_ANALYST: 'ПОДАНО_НА_ПЕРЕВІРКУ_АНАЛІТИКУ',
-  ANALYST_APPROVE: 'СХВАЛЕНО_АНАЛІТИКОМ',
-  ANALYST_REJECT: 'ВІДХИЛЕНО_АНАЛІТИКОМ',
-  OWNER_APPROVE: 'СХВАЛЕНО_ВЛАСНИКОМ',
-  OWNER_REJECT: 'ВІДХИЛЕНО_ВЛАСНИКОМ',
-  FINAL_APPROVE: 'ЗАТВЕРДЖЕНО',
+  SUBMIT_PASSPORT_ANALYST: 'ПОДАНО_ПАСПОРТ_АНАЛІТИКУ',
+  APPROVE_PASSPORT_ANALYST: 'ПАСПОРТ_СХВАЛЕНО_АНАЛІТИКОМ',
+  REJECT_PASSPORT_ANALYST: 'ПАСПОРТ_ВІДХИЛЕНО_АНАЛІТИКОМ',
+  APPROVE_PASSPORT_OWNER: 'ПАСПОРТ_СХВАЛЕНО_ВЛАСНИКОМ',
+  REJECT_PASSPORT_OWNER: 'ПАСПОРТ_ВІДХИЛЕНО_ВЛАСНИКОМ',
+  
+  SUBMIT_STEPS_ANALYST: 'ПОДАНО_КРОКИ_АНАЛІТИКУ',
+  APPROVE_STEPS_ANALYST: 'КРОКИ_СХВАЛЕНО_АНАЛІТИКОМ',
+  REJECT_STEPS_ANALYST: 'КРОКИ_ВІДХИЛЕНО_АНАЛІТИКОМ',
+  APPROVE_STEPS_OWNER: 'КРОКИ_СХВАЛЕНО_ВЛАСНИКОМ',
+  REJECT_STEPS_OWNER: 'КРОКИ_ВІДХИЛЕНО_ВЛАСНИКОМ',
+
+  SUBMIT_KPIS_ANALYST: 'ПОДАНО_ПОКАЗНИКИ_АНАЛІТИКУ',
+  APPROVE_KPIS_ANALYST: 'ПОКАЗНИКИ_СХВАЛЕНО_АНАЛІТИКОМ',
+  REJECT_KPIS_ANALYST: 'ПОКАЗНИКИ_ВІДХИЛЕНО_АНАЛІТИКОМ',
+  APPROVE_KPIS_OWNER: 'ПОКАЗНИКИ_СХВАЛЕНО_ВЛАСНИКОМ',
+  REJECT_KPIS_OWNER: 'ПОКАЗНИКИ_ВІДХИЛЕНО_ВЛАСНИКОМ',
+
+  FINAL_APPROVE: 'ФІНАЛЬНО_ЗАТВЕРДЖЕНО',
+  FINAL_REJECT: 'ФІНАЛЬНО_ВІДХИЛЕНО',
 }
 
-/** Перевірка, чи може поточний користувач виконати перехід */
-export function canTransition(
-  user: SessionUser,
-  currentStatus: ProcessStatus,
+export function canExecuteTransition(
   transition: WorkflowTransition,
-  ownerId: string | null
+  currentStatus: ProcessStatus,
+  user: SessionUser,
+  process: { ownerId: string | null; managerId: string | null }
 ): boolean {
+  const isAnalyst = user.role === Role.PROCESS_ANALYST || user.role === Role.ADMIN_ANALYST || user.role === Role.ADMIN;
+  const isOwner = isAnalyst || (user.role === Role.PROCESS_OWNER && process.ownerId === user.id);
+  const isManager = isAnalyst || (user.role === Role.PROCESS_MANAGER && process.managerId === user.id);
+
   switch (transition) {
-    case 'SUBMIT_FOR_ANALYST':
-      // Дозволяємо менеджеру або аналітику надсилати процес на будь-якому етапі до затвердження
-      return (currentStatus === 'DRAFT' || currentStatus === 'IN_REVIEW_ANALYST' || currentStatus === 'IN_REVIEW_OWNER') &&
-        (user.role === Role.ADMIN_ANALYST || user.role === Role.PROCESS_MANAGER)
+    case 'SUBMIT_PASSPORT_ANALYST':
+      return currentStatus === 'DRAFT' && isManager
+    case 'APPROVE_PASSPORT_ANALYST':
+    case 'REJECT_PASSPORT_ANALYST':
+      return currentStatus === 'PASSPORT_REVIEW_ANALYST' && isAnalyst
+    case 'APPROVE_PASSPORT_OWNER':
+    case 'REJECT_PASSPORT_OWNER':
+      return currentStatus === 'PASSPORT_REVIEW_OWNER' && isOwner
 
-    case 'ANALYST_APPROVE':
-    case 'ANALYST_REJECT':
-      return currentStatus === 'IN_REVIEW_ANALYST' && user.role === Role.ADMIN_ANALYST
+    case 'SUBMIT_STEPS_ANALYST':
+      return currentStatus === 'STEPS_DRAFT' && isManager
+    case 'APPROVE_STEPS_ANALYST':
+    case 'REJECT_STEPS_ANALYST':
+      return currentStatus === 'STEPS_REVIEW_ANALYST' && isAnalyst
+    case 'APPROVE_STEPS_OWNER':
+    case 'REJECT_STEPS_OWNER':
+      return currentStatus === 'STEPS_REVIEW_OWNER' && isOwner
 
-    case 'OWNER_APPROVE':
-    case 'OWNER_REJECT':
-      return currentStatus === 'IN_REVIEW_OWNER' &&
-        (user.role === Role.ADMIN_ANALYST ||
-          (user.role === Role.PROCESS_OWNER && ownerId === user.id))
+    case 'SUBMIT_KPIS_ANALYST':
+      return currentStatus === 'KPIS_DRAFT' && isManager
+    case 'APPROVE_KPIS_ANALYST':
+    case 'REJECT_KPIS_ANALYST':
+      return currentStatus === 'KPIS_REVIEW_ANALYST' && isAnalyst
+    case 'APPROVE_KPIS_OWNER':
+    case 'REJECT_KPIS_OWNER':
+      return currentStatus === 'KPIS_REVIEW_OWNER' && isOwner
 
     case 'FINAL_APPROVE':
-      // Аналітик може фінально затвердити процес як з IN_REVIEW_ANALYST, так і з IN_REVIEW_OWNER
-      return (currentStatus === 'IN_REVIEW_ANALYST' || currentStatus === 'IN_REVIEW_OWNER') &&
-        user.role === Role.ADMIN_ANALYST
+    case 'FINAL_REJECT':
+      return currentStatus === 'FINAL_APPROVAL_ANALYST' && isAnalyst
 
     default:
       return false
   }
 }
 
-/**
- * Виконати перехід стану процесу.
- * Оновлює статус, ApprovalWorkflow та ProcessHistoryLog в одній транзакції.
- */
 export async function applyTransition(
   processId: string,
   transition: WorkflowTransition,
@@ -80,7 +134,7 @@ export async function applyTransition(
   const now = new Date()
 
   await prisma.$transaction(async (tx) => {
-    // 1. Оновити статус процесу
+    // 1. Оновлення статусу
     await tx.process.update({
       where: { id: processId },
       data: {
@@ -89,50 +143,38 @@ export async function applyTransition(
       },
     })
 
-    // 2. Якщо завершуємо etap — позначити workflow запис як виконаний
-    if (transition === 'ANALYST_APPROVE' || transition === 'ANALYST_REJECT') {
+    // 2. Закриваємо активні workflow кроки
+    if (transition.includes('REJECT') || transition.includes('APPROVE')) {
       await tx.approvalWorkflow.updateMany({
-        where: { processId, stage: WorkflowStage.ANALYST_REVIEW, isCompleted: false },
-        data: { isCompleted: true, completedAt: now, comment },
-      })
-    }
-    if (transition === 'OWNER_APPROVE' || transition === 'OWNER_REJECT') {
-      await tx.approvalWorkflow.updateMany({
-        where: { processId, stage: WorkflowStage.OWNER_REVIEW, isCompleted: false },
+        where: { processId, isCompleted: false },
         data: { isCompleted: true, completedAt: now, comment },
       })
     }
 
-    // 3. Створити новий workflow запис якщо потрібно
-    if (transition === 'SUBMIT_FOR_ANALYST') {
-      await tx.approvalWorkflow.create({
-        data: {
-          processId,
-          stage: WorkflowStage.ANALYST_REVIEW,
-          assignedToRole: Role.ADMIN_ANALYST,
-        },
-      })
+    // 3. Створюємо нові workflow кроки (хто має діяти наступним)
+    if (transition === 'SUBMIT_PASSPORT_ANALYST') {
+      await tx.approvalWorkflow.create({ data: { processId, stage: WorkflowStage.PASSPORT_ANALYST_REVIEW, assignedToRole: Role.PROCESS_ANALYST } })
     }
-    if (transition === 'ANALYST_APPROVE') {
-      await tx.approvalWorkflow.create({
-        data: {
-          processId,
-          stage: WorkflowStage.OWNER_REVIEW,
-          assignedToRole: Role.PROCESS_OWNER,
-        },
-      })
+    if (transition === 'APPROVE_PASSPORT_ANALYST') {
+      await tx.approvalWorkflow.create({ data: { processId, stage: WorkflowStage.PASSPORT_OWNER_REVIEW, assignedToRole: Role.PROCESS_OWNER } })
     }
-    if (transition === 'OWNER_APPROVE') {
-      await tx.approvalWorkflow.create({
-        data: {
-          processId,
-          stage: WorkflowStage.FINAL_APPROVAL,
-          assignedToRole: Role.ADMIN_ANALYST,
-        },
-      })
+    if (transition === 'SUBMIT_STEPS_ANALYST') {
+      await tx.approvalWorkflow.create({ data: { processId, stage: WorkflowStage.STEPS_ANALYST_REVIEW, assignedToRole: Role.PROCESS_ANALYST } })
+    }
+    if (transition === 'APPROVE_STEPS_ANALYST') {
+      await tx.approvalWorkflow.create({ data: { processId, stage: WorkflowStage.STEPS_OWNER_REVIEW, assignedToRole: Role.PROCESS_OWNER } })
+    }
+    if (transition === 'SUBMIT_KPIS_ANALYST') {
+      await tx.approvalWorkflow.create({ data: { processId, stage: WorkflowStage.KPIS_ANALYST_REVIEW, assignedToRole: Role.PROCESS_ANALYST } })
+    }
+    if (transition === 'APPROVE_KPIS_ANALYST') {
+      await tx.approvalWorkflow.create({ data: { processId, stage: WorkflowStage.KPIS_OWNER_REVIEW, assignedToRole: Role.PROCESS_OWNER } })
+    }
+    if (transition === 'APPROVE_KPIS_OWNER') {
+      await tx.approvalWorkflow.create({ data: { processId, stage: WorkflowStage.FINAL_APPROVAL, assignedToRole: Role.PROCESS_ANALYST } })
     }
 
-    // 4. Якщо FINAL_APPROVE — архівуємо попередню версію (якщо є)
+    // 4. Архівування попередньої версії при фінальному затвердженні
     if (transition === 'FINAL_APPROVE') {
       const process = await tx.process.findUnique({
         where: { id: processId },
@@ -146,49 +188,55 @@ export async function applyTransition(
       }
     }
 
-    // 5. Записати в журнал
+    // 5. Лог історії
     await tx.processHistoryLog.create({
       data: { processId, action, userId: user.id, comment, timestamp: now },
     })
 
-    // 6. Створити сповіщення (Notification)
+    // 6. Сповіщення
     const processData = await tx.process.findUnique({
       where: { id: processId },
       select: { title: true, ownerId: true, managerId: true },
     })
 
     if (processData) {
-      if (transition === 'SUBMIT_FOR_ANALYST' || transition === 'OWNER_APPROVE') {
-        // Повідомляємо всіх аналітиків
-        const analysts = await tx.user.findMany({ where: { role: Role.ADMIN_ANALYST } })
+      if (transition.includes('SUBMIT_') || transition === 'APPROVE_KPIS_OWNER') {
+        const analysts = await tx.user.findMany({ where: { role: { in: [Role.PROCESS_ANALYST, Role.ADMIN_ANALYST, Role.ADMIN] } } })
         if (analysts.length > 0) {
           await tx.notification.createMany({
             data: analysts.map(a => ({
               userId: a.id,
-              title: transition === 'SUBMIT_FOR_ANALYST' ? 'Новий процес на перевірку' : 'Власник погодив процес',
-              message: `Процес "${processData.title}" очікує вашої дії.`,
+              title: 'Новий запит на перевірку',
+              message: `Процес "${processData.title}" очікує вашої перевірки.`,
               linkUrl: `/processes/${processId}`,
             }))
           })
         }
-      } else if (transition === 'ANALYST_APPROVE') {
+      } else if (transition.includes('APPROVE_') && transition.includes('_ANALYST')) {
         if (processData.ownerId) {
           await tx.notification.create({
             data: {
               userId: processData.ownerId,
-              title: 'Процес потребує вашого погодження',
-              message: `Процес "${processData.title}" перевірено аналітиком.`,
+              title: 'Погодження процесу',
+              message: `Процес "${processData.title}" очікує вашого погодження.`,
               linkUrl: `/processes/${processId}`,
             }
           })
         }
-      } else if (transition === 'ANALYST_REJECT' || transition === 'OWNER_REJECT' || transition === 'FINAL_APPROVE') {
+      } else if (
+        transition.includes('REJECT_') ||
+        transition === 'FINAL_REJECT' ||
+        transition === 'FINAL_APPROVE' ||
+        transition.includes('APPROVE_PASSPORT_OWNER') ||
+        transition.includes('APPROVE_STEPS_OWNER') ||
+        transition.includes('APPROVE_KPIS_OWNER')
+      ) {
         if (processData.managerId) {
           await tx.notification.create({
             data: {
               userId: processData.managerId,
-              title: transition === 'FINAL_APPROVE' ? 'Процес затверджено' : 'Процес відхилено',
-              message: `Процес "${processData.title}" ${transition === 'FINAL_APPROVE' ? 'було успішно затверджено' : 'було повернуто на доопрацювання'}.`,
+              title: transition === 'FINAL_APPROVE' ? 'Процес затверджено' : (transition.includes('REJECT') ? 'Процес відхилено' : 'Процес повернуто для наступного етапу'),
+              message: `Статус процесу "${processData.title}" змінився.`,
               linkUrl: `/processes/${processId}`,
             }
           })
@@ -198,10 +246,6 @@ export async function applyTransition(
   })
 }
 
-/**
- * Створити нову версію APPROVED процесу (починає редагування).
- * Стара версія залишається APPROVED до нового затвердження.
- */
 export async function createNewVersion(
   processId: string,
   user: SessionUser
@@ -212,11 +256,10 @@ export async function createNewVersion(
   })
 
   if (original.status !== 'APPROVED') {
-    throw new Error('Нову версію можна створити тільки для APPROVED процесу')
+    throw new Error('Тільки затверджений процес може мати нову версію')
   }
 
   const newProcess = await prisma.$transaction(async (tx) => {
-    // Створити нову чернетку
     const created = await tx.process.create({
       data: {
         code: original.code,
@@ -240,7 +283,6 @@ export async function createNewVersion(
       },
     })
 
-    // Копіювати кроки
     await tx.processStep.createMany({
       data: original.steps.map(({ id: _id, processId: _pid, ...step }) => ({
         ...step,
@@ -248,7 +290,6 @@ export async function createNewVersion(
       })),
     })
 
-    // Копіювати KPI
     await tx.processKPI.createMany({
       data: original.kpis.map(({ id: _id, processId: _pid, ...kpi }) => ({
         ...kpi,
@@ -256,13 +297,12 @@ export async function createNewVersion(
       })),
     })
 
-    // Лог
     await tx.processHistoryLog.create({
       data: {
         processId: created.id,
         action: 'НОВА_ВЕРСІЯ',
         userId: user.id,
-        comment: `Створено на основі версії ${original.version}`,
+        comment: `Створено на базі версії ${original.version}`,
       },
     })
 

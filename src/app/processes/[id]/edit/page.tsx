@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import ProcessBuilderTabs from '@/components/process-builder/ProcessBuilderTabs';
 
 import { prisma } from '@/lib/prisma';
@@ -9,7 +9,10 @@ import { canEditProcess } from '@/lib/permissions';
 export default async function ProcessEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await requireSession().catch(() => null);
-  
+  if (!session) {
+    redirect('/login');
+  }
+
   const processData = await prisma.process.findUnique({
     where: { id },
     include: {
@@ -26,7 +29,7 @@ export default async function ProcessEditPage({ params }: { params: Promise<{ id
     return notFound();
   }
 
-  if (session && !canEditProcess(session, processData)) {
+  if (!canEditProcess(session, processData)) {
     return <div className="p-8 text-red-500">Доступ заборонено</div>;
   }
 

@@ -10,9 +10,16 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import type { SessionUser, ProcessApprovalCard } from "@/lib/types"
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: "Чернетка", color: "bg-slate-100 text-slate-700" },
-  IN_REVIEW_ANALYST: { label: "На перевірці", color: "bg-amber-100 text-amber-800 border-amber-300" },
-  IN_REVIEW_OWNER: { label: "На погодженні", color: "bg-orange-100 text-orange-800 border-orange-300" },
+  DRAFT: { label: "Чернетка (Паспорт)", color: "bg-slate-100 text-slate-700" },
+  PASSPORT_REVIEW_ANALYST: { label: "Паспорт: Перевірка А.", color: "bg-amber-100 text-amber-800 border-amber-300" },
+  PASSPORT_REVIEW_OWNER: { label: "Паспорт: Погодження В.", color: "bg-orange-100 text-orange-800 border-orange-300" },
+  STEPS_DRAFT: { label: "Чернетка (Кроки)", color: "bg-slate-100 text-slate-700" },
+  STEPS_REVIEW_ANALYST: { label: "Кроки: Перевірка А.", color: "bg-amber-100 text-amber-800 border-amber-300" },
+  STEPS_REVIEW_OWNER: { label: "Кроки: Погодження В.", color: "bg-orange-100 text-orange-800 border-orange-300" },
+  KPIS_DRAFT: { label: "Чернетка (Показники)", color: "bg-slate-100 text-slate-700" },
+  KPIS_REVIEW_ANALYST: { label: "Показники: Перевірка А.", color: "bg-amber-100 text-amber-800 border-amber-300" },
+  KPIS_REVIEW_OWNER: { label: "Показники: Погодження В.", color: "bg-orange-100 text-orange-800 border-orange-300" },
+  FINAL_APPROVAL_ANALYST: { label: "Фінальне затвердження", color: "bg-blue-100 text-blue-800 border-blue-300" },
   APPROVED: { label: "Затверджено", color: "bg-emerald-100 text-emerald-800 border-emerald-300" },
 }
 

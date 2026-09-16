@@ -1,10 +1,10 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next'
-import { Geist } from 'next/font/google'
+import { Roboto } from 'next/font/google'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
 
-const geist = Geist({ subsets: ['latin', 'cyrillic'] })
+const roboto = Roboto({ subsets: ['latin', 'cyrillic'], weight: ['300', '400', '500', '700', '900'] })
 
 export const metadata: Metadata = {
   title: 'Process Mapper AS-IS',
@@ -17,18 +17,22 @@ import { ClientLayoutWrapper } from '@/components/layout/ClientLayoutWrapper';
 
 import { getSession } from '@/lib/auth';
 
+import { ThemeProvider } from '@/components/ThemeProvider';
+
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await getSession().catch(() => null);
   const isEmployee = session?.role === 'EMPLOYEE';
 
   return (
-    <html lang="uk">
-      <body className={`${geist.className} antialiased bg-background text-foreground`}>
-        <TooltipProvider>
-          <ClientLayoutWrapper sidebar={!isEmployee ? <Sidebar /> : null} isEmployee={isEmployee} user={session}>
-            {children}
-          </ClientLayoutWrapper>
-        </TooltipProvider>
+    <html lang="uk" suppressHydrationWarning>
+      <body className={`${roboto.className} antialiased bg-background text-foreground`}>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <TooltipProvider>
+            <ClientLayoutWrapper sidebar={!isEmployee ? <Sidebar /> : null} isEmployee={isEmployee} user={session}>
+              {children}
+            </ClientLayoutWrapper>
+          </TooltipProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

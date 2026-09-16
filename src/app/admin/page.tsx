@@ -11,8 +11,8 @@ export default async function AdminPage() {
     redirect("/")
   }
 
-  if (session?.role !== "ADMIN_ANALYST") {
-    redirect("/")
+  if (session?.role !== "ADMIN") {
+    redirect("/dashboard")
   }
 
   return (

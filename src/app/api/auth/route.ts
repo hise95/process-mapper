@@ -23,8 +23,8 @@ export async function POST(req: NextRequest) {
       if (count === 0) {
         await prisma.user.createMany({
           data: [
-            { email: 'admin@company.com', password: 'password123', fullName: 'Системний Адміністратор', role: 'ADMIN_ANALYST' },
-            { email: 'analyst@company.com', password: 'password123', fullName: 'Іваненко Олена (Процесний аналітик)', role: 'ADMIN_ANALYST' },
+            { email: 'admin@company.com', password: 'password123', fullName: 'Системний Адміністратор', role: 'ADMIN' },
+            { email: 'analyst@company.com', password: 'password123', fullName: 'Іваненко Олена (Процесний аналітик)', role: 'PROCESS_ANALYST' },
             { email: 'owner@company.com', password: 'password123', fullName: 'Шевченко Василь (Власник процесу)', role: 'PROCESS_OWNER' },
             { email: 'manager@company.com', password: 'password123', fullName: 'Коваленко Микола (Менеджер процесу)', role: 'PROCESS_MANAGER' },
             { email: 'employee@company.com', password: 'password123', fullName: 'Петренко Анна (Працівник)', role: 'EMPLOYEE' },

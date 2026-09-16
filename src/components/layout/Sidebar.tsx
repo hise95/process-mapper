@@ -1,8 +1,5 @@
 import Link from 'next/link';
 import { getSession } from '@/lib/auth';
-import { ROLES_UA } from '@/lib/permissions';
-import { Badge } from '@/components/ui/badge';
-import { LogoutButton } from './LogoutButton';
 import { SidebarNav } from './SidebarNav';
 
 export default async function Sidebar() {
@@ -11,23 +8,31 @@ export default async function Sidebar() {
 
   const user = session;
 
-  const canViewProcesses = session.role === 'PROCESS_MANAGER' || session.role === 'ADMIN_ANALYST' || session.role === 'PROCESS_OWNER';
-  const canViewApprovals = session.role === 'PROCESS_OWNER' || session.role === 'ADMIN_ANALYST';
-  const isAdmin = session.role === 'ADMIN_ANALYST';
+  const isAnalystOrAdmin = session.role === 'PROCESS_ANALYST' || session.role === 'ADMIN_ANALYST' || session.role === 'ADMIN';
+  const canViewProcesses = session.role === 'PROCESS_MANAGER' || isAnalystOrAdmin || session.role === 'PROCESS_OWNER';
+  const canViewApprovals = session.role === 'PROCESS_OWNER' || isAnalystOrAdmin;
+  const isAdmin = session.role === 'ADMIN';
 
+  const { prisma } = await import('@/lib/prisma');
   let pendingApprovalsCount = 0;
   if (canViewApprovals) {
-    const { prisma } = await import('@/lib/prisma');
-    if (session.role === 'ADMIN_ANALYST') {
+    if (isAnalystOrAdmin) {
       pendingApprovalsCount = await prisma.process.count({
-        where: { status: { in: ['IN_REVIEW_ANALYST', 'IN_REVIEW_OWNER'] } }
+        where: { status: { in: ['PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST', 'PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'] } }
       });
     } else if (session.role === 'PROCESS_OWNER') {
       pendingApprovalsCount = await prisma.process.count({
-        where: { status: 'IN_REVIEW_OWNER', ownerId: session.id }
+        where: { status: { in: ['PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'] }, ownerId: session.id }
       });
     }
   }
+
+  const notificationsCount = await prisma.notification.count({
+    where: { userId: session.id, isRead: false }
+  });
+
+  const { canCreateProcess } = await import('@/lib/permissions');
+  const userCanCreate = canCreateProcess(session);
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-[#1f1f1f] text-white flex flex-col shadow-xl z-20">
@@ -35,23 +40,15 @@ export default async function Sidebar() {
         <h1 className="font-bold text-base text-[#ffd100] whitespace-nowrap tracking-tight">🗺️ Process Mapper AS-IS</h1>
       </div>
       
-      <div className="p-4 border-b border-[#333333]">
-        <p className="font-medium truncate text-white">{session.fullName}</p>
-        <Badge className="mt-2 bg-[#fa4616] text-white hover:bg-[#d93a10] border-none">
-          {ROLES_UA[session.role as keyof typeof ROLES_UA] || session.role}
-        </Badge>
-      </div>
-
       <SidebarNav 
+        canViewDashboard={true}
         canViewProcesses={canViewProcesses} 
         canViewApprovals={canViewApprovals} 
         isAdmin={isAdmin} 
         pendingApprovalsCount={pendingApprovalsCount}
+        notificationsCount={notificationsCount}
+        canCreate={userCanCreate}
       />
-
-      <div className="p-4 border-t border-[#333333]">
-        <LogoutButton />
-      </div>
     </aside>
   );
 }

@@ -9,20 +9,6 @@ function getDatabaseUrl() {
   if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('file:')) {
     return process.env.DATABASE_URL
   }
-  if (process.env.VERCEL) {
-    const tmpDbPath = path.join('/tmp', 'dev.db')
-    if (!fs.existsSync(tmpDbPath)) {
-      const rootDbPath = path.join(process.cwd(), 'prisma', 'dev.db')
-      if (fs.existsSync(rootDbPath)) {
-        try {
-          fs.copyFileSync(rootDbPath, tmpDbPath)
-        } catch (e) {
-          console.error('Failed to copy seed db to /tmp:', e)
-        }
-      }
-    }
-    return `file:${tmpDbPath}`
-  }
   return `file:${path.join(process.cwd(), 'prisma', 'dev.db')}`
 }
 

@@ -100,7 +100,8 @@ export async function DELETE(
     return NextResponse.json({ error: 'Видалити можна тільки чернетки' }, { status: 400 })
   }
 
-  if (process.managerId !== session.id && session.role !== 'ADMIN_ANALYST') {
+  const isAnalystOrAdmin = ['PROCESS_ANALYST', 'ADMIN_ANALYST', 'ADMIN'].includes(session.role)
+  if (process.managerId !== session.id && !isAnalystOrAdmin) {
     return NextResponse.json({ error: 'Немає прав на видалення цього процесу' }, { status: 403 })
   }
 

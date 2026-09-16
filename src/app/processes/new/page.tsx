@@ -98,7 +98,7 @@ export default function NewProcessPage() {
             </div>
 
             <div className="p-4 rounded-lg bg-amber-50/80 border border-amber-200/60 text-xs text-amber-800 leading-relaxed">
-              💡 <strong>Як це працює:</strong> Після створення ви перейдете до заповнення <strong>Паспорта процесу</strong>. Коли ви його заповните і подасте — аналітик або власник погодить його, і вам відкриється доступ до опису <strong>Кроків (AS-IS)</strong>, а згодом — до <strong>Показників (KPI)</strong>.
+              💡 <strong>Як це працює:</strong> Після створення ви перейдете до заповнення <strong>Паспорта процесу</strong>. Коли ви його заповните і подасте — аналітик або власник погодить його, і вам відкриється доступ до опису <strong>Кроків (AS-IS)</strong>, а згодом — до <strong>Показників процесу</strong>.
             </div>
 
             <div className="flex justify-end gap-3 pt-2">

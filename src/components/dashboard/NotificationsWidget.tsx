@@ -40,12 +40,12 @@ export default function NotificationsWidget({ initialNotifications }: { initialN
       </div>
       <div className="grid gap-3">
         {notifications.map(n => (
-          <div key={n.id} onClick={() => markAsRead(n.id, n.linkUrl)} className="bg-white border rounded-lg p-4 cursor-pointer hover:border-[#fa4616] hover:shadow-sm transition-all">
+          <div key={n.id} onClick={() => markAsRead(n.id, n.linkUrl)} className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:border-primary hover:shadow-sm transition-all">
             <div className="flex justify-between items-start mb-1">
-              <h4 className="font-semibold text-slate-800">{n.title}</h4>
-              <span className="text-xs text-slate-400">{new Date(n.date).toLocaleDateString('uk-UA')}</span>
+              <h4 className="font-semibold text-foreground">{n.title}</h4>
+              <span className="text-xs text-muted-foreground">{new Date(n.date).toLocaleDateString('uk-UA')}</span>
             </div>
-            <p className="text-sm text-slate-600">{n.message}</p>
+            <p className="text-sm text-muted-foreground">{n.message}</p>
           </div>
         ))}
       </div>

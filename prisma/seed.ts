@@ -17,23 +17,23 @@ async function main() {
   // ── Користувачі (mock auth) ──
   const admin = await prisma.user.upsert({
     where: { email: 'admin@company.com' },
-    update: {},
+    update: { role: "ADMIN" },
     create: {
       email: 'admin@company.com',
       password: 'password123',
       fullName: 'Системний Адміністратор',
-      role: "ADMIN_ANALYST",
+      role: "ADMIN",
     },
   })
 
   const analyst = await prisma.user.upsert({
     where: { email: 'analyst@company.com' },
-    update: {},
+    update: { role: "PROCESS_ANALYST" },
     create: {
       email: 'analyst@company.com',
       password: 'password123',
       fullName: 'Іваненко Олена (Процесний аналітик)',
-      role: "ADMIN_ANALYST",
+      role: "PROCESS_ANALYST",
     },
   })
 
@@ -322,7 +322,7 @@ async function main() {
     ],
   })
 
-  // ── Демо-процес IN_REVIEW_ANALYST ──
+  // ── Демо-процес PASSPORT_REVIEW_ANALYST ──
   const reviewProcess = await prisma.process.upsert({
     where: { id: 'demo-process-003' },
     update: {},
@@ -338,7 +338,7 @@ async function main() {
       ownerId: owner.id,
       managerId: manager.id,
       version: 1,
-      status: "IN_REVIEW_ANALYST",
+      status: "PASSPORT_REVIEW_ANALYST",
     },
   })
 
@@ -348,7 +348,7 @@ async function main() {
       {
         id: 'workflow-003-1',
         processId: reviewProcess.id,
-        stage: "ANALYST_REVIEW",
+        stage: "PASSPORT_ANALYST_REVIEW",
         assignedToRole: "ADMIN_ANALYST",
         isCompleted: false,
       },
@@ -368,7 +368,7 @@ async function main() {
       {
         id: 'log-003-2',
         processId: reviewProcess.id,
-        action: 'ПОДАНО_НА_ПЕРЕВІРКУ_АНАЛІТИКУ',
+        action: 'ПОДАНО_ПАСПОРТ_АНАЛІТИКУ',
         userId: manager.id,
         timestamp: new Date('2026-09-08'),
         comment: 'Готово до перевірки',
@@ -376,7 +376,7 @@ async function main() {
     ],
   })
 
-  // ── Демо-процес IN_REVIEW_OWNER ──
+  // ── Демо-процес PASSPORT_REVIEW_OWNER ──
   const reviewOwnerProcess = await prisma.process.upsert({
     where: { id: 'demo-process-004' },
     update: {},
@@ -392,7 +392,7 @@ async function main() {
       ownerId: owner.id,
       managerId: manager.id,
       version: 1,
-      status: "IN_REVIEW_OWNER",
+      status: "PASSPORT_REVIEW_OWNER",
     },
   })
 
@@ -401,7 +401,7 @@ async function main() {
       {
         id: 'workflow-004-1',
         processId: reviewOwnerProcess.id,
-        stage: "ANALYST_REVIEW",
+        stage: "PASSPORT_ANALYST_REVIEW",
         assignedToRole: "ADMIN_ANALYST",
         isCompleted: true,
         completedAt: new Date('2026-09-06'),
@@ -410,7 +410,7 @@ async function main() {
       {
         id: 'workflow-004-2',
         processId: reviewOwnerProcess.id,
-        stage: "OWNER_REVIEW",
+        stage: "PASSPORT_OWNER_REVIEW",
         assignedToRole: "PROCESS_OWNER",
         isCompleted: false,
       },

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Trash2 } from 'lucide-react';
+import { getStatusLabel } from '@/lib/enums';
 
 interface Process {
   id: string;
@@ -66,7 +67,7 @@ export default function ManagerDraftList({ processes }: ManagerDraftListProps) {
                 <div className="flex justify-between items-start gap-2">
                   <CardTitle className="text-lg leading-tight">{process.title}</CardTitle>
                   <div className="flex flex-col items-end gap-1">
-                    <Badge className="bg-gray-500 shrink-0">Чернетка</Badge>
+                    <Badge className="bg-gray-500 shrink-0 text-[10px] py-0">{getStatusLabel(process.status)}</Badge>
                     <button 
                       onClick={(e) => { e.preventDefault(); handleDelete(process.id); }}
                       disabled={deletingId === process.id}

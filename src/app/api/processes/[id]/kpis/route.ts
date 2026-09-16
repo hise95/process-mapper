@@ -90,6 +90,10 @@ export async function DELETE(
   const { id } = await params
   const { kpiId } = await req.json()
 
+  const process = await prisma.process.findUnique({ where: { id } })
+  if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+  if (!canEditProcess(session, process)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+
   await prisma.processKPI.delete({ where: { id: kpiId, processId: id } })
   return NextResponse.json({ success: true })
 }

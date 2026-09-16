@@ -7,24 +7,27 @@ import { Button } from "@/components/ui/button"
 import { ExternalLink, UserCheck, ShieldCheck } from "lucide-react"
 
 const STATUS_LABELS_UA: Record<string, { label: string; className: string }> = {
-  DRAFT: { label: "Чернетка", className: "bg-slate-100 text-slate-700" },
-  IN_REVIEW_ANALYST: { label: "На перевірці аналітика", className: "bg-amber-500 text-white" },
-  IN_REVIEW_OWNER: { label: "На погодженні власника", className: "bg-orange-500 text-white" },
+  DRAFT: { label: "Чернетка (Паспорт)", className: "bg-slate-500 text-white" },
+  PASSPORT_REVIEW_ANALYST: { label: "Паспорт: Перевірка А.", className: "bg-amber-500 text-white" },
+  PASSPORT_REVIEW_OWNER: { label: "Паспорт: Погодження В.", className: "bg-orange-500 text-white" },
+  STEPS_DRAFT: { label: "Чернетка (Кроки)", className: "bg-slate-500 text-white" },
+  STEPS_REVIEW_ANALYST: { label: "Кроки: Перевірка А.", className: "bg-amber-500 text-white" },
+  STEPS_REVIEW_OWNER: { label: "Кроки: Погодження В.", className: "bg-orange-500 text-white" },
+  KPIS_DRAFT: { label: "Чернетка (Показники)", className: "bg-slate-500 text-white" },
+  KPIS_REVIEW_ANALYST: { label: "Показники: Перевірка А.", className: "bg-amber-500 text-white" },
+  KPIS_REVIEW_OWNER: { label: "Показники: Погодження В.", className: "bg-orange-500 text-white" },
+  FINAL_APPROVAL_ANALYST: { label: "Фінальне затвердження", className: "bg-blue-600 text-white" },
   APPROVED: { label: "Затверджено", className: "bg-emerald-600 text-white" },
   ARCHIVED: { label: "В архіві", className: "bg-slate-400 text-white" },
 };
 
-const TYPE_LABELS_UA: Record<string, string> = {
-  MANAGERIAL: "Управлінський",
-  MAIN: "Основний",
-  SERVICE: "Сервісний",
-};
+import { PROCESS_TYPE_LABELS } from "@/lib/enums"
 
 export function ProcessReadOnlyCard({ process }: { process: any }) {
   if (!process) return null;
 
   const statusMeta = STATUS_LABELS_UA[process.status] || { label: process.status, className: "bg-[#fa4616] text-white" };
-  const typeLabel = TYPE_LABELS_UA[process.processType] || process.processType || "Тип не вказано";
+  const typeLabel = process.processType ? (PROCESS_TYPE_LABELS[process.processType] || process.processType) : "Тип не вказано";
 
   return (
     <Card className="h-full flex flex-col overflow-hidden relative border border-slate-200 shadow-sm bg-white">
@@ -162,9 +165,9 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
             )}
           </section>
 
-          {/* KPI */}
+          {/* Показники процесу */}
           <section className="space-y-3">
-            <h3 className="text-base font-bold border-b pb-2 text-slate-800">Показники KPI</h3>
+            <h3 className="text-base font-bold border-b pb-2 text-slate-800">Показники процесу</h3>
             {process.kpis && process.kpis.length > 0 ? (
               <div className="border rounded-lg overflow-hidden text-sm">
                 <table className="w-full text-left">
@@ -192,7 +195,7 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
               </div>
             ) : (
               <p className="text-sm text-muted-foreground italic bg-muted/20 p-4 rounded-lg text-center">
-                Показники KPI ще не внесені
+                Показники процесу ще не внесені
               </p>
             )}
           </section>

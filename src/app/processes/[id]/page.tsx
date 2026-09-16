@@ -8,6 +8,7 @@ import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
 import { canEditProcess } from '@/lib/permissions';
 import { ProcessActionButton } from '@/components/process-builder/ProcessActionButton';
+import { PROCESS_TYPE_LABELS, getStatusLabel } from '@/lib/enums';
 
 export default async function ProcessViewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -67,8 +68,8 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
         <div>
           <div className="flex items-center gap-2 mb-1">
             <span className="text-sm text-muted-foreground font-mono">{process.code || 'БЕЗ КОДУ'}</span>
-            <Badge variant="outline">{process.processType || 'Не вказано'}</Badge>
-            <Badge className={`border-none ${process.status === 'ARCHIVED' ? 'bg-slate-500' : 'bg-[#fa4616] text-white hover:bg-[#d93a10]'}`}>{process.status}</Badge>
+            <Badge variant="outline">{process.processType ? (PROCESS_TYPE_LABELS[process.processType] || process.processType) : 'Не вказано'}</Badge>
+            <Badge className={`border-none ${process.status === 'ARCHIVED' ? 'bg-slate-500' : 'bg-[#fa4616] text-white hover:bg-[#d93a10]'}`}>{getStatusLabel(process.status)}</Badge>
             {process.status === 'ARCHIVED' && (
               <Badge variant="destructive">Застаріла версія</Badge>
             )}
@@ -78,19 +79,19 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
           </h1>
           
           {versions.length > 1 && (
-            <div className="mt-4 p-3 bg-slate-50 border rounded-md max-w-lg">
-              <h4 className="text-sm font-semibold mb-2 text-slate-700">Історія версій:</h4>
+            <div className="mt-4 p-3 bg-muted border border-border rounded-md max-w-lg">
+              <h4 className="text-sm font-semibold mb-2 text-foreground">Історія версій:</h4>
               <div className="flex flex-col gap-1 text-sm">
                 {versions.map(v => (
                   <div key={v.id} className="flex items-center gap-2">
                     {v.id === process.id ? (
-                      <span className="font-bold text-[#fa4616]">v{v.version} — Поточна сторінка ({v.status})</span>
+                      <span className="font-bold text-primary">v{v.version} — Поточна сторінка ({getStatusLabel(v.status)})</span>
                     ) : (
-                      <Link href={`/processes/${v.id}`} className="text-blue-600 hover:underline">
-                        v{v.version} — {v.status} 
+                      <Link href={`/processes/${v.id}`} className="text-blue-600 dark:text-blue-400 hover:underline">
+                        v{v.version} — {getStatusLabel(v.status)} 
                       </Link>
                     )}
-                    {v.status === 'ARCHIVED' && <span className="text-xs text-slate-500 ml-auto">Архівована</span>}
+                    {v.status === 'ARCHIVED' && <span className="text-xs text-muted-foreground ml-auto">Архівована</span>}
                     {v.status === 'APPROVED' && <span className="text-xs text-green-600 font-medium ml-auto">Актуальна</span>}
                   </div>
                 ))}
@@ -122,9 +123,9 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
             <ProcessActionButton
               label="Подати на перевірку"
               url={`/api/processes/${id}/approve`}
-              body={{ transition: 'SUBMIT_FOR_ANALYST' }}
+              body={{ transition: 'SUBMIT_PASSPORT_ANALYST' }}
               method="POST"
-              className="bg-[#fa4616] hover:bg-[#d93a10] text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
             />
           )}
         </div>
@@ -134,14 +135,14 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
         <CardHeader><CardTitle>Паспорт процесу</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-2 gap-4">
           <div><span className="font-semibold">Код:</span> {process.code || '-'}</div>
-          <div><span className="font-semibold">Тип:</span> {process.processType || '-'}</div>
+          <div><span className="font-semibold">Тип:</span> {process.processType ? (PROCESS_TYPE_LABELS[process.processType] || process.processType) : '-'}</div>
           <div><span className="font-semibold">Менеджер:</span> {process.manager?.fullName || '-'}</div>
           <div><span className="font-semibold">Власник:</span> {process.owner?.fullName || '-'}</div>
-          <div className="col-span-2"><span className="font-semibold">Мета:</span> <p className="text-slate-700 whitespace-pre-wrap">{process.objective || '-'}</p></div>
-          <div className="col-span-2"><span className="font-semibold">Вхід:</span> <p className="text-slate-700 whitespace-pre-wrap">{process.input || '-'}</p></div>
-          <div className="col-span-2"><span className="font-semibold">Вихід:</span> <p className="text-slate-700 whitespace-pre-wrap">{process.output || '-'}</p></div>
-          <div className="col-span-2"><span className="font-semibold">Учасники:</span> <p className="text-slate-700 whitespace-pre-wrap">{process.participants || '-'}</p></div>
-          <div className="col-span-2"><span className="font-semibold">Клієнти:</span> <p className="text-slate-700 whitespace-pre-wrap">{process.clients || '-'}</p></div>
+          <div className="col-span-2"><span className="font-semibold">Мета:</span> <p className="text-foreground whitespace-pre-wrap">{process.objective || '-'}</p></div>
+          <div className="col-span-2"><span className="font-semibold">Вхід:</span> <p className="text-foreground whitespace-pre-wrap">{process.input || '-'}</p></div>
+          <div className="col-span-2"><span className="font-semibold">Вихід:</span> <p className="text-foreground whitespace-pre-wrap">{process.output || '-'}</p></div>
+          <div className="col-span-2"><span className="font-semibold">Учасники:</span> <p className="text-foreground whitespace-pre-wrap">{process.participants || '-'}</p></div>
+          <div className="col-span-2"><span className="font-semibold">Клієнти:</span> <p className="text-foreground whitespace-pre-wrap">{process.clients || '-'}</p></div>
         </CardContent>
       </Card>
 
@@ -183,7 +184,7 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
         <CardHeader><CardTitle>BPMN Схема</CardTitle></CardHeader>
         <CardContent>
           {process.bpmnUrl ? (
-            <a href={process.bpmnUrl} target="_blank" rel="noreferrer" className="text-[#fa4616] hover:underline font-medium">
+            <a href={process.bpmnUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline font-medium">
               🔗 Відкрити схему за посиланням
             </a>
           ) : (
@@ -193,7 +194,7 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
       </Card>
 
       <Card>
-        <CardHeader><CardTitle>Показники KPI</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Показники процесу</CardTitle></CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
@@ -208,7 +209,7 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
               {(process.kpis || []).length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
-                    Показники KPI ще не додані
+                    Показники процесу ще не додані
                   </TableCell>
                 </TableRow>
               ) : (
@@ -234,15 +235,15 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
           ) : (
             <ul className="space-y-3">
               {process.historyLogs.map((log) => (
-                <li key={log.id} className="text-sm border-b pb-2 last:border-0 last:pb-0">
+                <li key={log.id} className="text-sm border-b border-border pb-2 last:border-0 last:pb-0">
                   <div className="flex items-center justify-between">
                     <span className="font-medium">{log.user?.fullName || 'Система'}</span>
                     <span className="text-xs text-muted-foreground">
                       {new Date(log.timestamp).toLocaleString('uk-UA')}
                     </span>
                   </div>
-                  <div className="text-xs text-slate-600 mt-0.5">
-                    Дія: <span className="font-semibold text-slate-800">{log.action}</span>
+                  <div className="text-xs text-muted-foreground mt-0.5">
+                    Дія: <span className="font-semibold text-foreground">{log.action}</span>
                     {log.comment && <span className="italic ml-2">«{log.comment}»</span>}
                   </div>
                 </li>

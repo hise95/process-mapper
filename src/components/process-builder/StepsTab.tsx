@@ -17,8 +17,8 @@ function SortableRow({ step, onUpdate, onDelete }: { step: any, onUpdate: any, o
       <TableCell {...attributes} {...listeners} className="cursor-grab text-center">⋮⋮</TableCell>
       <TableCell><Input value={step.name || ''} onChange={e => onUpdate(step.id, 'name', e.target.value)} /></TableCell>
       <TableCell><Input value={step.description || ''} onChange={e => onUpdate(step.id, 'description', e.target.value)} /></TableCell>
-      <TableCell><Input value={step.assignee || ''} onChange={e => onUpdate(step.id, 'assignee', e.target.value)} /></TableCell>
-      <TableCell><Input value={step.docTemplate || ''} onChange={e => onUpdate(step.id, 'docTemplate', e.target.value)} placeholder="URL" /></TableCell>
+      <TableCell><Input value={step.executorRole || ''} onChange={e => onUpdate(step.id, 'executorRole', e.target.value)} /></TableCell>
+      <TableCell><Input value={step.docUrl || ''} onChange={e => onUpdate(step.id, 'docUrl', e.target.value)} placeholder="URL" /></TableCell>
       <TableCell><Input value={step.comment || ''} onChange={e => onUpdate(step.id, 'comment', e.target.value)} /></TableCell>
       <TableCell>
         <Button variant="destructive" size="sm" onClick={() => onDelete(step.id)}>Видалити</Button>
@@ -38,12 +38,13 @@ export default function StepsTab({ processId, initialSteps }: { processId: strin
       const newSteps = [...steps];
       const [moved] = newSteps.splice(oldIndex, 1);
       newSteps.splice(newIndex, 0, moved);
-      setSteps(newSteps);
+      const updatedSteps = newSteps.map((s, index) => ({ ...s, orderIndex: index + 1 }));
+      setSteps(updatedSteps);
       
       await fetch(`/api/processes/${processId}/steps`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ orderIds: newSteps.map(s => s.id) }),
+        body: JSON.stringify(updatedSteps),
       });
     }
   };

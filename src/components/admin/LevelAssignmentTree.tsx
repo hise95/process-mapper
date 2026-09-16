@@ -29,7 +29,7 @@ export function LevelAssignmentTree() {
         const levelsData = await levelsRes.json()
         const usersData = await usersRes.json()
         setLevels(levelsData)
-        setUsers(usersData.filter((u: any) => u.role === "ADMIN_ANALYST" || u.role === "PROCESS_OWNER"))
+        setUsers(usersData.filter((u: any) => u.role === "ADMIN_ANALYST" || u.role === "PROCESS_ANALYST" || u.role === "ADMIN" || u.role === "PROCESS_OWNER"))
         
         // Expand L1 by default
         const initialExpanded: Record<string, boolean> = {}
@@ -138,7 +138,7 @@ export function LevelAssignmentTree() {
               <SelectContent>
                 <SelectItem value="none">Не призначено</SelectItem>
                 {users.map(u => (
-                  <SelectItem key={u.id} value={u.id}>{u.name} ({u.role})</SelectItem>
+                  <SelectItem key={u.id} value={u.id}>{u.fullName} ({u.role})</SelectItem>
                 ))}
               </SelectContent>
             </Select>

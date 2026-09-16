@@ -3,23 +3,36 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
+import { Button } from '@/components/ui/button';
+
 interface SidebarNavProps {
+  canViewDashboard?: boolean;
   canViewProcesses: boolean;
   canViewApprovals: boolean;
   isAdmin: boolean;
   pendingApprovalsCount?: number;
+  notificationsCount?: number;
+  canCreate?: boolean;
 }
 
-export function SidebarNav({ canViewProcesses, canViewApprovals, isAdmin, pendingApprovalsCount = 0 }: SidebarNavProps) {
+export function SidebarNav({ 
+  canViewDashboard = true, 
+  canViewProcesses, 
+  canViewApprovals, 
+  isAdmin, 
+  pendingApprovalsCount = 0,
+  notificationsCount = 0,
+  canCreate = false
+}: SidebarNavProps) {
   const pathname = usePathname();
 
   const isActive = (path: string) => {
     // Точний збіг для дашборду та репозиторію
-    if (path === '/dashboard' || path === '/repository' || path === '/admin' || path === '/approvals') {
+    if (path === '/dashboard' || path === '/repository' || path === '/admin' || path === '/approvals' || path === '/notifications') {
       return pathname === path;
     }
     // Для процесів підсвічуємо і вкладені сторінки (наприклад, /processes/new)
-    if (path === '/processes') {
+    if (path === '/processes' && pathname !== '/processes/new') {
       return pathname.startsWith('/processes');
     }
     return pathname.startsWith(path);
@@ -33,10 +46,22 @@ export function SidebarNav({ canViewProcesses, canViewApprovals, isAdmin, pendin
 
   return (
     <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-      <Link href="/dashboard" className={linkClass('/dashboard')}>
-        🏠 Дашборд
-      </Link>
-      
+      {canCreate && (
+        <div className="mb-6">
+          <Link href="/processes/new" className="block">
+            <Button className="w-full bg-[#fa4616] hover:bg-[#d93a10] text-white font-medium shadow-xs">
+              + Створити процес
+            </Button>
+          </Link>
+        </div>
+      )}
+
+      {canViewDashboard && (
+        <Link href="/dashboard" className={linkClass('/dashboard')}>
+          🏠 Дашборд
+        </Link>
+      )}
+
       {canViewProcesses && (
         <Link href="/processes" className={linkClass('/processes')}>
           📋 Мої процеси
@@ -56,6 +81,15 @@ export function SidebarNav({ canViewProcesses, canViewApprovals, isAdmin, pendin
       
       <Link href="/repository" className={linkClass('/repository')}>
         📚 Репозиторій
+      </Link>
+
+      <Link href="/notifications" className={`${linkClass('/notifications')} flex justify-between items-center`}>
+        <span>🔔 Сповіщення</span>
+        {notificationsCount > 0 && (
+          <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+            {notificationsCount}
+          </span>
+        )}
       </Link>
       
       {isAdmin && (

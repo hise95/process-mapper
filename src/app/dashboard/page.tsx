@@ -1,14 +1,23 @@
 import { getSession } from '@/lib/auth';
-import TopBar from '@/components/layout/TopBar';
+import { redirect } from 'next/navigation';
 import AnalystKanban from '@/components/dashboard/AnalystKanban';
-import ManagerDraftList from '@/components/dashboard/ManagerDraftList';
-import OwnerPendingApprovals from '@/components/dashboard/OwnerPendingApprovals';
 import NotificationsWidget from '@/components/dashboard/NotificationsWidget';
-
 import { prisma } from '@/lib/prisma';
+import { Role } from '@/lib/enums';
 
-async function fetchProcesses() {
+async function fetchProcesses(session: { id: string; role: string }) {
+  const where: Record<string, unknown> = {
+    status: { not: 'ARCHIVED' }
+  };
+
+  if (session.role === Role.PROCESS_MANAGER) {
+    where.managerId = session.id;
+  } else if (session.role === Role.PROCESS_OWNER) {
+    where.ownerId = session.id;
+  }
+
   return await prisma.process.findMany({
+    where,
     include: {
       manager: true,
       owner: true,
@@ -32,35 +41,32 @@ async function fetchNotifications(userId: string) {
   }));
 }
 
-import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import { canCreateProcess } from '@/lib/permissions';
 
 export default async function DashboardPage() {
   const session = await getSession();
-  if (!session) return null;
+  if (!session) {
+    redirect('/login');
+  }
 
   const userRole = session.role;
-  if (userRole === 'EMPLOYEE') {
+  if (userRole === Role.EMPLOYEE) {
     redirect('/repository');
   }
 
-  const processes = await fetchProcesses();
+  const processes = await fetchProcesses(session);
   const notifications = await fetchNotifications(session.id);
-
-  let content = null
-  if (userRole === 'ADMIN_ANALYST') {
-    const notifications = await fetchNotifications(session.id);
-    content = <AnalystKanban processes={processes as any} notifications={notifications} />
-  } else if (userRole === 'PROCESS_MANAGER') {
-    content = <ManagerDraftList processes={processes.filter((p: any) => p.status === 'DRAFT') as any} />
-  } else if (userRole === 'PROCESS_OWNER') {
-    content = <OwnerPendingApprovals processes={processes.filter((p: any) => p.status === 'IN_REVIEW_OWNER') as any} />
-  }
-
+  const userCanCreate = canCreateProcess(session);
 
   return (
     <div className="space-y-6">
-      <NotificationsWidget initialNotifications={notifications} />
-      {content}
+      <div className="flex justify-between items-center">
+        <h2 className="text-xl font-semibold">Статуси моїх процесів</h2>
+      </div>
+
+      <AnalystKanban processes={processes as any} />
     </div>
   );
 }

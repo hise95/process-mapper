@@ -1,14 +1,18 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { prisma } from '@/lib/prisma';
-import { requireSession } from '@/lib/auth';
+import { getSession } from '@/lib/auth';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { PROCESS_TYPE_LABELS, getStatusLabel } from '@/lib/enums';
 
 export default async function ProcessDiffPage({ params }: { params: Promise<{ id: string }> }) {
-  await requireSession().catch(() => null);
+  const session = await getSession();
+  if (!session) {
+    redirect('/login');
+  }
   const { id } = await params;
 
   const current = await prisma.process.findUnique({
@@ -60,11 +64,11 @@ export default async function ProcessDiffPage({ params }: { params: Promise<{ id
           <h1 className="text-2xl font-bold mb-2">Порівняння версій</h1>
           <div className="flex items-center gap-3 text-sm">
             <Badge variant="outline" className="bg-slate-100">
-              Попередня: v{prev.version} ({prev.status})
+              Попередня: v{prev.version} ({getStatusLabel(prev.status)})
             </Badge>
             <ArrowRight className="w-4 h-4 text-slate-400" />
             <Badge className="bg-[#fa4616] text-white">
-              Поточна: v{current.version} ({current.status})
+              Поточна: v{current.version} ({getStatusLabel(current.status)})
             </Badge>
           </div>
         </div>
@@ -78,7 +82,7 @@ export default async function ProcessDiffPage({ params }: { params: Promise<{ id
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
           <DiffField label="Назва" oldVal={prev.title} newVal={current.title} />
           <DiffField label="Код" oldVal={prev.code} newVal={current.code} />
-          <DiffField label="Тип" oldVal={prev.processType} newVal={current.processType} />
+          <DiffField label="Тип" oldVal={prev.processType ? (PROCESS_TYPE_LABELS[prev.processType] || prev.processType) : null} newVal={current.processType ? (PROCESS_TYPE_LABELS[current.processType] || current.processType) : null} />
           <DiffField label="Мета" oldVal={prev.objective} newVal={current.objective} />
           <DiffField label="Вхід" oldVal={prev.input} newVal={current.input} />
           <DiffField label="Вихід" oldVal={prev.output} newVal={current.output} />
@@ -114,6 +118,38 @@ export default async function ProcessDiffPage({ params }: { params: Promise<{ id
                     <span className="font-mono text-slate-400">{i + 1}.</span>
                     <span className="font-medium">{s.name} {isNew && <Badge className="ml-2 bg-green-500 text-[10px]">Новий</Badge>}</span>
                     <span className="text-slate-500">— {s.executorRole}</span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Показники процесу</CardTitle></CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            <h3 className="font-semibold text-slate-700">Було (v{prev.version}):</h3>
+            <div className="bg-slate-50 p-4 rounded-md border text-sm space-y-2">
+              {prev.kpis.length === 0 && <p className="text-muted-foreground">Немає показників</p>}
+              {prev.kpis.map((k) => (
+                <div key={k.id} className="flex gap-2">
+                  <span className="font-medium">{k.name}</span>
+                  <span className="text-slate-500">— {k.targetValue || '-'} ({k.unit || '-'})</span>
+                </div>
+              ))}
+            </div>
+
+            <h3 className="font-semibold text-slate-700 mt-6">Стало (v{current.version}):</h3>
+            <div className="bg-slate-50 p-4 rounded-md border text-sm space-y-2">
+              {current.kpis.length === 0 && <p className="text-muted-foreground">Немає показників</p>}
+              {current.kpis.map((k) => {
+                const isNew = !prev.kpis.find(pk => pk.name === k.name);
+                return (
+                  <div key={k.id} className={`flex gap-2 p-1 rounded ${isNew ? 'bg-green-100 text-green-800' : ''}`}>
+                    <span className="font-medium">{k.name} {isNew && <Badge className="ml-2 bg-green-500 text-[10px]">Новий</Badge>}</span>
+                    <span className="text-slate-500">— {k.targetValue || '-'} ({k.unit || '-'})</span>
                   </div>
                 )
               })}

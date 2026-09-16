@@ -1,9 +1,7 @@
-// src/app/api/processes/[id]/approve/route.ts
-// POST — виконати перехід workflow (погодження / відхилення)
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { applyTransition, canTransition, type WorkflowTransition } from '@/lib/workflow'
+import { applyTransition, canExecuteTransition, type WorkflowTransition } from '@/lib/workflow'
 import { ProcessStatus } from '@/lib/enums'
 
 export async function POST(
@@ -19,8 +17,8 @@ export async function POST(
 
   const { transition, comment }: { transition: WorkflowTransition; comment?: string } = await req.json()
 
-  if (!canTransition(session, process.status as ProcessStatus, transition, process.ownerId)) {
-    return NextResponse.json({ error: 'Дія недоступна для вашої ролі або поточного статусу процесу' }, { status: 403 })
+  if (!canExecuteTransition(transition, process.status as ProcessStatus, session, process)) {
+    return NextResponse.json({ error: 'Дія заборонена для вашої ролі або поточного статусу процесу' }, { status: 403 })
   }
 
   await applyTransition(id, transition, session, comment)

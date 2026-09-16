@@ -1,5 +1,6 @@
 import * as React from 'react';
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
@@ -8,7 +9,9 @@ import { ProcessTableClient } from '@/components/processes/ProcessTableClient';
 
 export default async function ProcessesPage() {
   const session = await requireSession().catch(() => null);
-  if (!session) return null;
+  if (!session) {
+    redirect('/login');
+  }
 
   // Побудова where-умови залежно від ролі
   const where =
@@ -32,21 +35,13 @@ export default async function ProcessesPage() {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">
+          <h1 className="text-xl font-bold text-foreground">
             {session.role === 'PROCESS_MANAGER' ? 'Мої процеси' : 'Всі процеси компанії'}
           </h1>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-muted-foreground">
             Керування, перегляд та редагування бізнес-процесів
           </p>
         </div>
-
-        {userCanCreate && (
-          <Link href="/processes/new">
-            <Button className="bg-[#fa4616] hover:bg-[#d93a10] text-white font-medium shadow-xs">
-              + Створити процес
-            </Button>
-          </Link>
-        )}
       </div>
 
       <React.Suspense fallback={<div>Завантаження таблиці...</div>}>
