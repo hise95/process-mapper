@@ -1,6 +1,16 @@
+export interface ArchitectureCard {
+  id: string;
+  group: 'mgmt' | 'main' | 'supp';
+  code: string;
+  title: string;
+  owner: string;
+  inputs: string[];
+  outputs: string[];
+}
+
 export interface ArchitectureData {
   rev: number;
-  cards: any[];
+  cards: ArchitectureCard[];
 }
 
 export const initialArchitectureData: ArchitectureData = {
