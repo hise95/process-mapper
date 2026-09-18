@@ -44,6 +44,7 @@ export default async function Sidebar() {
         canViewDashboard={true}
         canViewProcesses={canViewProcesses} 
         canViewApprovals={canViewApprovals} 
+        canViewArchitecture={isAnalystOrAdmin}
         isAdmin={isAdmin} 
         pendingApprovalsCount={pendingApprovalsCount}
         notificationsCount={notificationsCount}

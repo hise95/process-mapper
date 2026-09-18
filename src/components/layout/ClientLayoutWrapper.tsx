@@ -32,6 +32,7 @@ export function ClientLayoutWrapper({
     if (path === '/processes') return 'Мої процеси';
     if (path === '/approvals') return 'Погодження';
     if (path === '/repository') return 'Репозиторій процесів';
+    if (path === '/architecture') return 'Архітектура процесів';
     if (path === '/admin') return 'Адмін-панель';
     if (path === '/notifications') return 'Сповіщення';
     return '';

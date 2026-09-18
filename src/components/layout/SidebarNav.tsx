@@ -9,6 +9,7 @@ interface SidebarNavProps {
   canViewDashboard?: boolean;
   canViewProcesses: boolean;
   canViewApprovals: boolean;
+  canViewArchitecture?: boolean;
   isAdmin: boolean;
   pendingApprovalsCount?: number;
   notificationsCount?: number;
@@ -19,6 +20,7 @@ export function SidebarNav({
   canViewDashboard = true, 
   canViewProcesses, 
   canViewApprovals, 
+  canViewArchitecture = false,
   isAdmin, 
   pendingApprovalsCount = 0,
   notificationsCount = 0,
@@ -27,8 +29,8 @@ export function SidebarNav({
   const pathname = usePathname();
 
   const isActive = (path: string) => {
-    // Точний збіг для дашборду та репозиторію
-    if (path === '/dashboard' || path === '/repository' || path === '/admin' || path === '/approvals' || path === '/notifications') {
+    // Точний збіг для дашборду, репозиторію, архітектури тощо
+    if (path === '/dashboard' || path === '/repository' || path === '/admin' || path === '/approvals' || path === '/notifications' || path === '/architecture') {
       return pathname === path;
     }
     // Для процесів підсвічуємо і вкладені сторінки (наприклад, /processes/new)
@@ -79,6 +81,12 @@ export function SidebarNav({
         </Link>
       )}
       
+      {canViewArchitecture && (
+        <Link href="/architecture" className={linkClass('/architecture')}>
+          🏛️ Архітектура
+        </Link>
+      )}
+
       <Link href="/repository" className={linkClass('/repository')}>
         📚 Репозиторій
       </Link>
