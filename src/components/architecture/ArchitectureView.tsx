@@ -51,14 +51,53 @@ export function ArchitectureView({ session }: ArchitectureViewProps) {
     }, 2500);
   };
 
-  // Завантаження даних з API
+  const STORAGE_KEY = 'kopiyochka_architecture_data_v2';
+
+  // Завантаження даних
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/architecture');
+
+      // 1. Спочатку перевіряємо локальне сховище браузера для миттєвого збереження стану
+      let localData: ArchitectureData | null = null;
+      try {
+        const localRaw = typeof window !== 'undefined' ? localStorage.getItem(STORAGE_KEY) : null;
+        if (localRaw) {
+          localData = JSON.parse(localRaw);
+          if (localData && Array.isArray(localData.cards) && localData.cards.length > 0) {
+            setData(localData);
+          }
+        }
+      } catch (err) {
+        console.error('Помилка читання localStorage', err);
+      }
+
+      // 2. Отримуємо актуальні дані з сервера
+      const res = await fetch('/api/architecture', { cache: 'no-store' });
       if (res.ok) {
-        const json = await res.json();
-        setData(json);
+        const serverData: ArchitectureData = await res.json();
+        
+        // Якщо в браузері ще не було збережених даних, беремо з сервера
+        if (!localData) {
+          setData(serverData);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(serverData));
+          }
+        } else if (serverData.cards && serverData.cards.length > localData.cards.length) {
+          // Якщо на сервері більше карток, оновлюємо локальні дані
+          setData(serverData);
+          if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(serverData));
+          }
+        } else if (localData && localData.cards.length >= serverData.cards.length) {
+          // Якщо в користувача в браузері збережені новіші або відредаговані дані,
+          // відправляємо їх на сервер у фоні для постійної синхронізації
+          fetch('/api/architecture', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(localData),
+          }).catch(console.error);
+        }
       }
     } catch (e) {
       console.error(e);
@@ -72,9 +111,20 @@ export function ArchitectureView({ session }: ArchitectureViewProps) {
     fetchData();
   }, []);
 
-  // Збереження даних на сервер
+  // Збереження даних
   const persistData = async (newData: ArchitectureData) => {
     setData(newData);
+
+    // 1. Негайний запис у localStorage — гарантує, що при оновленні сторінки (F5) нічого не зникне!
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
+      } catch (e) {
+        console.error('Помилка збереження в localStorage', e);
+      }
+    }
+
+    // 2. Синхронізація з сервером
     try {
       setSaving(true);
       const res = await fetch('/api/architecture', {
@@ -83,13 +133,13 @@ export function ArchitectureView({ session }: ArchitectureViewProps) {
         body: JSON.stringify(newData),
       });
       if (res.ok) {
-        showToast('Зміни збережено');
+        showToast('Зміни успішно збережено');
       } else {
-        showToast('Помилка збереження на сервері');
+        showToast('Збережено локально');
       }
     } catch (e) {
       console.error(e);
-      showToast('Помилка мережі при збереженні');
+      showToast('Збережено в браузері');
     } finally {
       setSaving(false);
     }
@@ -180,14 +230,30 @@ export function ArchitectureView({ session }: ArchitectureViewProps) {
     if (!confirm('Скинути всю архітектуру до початкового стану з файлу?')) return;
     try {
       setSaving(true);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem(STORAGE_KEY);
+      }
       const res = await fetch('/api/architecture', { method: 'POST' });
       if (res.ok) {
         const json = await res.json();
         setData(json.data);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(json.data));
+        }
         showToast('Архітектуру відновлено до початкового стану');
+      } else {
+        setData(initialArchitectureData);
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(initialArchitectureData));
+        }
+        showToast('Архітектуру відновлено');
       }
     } catch (e) {
-      showToast('Помилка скидання');
+      setData(initialArchitectureData);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(initialArchitectureData));
+      }
+      showToast('Архітектуру відновлено');
     } finally {
       setSaving(false);
     }
