@@ -6,8 +6,8 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // У SQLite немає підтримки enums, тому використовуємо String
@@ -167,4 +167,10 @@ model Notification {
   isRead    Boolean  @default(false)
   
   createdAt DateTime @default(now())
+}
+model ArchitectureDataStorage {
+  id        String   @id @default("singleton")
+  rev       Int      @default(1)
+  data      Json
+  updatedAt DateTime @updatedAt
 }
