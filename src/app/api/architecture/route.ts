@@ -28,13 +28,12 @@ export async function GET() {
         'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching architecture data:', error);
-    return NextResponse.json(initialArchitectureData, {
-      headers: {
-        'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-      },
-    });
+    return NextResponse.json(
+      { error: 'DB Connection Error', details: error?.message || String(error) }, 
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
+    );
   }
 }
 
