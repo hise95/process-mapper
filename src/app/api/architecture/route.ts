@@ -49,8 +49,8 @@ export async function PUT(req: Request) {
     
     await prisma.architectureDataStorage.upsert({
       where: { id: 'singleton' },
-      update: { data: body },
-      create: { id: 'singleton', data: body },
+      update: { data: body as any },
+      create: { id: 'singleton', data: body as any },
     });
     
     return NextResponse.json({ success: true, data: body });
@@ -70,8 +70,8 @@ export async function POST(req: Request) {
   try {
     await prisma.architectureDataStorage.upsert({
       where: { id: 'singleton' },
-      update: { data: initialArchitectureData },
-      create: { id: 'singleton', data: initialArchitectureData },
+      update: { data: initialArchitectureData as any },
+      create: { id: 'singleton', data: initialArchitectureData as any },
     });
     return NextResponse.json({ success: true, data: initialArchitectureData });
   } catch (error) {
