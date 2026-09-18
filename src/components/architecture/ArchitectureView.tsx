@@ -338,18 +338,28 @@ export function ArchitectureView({ session }: ArchitectureViewProps) {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            variant={isEditingMode ? 'default' : 'outline'}
-            onClick={() => setIsEditingMode(!isEditingMode)}
-            className={`gap-1.5 font-semibold text-xs h-9 ${
-              isEditingMode
-                ? 'bg-amber-500 hover:bg-amber-600 text-slate-900 border-none shadow-sm'
-                : 'border-border'
-            }`}
-          >
-            <Pencil className="w-3.5 h-3.5" />
-            <span>{isEditingMode ? 'Вимкнути редагування' : 'Швидке редагування'}</span>
-          </Button>
+          {isEditingMode ? (
+            <Button
+              variant="default"
+              onClick={() => {
+                setIsEditingMode(false);
+                persistData(data); // Явне збереження для зворотного зв'язку
+              }}
+              className="gap-1.5 font-semibold text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white border-none shadow-sm"
+            >
+              <Check className="w-3.5 h-3.5" />
+              <span>Зберегти</span>
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              onClick={() => setIsEditingMode(true)}
+              className="gap-1.5 font-semibold text-xs h-9 border-border"
+            >
+              <Pencil className="w-3.5 h-3.5" />
+              <span>Швидке редагування</span>
+            </Button>
+          )}
 
           {isEditingMode && (
             <>
