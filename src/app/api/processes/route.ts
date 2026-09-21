@@ -46,24 +46,29 @@ export async function GET(req: NextRequest) {
 
   if (levelId) where.levelId = levelId
 
-  const processes = await prisma.process.findMany({
-    where,
-    include: {
-      owner: { select: { id: true, fullName: true } },
-      manager: { select: { id: true, fullName: true } },
-      level: { select: { id: true, name: true, depth: true } },
-      steps: { orderBy: { orderIndex: 'asc' } },
-      kpis: true,
-      _count: { select: { steps: true, kpis: true } },
-      historyLogs: {
-        orderBy: { timestamp: 'desc' },
-        include: { user: { select: { fullName: true } } }
-      }
-    },
-    orderBy: { updatedAt: 'desc' },
-  })
+  try {
+    const processes = await prisma.process.findMany({
+      where,
+      include: {
+        owner: { select: { id: true, fullName: true } },
+        manager: { select: { id: true, fullName: true } },
+        level: { select: { id: true, name: true, depth: true } },
+        steps: { orderBy: { orderIndex: 'asc' } },
+        kpis: true,
+        _count: { select: { steps: true, kpis: true } },
+        historyLogs: {
+          orderBy: { timestamp: 'desc' },
+          include: { user: { select: { fullName: true } } }
+        }
+      },
+      orderBy: { updatedAt: 'desc' },
+    })
 
-  return NextResponse.json(processes)
+    return NextResponse.json(processes)
+  } catch (error) {
+    console.error('Error fetching processes:', error)
+    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 })
+  }
 }
 
 export async function POST(req: NextRequest) {
@@ -76,30 +81,35 @@ export async function POST(req: NextRequest) {
 
   if (!title) return NextResponse.json({ error: 'Назва процесу обов\'язкова' }, { status: 400 })
 
-  // Перевірити що рівень L2 або L3
-  if (levelId) {
-    const level = await prisma.processLevel.findUnique({ where: { id: levelId } })
-    if (level && level.depth < 2) {
-      return NextResponse.json({ error: 'Процес можна прив\'язати тільки до рівня L2 або L3' }, { status: 400 })
+  try {
+    // Перевірити що рівень L2 або L3
+    if (levelId) {
+      const level = await prisma.processLevel.findUnique({ where: { id: levelId } })
+      if (level && level.depth < 2) {
+        return NextResponse.json({ error: 'Процес можна прив\'язати тільки до рівня L2 або L3' }, { status: 400 })
+      }
     }
+
+    const process = await prisma.process.create({
+      data: {
+        title,
+        processType: processType ?? 'MAIN',
+        levelId: levelId || null,
+        ownerId: ownerId || null,
+        managerId: managerId || session.id,
+        status: 'DRAFT',
+        version: 1,
+      },
+    })
+
+    // Записати в журнал
+    await prisma.processHistoryLog.create({
+      data: { processId: process.id, action: 'СТВОРЕНО', userId: session.id },
+    })
+
+    return NextResponse.json(process, { status: 201 })
+  } catch (error) {
+    console.error('Error creating process:', error)
+    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 })
   }
-
-  const process = await prisma.process.create({
-    data: {
-      title,
-      processType: processType ?? 'MAIN',
-      levelId: levelId || null,
-      ownerId: ownerId || null,
-      managerId: managerId || session.id,
-      status: 'DRAFT',
-      version: 1,
-    },
-  })
-
-  // Записати в журнал
-  await prisma.processHistoryLog.create({
-    data: { processId: process.id, action: 'СТВОРЕНО', userId: session.id },
-  })
-
-  return NextResponse.json(process, { status: 201 })
 }

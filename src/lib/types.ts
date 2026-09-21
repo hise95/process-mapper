@@ -89,8 +89,6 @@ export type ProcessForChecklist = Pick<
   'id' | 'title' | 'status' | 'ownerId' | 'managerId'
 > & {
   historyLogs: (Pick<ProcessHistoryLog, 'action' | 'timestamp' | 'comment'> & { user?: { fullName: string } | null })[];
-  /** Сумісність зі старим полем approvalHistory */
-  approvalHistory?: Pick<ProcessHistoryLog, 'action' | 'timestamp' | 'comment'>[];
 };
 
 // ── Типи для ApprovalSplitScreen ─────────────────────────────────────────────
