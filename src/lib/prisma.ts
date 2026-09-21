@@ -2,19 +2,6 @@ import { PrismaClient } from '@prisma/client'
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient | undefined }
 
-import path from 'path'
-import fs from 'fs'
-
-function getDatabaseUrl() {
-  if (process.env.DATABASE_URL && process.env.DATABASE_URL.startsWith('file:')) {
-    return process.env.DATABASE_URL
-  }
-  return `file:${path.join(process.cwd(), 'prisma', 'dev.db')}`
-}
-
-const activeDbUrl = getDatabaseUrl()
-process.env.DATABASE_URL = activeDbUrl
-
 function makePrismaClient() {
   return new PrismaClient({
     log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
