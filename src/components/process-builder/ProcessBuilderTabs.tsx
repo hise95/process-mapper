@@ -22,7 +22,7 @@ import {
   Activity
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { getStatusLabel } from '@/lib/enums';
+import { getStatusLabel, PROCESS_STATUS_LABELS } from '@/lib/enums';
 
 export default function ProcessBuilderTabs({ process }: { process: ProcessForEdit }) {
   const [activeTab, setActiveTab] = useState<string>('passport');
@@ -82,7 +82,7 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
         {/* Панель стану та дій */}
         <div className="flex flex-wrap justify-between items-center bg-card p-4 rounded-xl border border-border mb-6 gap-4 shadow-sm">
           <div className="flex items-center gap-3">
-            <Badge variant="outline" className="px-3 py-1 font-semibold text-foreground">
+            <Badge className={`${PROCESS_STATUS_LABELS[process.status]?.className || 'bg-muted text-foreground'} px-3 py-1 font-semibold text-xs border-none shadow-xs`}>
               Статус: {getStatusLabel(process.status)}
             </Badge>
             {process.code && (
@@ -129,10 +129,10 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
         </div>
         
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="bg-muted border border-border p-1 rounded-xl mb-6 grid grid-cols-4 w-full h-auto">
+          <TabsList className="bg-muted border border-border p-1 rounded-xl mb-6 flex flex-col sm:grid sm:grid-cols-2 lg:grid-cols-4 w-full !h-auto gap-1">
             <TabsTrigger 
               value="passport" 
-              className="py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs"
+              className="py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs h-full"
             >
               <FileText className="w-4 h-4" />
               <span>1. Паспорт</span>
@@ -141,7 +141,7 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
             <TabsTrigger 
               value="steps" 
               disabled={!isStepsUnlocked}
-              className="py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40"
+              className="py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40 h-full"
             >
               <ListChecks className="w-4 h-4" />
               <span>2. Кроки AS-IS</span>
@@ -151,7 +151,7 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
             <TabsTrigger 
               value="bpmn" 
               disabled={!isStepsUnlocked}
-              className="py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40"
+              className="py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40 h-full"
             >
               <Share2 className="w-4 h-4" />
               <span>3. BPMN Схема</span>
@@ -161,7 +161,7 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
             <TabsTrigger 
               value="kpis" 
               disabled={!isKpisUnlocked}
-              className="py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40"
+              className="py-2 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-xs disabled:opacity-40 h-full"
             >
               <Activity className="w-4 h-4" />
               <span>4. Показники</span>
@@ -188,27 +188,90 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
       </div>
       
       {/* Інформаційна панель */}
-      <aside className="w-full lg:w-80 shrink-0 space-y-4">
-        <div className="p-5 border border-border rounded-xl bg-card shadow-sm space-y-4">
+      <aside className="w-full lg:w-72 xl:w-80 shrink-0 space-y-4">
+        <div className="p-5 border border-border rounded-xl bg-card shadow-xs space-y-4">
           <h3 className="font-bold text-foreground flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-primary" />
             <span>Життєвий цикл</span>
           </h3>
           
-          <div className="space-y-3 text-xs leading-relaxed text-muted-foreground">
-            <div className={`p-3 rounded-lg border ${!isStepsUnlocked ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200' : 'bg-green-500/10 border-green-500/20 text-green-900 dark:text-green-200'}`}>
-              <p className="font-semibold text-foreground mb-1">Фаза 1: Паспорт</p>
-              <p>Менеджер заповнює базову інформацію, аналітик та власник погоджують.</p>
+          <div className="space-y-3 text-xs leading-relaxed">
+            <div className={`p-3.5 rounded-xl border transition-all ${
+              !isStepsUnlocked 
+                ? 'bg-amber-500/10 border-amber-500/30 text-foreground' 
+                : 'bg-emerald-500/10 border-emerald-500/30 text-foreground'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-bold text-foreground">Фаза 1: Паспорт</p>
+                {!isStepsUnlocked ? (
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 border-none font-semibold">
+                    В роботі
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-none font-semibold">
+                    Завершено
+                  </Badge>
+                )}
+              </div>
+              <p className="text-muted-foreground break-normal hyphens-none">
+                Менеджер заповнює базову інформацію, аналітик та власник погоджують.
+              </p>
             </div>
 
-            <div className={`p-3 rounded-lg border ${isStepsUnlocked && !isKpisUnlocked ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200' : isKpisUnlocked ? 'bg-green-500/10 border-green-500/20 text-green-900 dark:text-green-200' : 'bg-muted/40 border-border'}`}>
-              <p className="font-semibold text-foreground mb-1">Фаза 2: Кроки та BPMN</p>
-              <p>Деталізація процесу (кроки) та додавання посилання на схему BPMN.</p>
+            <div className={`p-3.5 rounded-xl border transition-all ${
+              isStepsUnlocked && !isKpisUnlocked 
+                ? 'bg-amber-500/10 border-amber-500/30 text-foreground' 
+                : isKpisUnlocked 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-foreground' 
+                : 'bg-muted/40 border-border text-muted-foreground'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-bold text-foreground">Фаза 2: Кроки та BPMN</p>
+                {isStepsUnlocked && !isKpisUnlocked ? (
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 border-none font-semibold">
+                    В роботі
+                  </Badge>
+                ) : isKpisUnlocked ? (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-none font-semibold">
+                    Завершено
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] border-border text-muted-foreground font-normal">
+                    Заблоковано
+                  </Badge>
+                )}
+              </div>
+              <p className="text-muted-foreground break-normal hyphens-none">
+                Деталізація кроків процесу та додавання посилання на схему BPMN.
+              </p>
             </div>
 
-            <div className={`p-3 rounded-lg border ${isKpisUnlocked && process.status !== 'APPROVED' ? 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200' : process.status === 'APPROVED' ? 'bg-green-500/10 border-green-500/20 text-green-900 dark:text-green-200' : 'bg-muted/40 border-border'}`}>
-              <p className="font-semibold text-foreground mb-1">Фаза 3: Показники процесу</p>
-              <p>Додавання показників результативності та фінальне затвердження.</p>
+            <div className={`p-3.5 rounded-xl border transition-all ${
+              isKpisUnlocked && process.status !== 'APPROVED' 
+                ? 'bg-amber-500/10 border-amber-500/30 text-foreground' 
+                : process.status === 'APPROVED' 
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-foreground' 
+                : 'bg-muted/40 border-border text-muted-foreground'
+            }`}>
+              <div className="flex items-center justify-between mb-1">
+                <p className="font-bold text-foreground">Фаза 3: Показники</p>
+                {isKpisUnlocked && process.status !== 'APPROVED' ? (
+                  <Badge variant="outline" className="text-[10px] bg-amber-500/20 text-amber-600 dark:text-amber-400 border-none font-semibold">
+                    В роботі
+                  </Badge>
+                ) : process.status === 'APPROVED' ? (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-none font-semibold">
+                    Затверджено
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="text-[10px] border-border text-muted-foreground font-normal">
+                    Заблоковано
+                  </Badge>
+                )}
+              </div>
+              <p className="text-muted-foreground break-normal hyphens-none">
+                Додавання показників результативності та фінальне затвердження.
+              </p>
             </div>
           </div>
         </div>

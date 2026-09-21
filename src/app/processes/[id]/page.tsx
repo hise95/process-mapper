@@ -6,8 +6,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
-import { canEditProcess } from '@/lib/permissions';
+import { canEditProcess, isAnalystOrAdmin } from '@/lib/permissions';
 import { ProcessActionButton } from '@/components/process-builder/ProcessActionButton';
+import { ProcessArchiveButton } from '@/components/processes/ProcessArchiveButton';
 import { PROCESS_TYPE_LABELS, getStatusLabel } from '@/lib/enums';
 
 export default async function ProcessViewPage({ params }: { params: Promise<{ id: string }> }) {
@@ -30,6 +31,7 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
     return notFound();
   }
 
+  const isAnalyst = session ? isAnalystOrAdmin(session.role) : false;
   const canEdit = session ? canEditProcess(session, process) : false;
   const canCreateVersion = process.status === 'APPROVED' && canEdit;
   const canSubmit = process.status === 'DRAFT' && canEdit;
@@ -128,6 +130,13 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
             />
           )}
+          <ProcessArchiveButton
+            processId={id}
+            processTitle={process.title}
+            processCode={process.code}
+            status={process.status}
+            isAnalyst={isAnalyst}
+          />
         </div>
       </div>
 

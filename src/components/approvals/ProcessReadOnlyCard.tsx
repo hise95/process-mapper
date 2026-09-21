@@ -32,13 +32,13 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
   return (
     <Card className="h-full flex flex-col overflow-hidden relative border border-border shadow-sm bg-card">
       {/* Sticky Top Bar */}
-      <div className="sticky top-0 z-10 bg-card border-b border-border p-3 flex items-center justify-between shadow-xs gap-2">
-        <div className="flex items-center gap-2 min-w-0">
-          <Badge variant="secondary" className="text-xs px-2 py-0.5 font-mono shrink-0 bg-muted text-foreground">
+      <div className="sticky top-0 z-10 bg-card border-b border-border py-2 px-4 flex flex-wrap sm:flex-nowrap items-center justify-between shadow-xs gap-3">
+        <div className="flex items-center gap-3 min-w-0 w-full sm:w-auto">
+          <Badge variant="secondary" className="text-xs px-2.5 py-0.5 font-mono shrink-0 bg-muted/60 text-foreground">
             {process.code || "БЕЗ КОДУ"}
           </Badge>
-          <h2 className="text-sm sm:text-base font-bold truncate text-foreground">{process.title}</h2>
-          <Badge variant="outline" className="text-[11px] shrink-0">v{process.version || "1.0"}</Badge>
+          <span className="text-base font-bold truncate text-foreground pt-0.5">{process.title}</span>
+          <Badge variant="outline" className="text-[10px] shrink-0 px-1.5 py-0.5">v{process.version || "1.0"}</Badge>
         </div>
         
         <div className="flex items-center gap-2 shrink-0">

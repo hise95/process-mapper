@@ -55,14 +55,14 @@ export function ClientLayoutWrapper({
     <div className="flex min-h-screen bg-background font-sans transition-colors">
       {sidebar}
       <div className={containerClass}>
-        <header className="sticky top-0 z-10 grid grid-cols-3 items-center px-8 py-4 bg-background/80 backdrop-blur-md border-b border-border transition-colors">
+        <header className="sticky top-0 z-10 grid grid-cols-3 items-center px-8 h-[57px] bg-background/80 backdrop-blur-md border-b border-border transition-colors shrink-0">
           <div className="flex items-center gap-4 justify-start">
             {isEmployee && (
                <h1 className="font-bold text-base text-[#fa4616] tracking-tight mr-4">🗺️ Process Mapper AS-IS</h1>
             )}
             <h1 className="text-xl font-bold tracking-tight text-foreground">{getPageTitle(pathname)}</h1>
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center invisible">
             <SearchBar />
           </div>
           <div className="flex items-center gap-4 justify-end">

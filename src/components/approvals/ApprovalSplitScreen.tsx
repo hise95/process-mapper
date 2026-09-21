@@ -6,7 +6,6 @@ import { WorkflowChecklist } from "./WorkflowChecklist"
 import { Loader2 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import type { SessionUser, ProcessApprovalCard } from "@/lib/types"
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -57,14 +56,14 @@ export function ApprovalSplitScreen({ session }: { session: SessionUser }) {
     <div className="flex h-full gap-4 overflow-hidden">
       {/* Ліва панель: 35% */}
       <div className="w-[32%] shrink-0 flex flex-col h-full border border-border rounded-xl bg-card shadow-sm overflow-hidden">
-        <div className="p-3.5 border-b border-border font-bold text-foreground flex items-center justify-between bg-muted/40">
+        <div className="p-3.5 border-b border-border font-bold text-foreground flex items-center justify-between bg-muted/40 shrink-0">
           <span>Очікують на погодження</span>
           <Badge className="bg-primary text-primary-foreground hover:bg-primary/90 border-none font-bold">
             {processes.length}
           </Badge>
         </div>
         
-        <ScrollArea className="flex-1 p-3">
+        <div className="flex-1 min-h-0 overflow-y-auto p-3">
           {loading ? (
             <div className="flex justify-center p-8">
               <Loader2 className="w-6 h-6 animate-spin text-primary" />
@@ -113,7 +112,7 @@ export function ApprovalSplitScreen({ session }: { session: SessionUser }) {
               })}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </div>
 
       {/* Права панель: 68% */}

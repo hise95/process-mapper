@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { canCreateProcess } from '@/lib/permissions'
+import { canCreateProcess, isAnalystOrAdmin } from '@/lib/permissions'
 import { Role } from '../../../lib/enums';
 
 export async function GET(req: NextRequest) {
@@ -28,6 +28,9 @@ export async function GET(req: NextRequest) {
       where.ownerId = session.id
     }
   } else if (status) {
+    if (status === 'ARCHIVED' && !isAnalystOrAdmin(session.role)) {
+      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    }
     where.status = status
   } else {
     // Якщо статус не вказано, ховаємо архівовані версії з загальних списків

@@ -14,6 +14,7 @@ interface SidebarNavProps {
   pendingApprovalsCount?: number;
   notificationsCount?: number;
   canCreate?: boolean;
+  isAnalyst?: boolean;
 }
 
 export function SidebarNav({ 
@@ -22,6 +23,7 @@ export function SidebarNav({
   canViewApprovals, 
   canViewArchitecture = false,
   isAdmin, 
+  isAnalyst = false,
   pendingApprovalsCount = 0,
   notificationsCount = 0,
   canCreate = false
@@ -30,7 +32,7 @@ export function SidebarNav({
 
   const isActive = (path: string) => {
     // Точний збіг для дашборду, репозиторію, архітектури тощо
-    if (path === '/dashboard' || path === '/repository' || path === '/admin' || path === '/approvals' || path === '/notifications' || path === '/architecture') {
+    if (path === '/dashboard' || path === '/repository' || path === '/admin' || path === '/approvals' || path === '/notifications' || path === '/architecture' || path === '/archive') {
       return pathname === path;
     }
     // Для процесів підсвічуємо і вкладені сторінки (наприклад, /processes/new)
@@ -90,6 +92,12 @@ export function SidebarNav({
       <Link href="/repository" className={linkClass('/repository')}>
         📚 Репозиторій
       </Link>
+
+      {isAnalyst && (
+        <Link href="/archive" className={linkClass('/archive')}>
+          📦 Архів
+        </Link>
+      )}
 
       <Link href="/notifications" className={`${linkClass('/notifications')} flex justify-between items-center`}>
         <span>🔔 Сповіщення</span>

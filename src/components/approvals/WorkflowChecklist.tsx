@@ -67,9 +67,9 @@ export function WorkflowChecklist({
                        canApproveKpisAnalyst || canApproveKpisOwner || canFinalApprove
 
   return (
-    <Card className="border border-border overflow-hidden shadow-sm bg-card mb-6">
-      <div className="bg-muted/50 p-2.5 border-b border-border flex items-center justify-between">
-        <span className="text-xs font-semibold text-foreground">Панель погодження</span>
+    <Card className="border border-border overflow-hidden shadow-sm bg-card rounded-xl">
+      <div className="py-2 px-4 border-b border-border flex items-center justify-between">
+        <span className="text-base font-bold text-foreground">Панель погодження</span>
         
         <Button 
           variant="ghost" 
@@ -104,14 +104,14 @@ export function WorkflowChecklist({
         </div>
       )}
 
-      <div className="p-3.5 space-y-3 bg-card">
+      <div className="p-3 space-y-2 bg-card">
         {hasAnyAction ? (
           <div className="space-y-2.5">
             <Textarea
               placeholder="Коментар (обов'язково для відхилення)..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              className="resize-none h-10 min-h-[38px] py-2 text-xs w-full border-border bg-background text-foreground focus-visible:ring-primary"
+              className="resize-none h-9 min-h-[36px] py-1.5 text-xs w-full border-border bg-background text-foreground focus-visible:ring-primary"
             />
 
             <div className="flex flex-wrap items-center gap-2">
