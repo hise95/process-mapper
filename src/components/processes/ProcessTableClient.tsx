@@ -118,6 +118,7 @@ export function ProcessTableClient({
   }, [query, statusFilter, typeFilter]);
 
   // Відновлення з localStorage після монтування
+  // eslint-disable-next-line
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -177,7 +178,9 @@ export function ProcessTableClient({
     const colDef = ALL_COLUMNS.find(c => c.id === colId);
     const minW = colDef?.minWidth || 70;
 
+    // eslint-disable-next-line
     document.body.style.cursor = 'col-resize';
+    // eslint-disable-next-line
     document.body.classList.add('select-none');
 
     let currentWidth = initialWidth;

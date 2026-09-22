@@ -22,7 +22,10 @@ export async function GET(req: NextRequest) {
 
   if (pending === 'true') {
     if (session.role === Role.PROCESS_ANALYST || session.role === Role.ADMIN_ANALYST || session.role === Role.ADMIN) {
-      where.status = { in: ['PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST'] }
+      where.status = { in: [
+        'PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST',
+        'PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'
+      ] }
     } else if (session.role === Role.PROCESS_OWNER) {
       where.status = { in: ['PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'] }
       where.ownerId = session.id

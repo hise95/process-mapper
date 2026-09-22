@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
-import { getStatusLabel } from '@/lib/enums';
+import { getStatusLabel, PROCESS_STATUS_LABELS } from '@/lib/enums';
 import { Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -54,7 +54,32 @@ export default function AnalystKanban({ processes }: AnalystKanbanProps) {
     }
   };
 
-  const columns = [
+  const [viewMode, setViewMode] = useState<'phases' | 'statuses'>('phases');
+
+  const columnsPhases = [
+    { 
+      id: 'passport', 
+      title: '1. Паспорт процесу',
+      statuses: ['DRAFT', 'PASSPORT_REVIEW_ANALYST', 'PASSPORT_REVIEW_OWNER']
+    },
+    { 
+      id: 'steps', 
+      title: '2. Опис кроків (BPMN)',
+      statuses: ['STEPS_DRAFT', 'STEPS_REVIEW_ANALYST', 'STEPS_REVIEW_OWNER']
+    },
+    { 
+      id: 'kpis', 
+      title: '3. Показники процесу',
+      statuses: ['KPIS_DRAFT', 'KPIS_REVIEW_ANALYST', 'KPIS_REVIEW_OWNER', 'FINAL_APPROVAL_ANALYST']
+    },
+    { 
+      id: 'approved', 
+      title: 'Затверджено',
+      statuses: ['APPROVED']
+    },
+  ];
+
+  const columnsStatuses = [
     { 
       id: 'drafts', 
       title: 'Чернетки',
@@ -77,10 +102,29 @@ export default function AnalystKanban({ processes }: AnalystKanbanProps) {
     },
   ];
 
+  const activeColumns = viewMode === 'phases' ? columnsPhases : columnsStatuses;
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-semibold">Статуси моїх процесів</h2>
+        <div className="inline-flex items-center rounded-md border border-border p-1 bg-muted/30">
+          <button
+            onClick={() => setViewMode('phases')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'phases' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Етапи процесів
+          </button>
+          <button
+            onClick={() => setViewMode('statuses')}
+            className={`px-3 py-1.5 text-xs font-medium rounded-sm transition-colors ${viewMode === 'statuses' ? 'bg-background shadow-sm text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+          >
+            Статуси процесів
+          </button>
+        </div>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        {columns.map(col => {
+        {activeColumns.map(col => {
           const columnProcesses = processes.filter(p => col.statuses.includes(p.status));
           return (
             <div key={col.id} className="bg-muted/60 border border-border/50 p-4 rounded-lg">
@@ -97,31 +141,40 @@ export default function AnalystKanban({ processes }: AnalystKanbanProps) {
                       <CardHeader className="p-3 pb-2">
                         <div className="flex justify-between items-start gap-2">
                           <CardTitle className="text-sm leading-tight pr-6 text-foreground">{process.title}</CardTitle>
-                          {col.id === 'drafts' && (
-                            <button 
+                          {['DRAFT', 'STEPS_DRAFT', 'KPIS_DRAFT'].includes(process.status) && (
+                            <button
                               onClick={(e) => handleDelete(e, process.id)}
-                              disabled={deletingId === process.id}
-                              className="absolute top-3 right-3 text-destructive/70 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
+                              className="absolute top-2 right-2 p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
                               title="Видалити чернетку"
+                              disabled={deletingId === process.id}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}
                         </div>
                         {process.code && (
-                          <div className="text-xs text-muted-foreground font-mono mt-1">{process.code}</div>
+                          <p className="text-xs text-muted-foreground font-mono mt-1 mb-2">{process.code}</p>
                         )}
-                        <Badge variant="outline" className="mt-2 text-[10px] py-0">{getStatusLabel(process.status)}</Badge>
+                        <div className="mt-2">
+                          <Badge variant="outline" className={`text-[10px] ${PROCESS_STATUS_LABELS[process.status]?.color || ''}`}>
+                            {PROCESS_STATUS_LABELS[process.status]?.label || process.status}
+                          </Badge>
+                        </div>
                       </CardHeader>
-                      <CardContent className="p-3 pt-0 text-xs text-muted-foreground">
-                        <div>{process.manager?.fullName ?? <span className="italic text-muted-foreground/60">Менеджер не призначений</span>}</div>
-                        <div className="mt-2 text-muted-foreground/70">
-                          Оновлено: {new Date(process.updatedAt).toLocaleDateString('uk-UA')}
+                      <CardContent className="p-3 pt-0 flex justify-between items-end">
+                        <div className="text-xs text-muted-foreground">
+                          <p>{process.manager?.fullName || 'Не вказано'}</p>
+                          <p className="mt-1">Оновлено: {new Date(process.updatedAt).toLocaleDateString('uk-UA')}</p>
                         </div>
                       </CardContent>
                     </Card>
                   </Link>
                 ))}
+                {columnProcesses.length === 0 && (
+                  <p className="text-sm text-muted-foreground/60 text-center py-4 italic">
+                    Немає процесів
+                  </p>
+                )}
               </div>
             </div>
           );

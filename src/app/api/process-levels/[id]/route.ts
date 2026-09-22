@@ -12,9 +12,14 @@ export async function PATCH(
   if (!canViewAdminPanel(session)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
   const { id } = await params
   const { name, adminId } = await req.json()
+  
+  const data: any = {}
+  if (name !== undefined) data.name = name
+  if (adminId !== undefined) data.adminId = adminId
+
   const level = await prisma.processLevel.update({
     where: { id },
-    data: { ...(name ? { name } : {}), adminId: adminId ?? undefined },
+    data,
   })
   return NextResponse.json(level)
 }

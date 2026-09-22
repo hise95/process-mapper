@@ -10,6 +10,15 @@ export const Role = {
 
 export type Role = typeof Role[keyof typeof Role];
 
+export const ROLES_UA: Record<string, string> = {
+  ADMIN: 'Адміністратор',
+  PROCESS_ANALYST: 'Процесний аналітик',
+  ADMIN_ANALYST: 'Процесний аналітик',
+  PROCESS_MANAGER: 'Менеджер процесу',
+  PROCESS_OWNER: 'Власник процесу',
+  EMPLOYEE: 'Працівник',
+};
+
 // 3-фазна модель: Паспорт -> Кроки -> Показники -> Фінал
 export const ProcessStatus = {
   // Фаза 1: Паспорт

@@ -7,7 +7,6 @@ datasource db {
   provider = "postgresql"
   url      = env("POSTGRES_URL")
 }
-// ProcessType: "MANAGERIAL" | "MAIN" | "SERVICE"
 
 // ─────────────────────────────────────────────
 // MODELS
@@ -28,6 +27,9 @@ model User {
   historyLogs      ProcessHistoryLog[]
   adminLevels      ProcessLevel[] @relation("LevelAdmin")
   notifications    Notification[]
+  feedbacks        Feedback[]
+  authoredTasks    AnalystTask[] @relation("TaskAuthor")
+  assignedTasks    AnalystTask[] @relation("TaskAssignee")
 }
 
 model ProcessLevel {
@@ -36,40 +38,33 @@ model ProcessLevel {
   depth    Int    @default(1) // 1=L1, 2=L2, 3=L3
   parentId String?
 
-  // Самопосилання для ієрархії L1 → L2 → L3
   parent   ProcessLevel?  @relation("LevelHierarchy", fields: [parentId], references: [id])
   children ProcessLevel[] @relation("LevelHierarchy")
 
-  // Процеси можуть бути прив'язані тільки до L2 або L3
   processes Process[]
 
-  // Адміністратор, що керує цим рівнем
   adminId  String?
   admin    User?   @relation("LevelAdmin", fields: [adminId], references: [id])
 }
 
 model Process {
   id    String @id @default(cuid())
-  code  String? // Код процесу, напр. "P-001"
+  code  String?
   title String
 
-  // Тип процесу (String замість enum)
   processType String @default("MAIN")
 
-  // ── Паспорт процесу (з шаблону template.xlsx) ──
-  objective          String? // Мета процесу
-  input              String? // Вхід
-  output             String? // Вихід
-  participants       String? // Учасники процесу (текст)
-  clients            String? // Клієнти процесу (внутрішні та зовнішні)
-  inputSupplier      String? // Постачальник входу
-  upstreamProcesses  String? // Який бізнес-процес(-и) іде перед ним
-  downstreamProcesses String? // Який бізнес-процес(-и) після нього
+  objective          String?
+  input              String?
+  output             String?
+  participants       String?
+  clients            String?
+  inputSupplier      String?
+  upstreamProcesses  String?
+  downstreamProcesses String?
 
-  // ── BPMN ──
-  bpmnUrl String? // Посилання на BPMN схему
+  bpmnUrl String?
 
-  // ── Ієрархія та власність ──
   levelId   String?
   level     ProcessLevel? @relation(fields: [levelId], references: [id])
   ownerId   String?
@@ -77,19 +72,16 @@ model Process {
   managerId String?
   manager   User?         @relation("ProcessManager", fields: [managerId], references: [id])
 
-  // ── Версіонування ──
   version           Int           @default(1)
   status            String        @default("DRAFT")
   previousVersionId String?       @unique
   previousVersion   Process?      @relation("VersionChain", fields: [previousVersionId], references: [id])
   nextVersion       Process?      @relation("VersionChain")
 
-  // ── Часові мітки ──
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
-  approvedAt DateTime? // Дата затвердження
+  approvedAt DateTime?
 
-  // ── Відносини ──
   steps       ProcessStep[]
   kpis        ProcessKPI[]
   workflow    ApprovalWorkflow[]
@@ -102,13 +94,13 @@ model ProcessStep {
   process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
 
   orderIndex       Int
-  phase            String? // "Ініціювання процесу" | "Аналіз AS IS" | "Моніторинг"
-  name             String  // Крок
-  description      String? // Опис кроку
-  executorRole     String? // Хто виконує
-  participantsNote String? // Додаткова примітка
-  docUrl           String? // Шаблон документу — ТІЛЬКИ URL
-  comment          String? // Коментар
+  phase            String?
+  name             String
+  description      String?
+  executorRole     String?
+  participantsNote String?
+  docUrl           String?
+  comment          String?
 }
 
 model ProcessKPI {
@@ -116,11 +108,11 @@ model ProcessKPI {
   processId String
   process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
 
-  name        String  // Назва показника
-  unit        String? // Одиниця виміру
-  dataSource  String? // Джерело
-  frequency   String? // Частота вимірювання
-  targetValue String? // Цільове значення / KPI
+  name        String
+  unit        String?
+  dataSource  String?
+  frequency   String?
+  targetValue String?
 }
 
 model ApprovalWorkflow {
@@ -161,9 +153,38 @@ model Notification {
   
   createdAt DateTime @default(now())
 }
+
 model ArchitectureDataStorage {
   id        String   @id @default("singleton")
   rev       Int      @default(1)
   data      Json
   updatedAt DateTime @updatedAt
+}
+
+model Feedback {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type         String   // 'BUG', 'SUGGESTION', etc.
+  message      String
+  status       String   @default("OPEN") // 'OPEN', 'RESOLVED'
+  adminComment String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model AnalystTask {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  status      String   @default("TODO") // "TODO", "IN_PROGRESS", "DONE"
+  
+  authorId    String
+  author      User     @relation("TaskAuthor", fields: [authorId], references: [id])
+  
+  assigneeId  String?
+  assignee    User?    @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }

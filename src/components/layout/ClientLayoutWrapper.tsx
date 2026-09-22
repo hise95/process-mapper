@@ -34,7 +34,10 @@ export function ClientLayoutWrapper({
     if (path === '/repository') return 'Репозиторій процесів';
     if (path === '/architecture') return 'Архітектура процесів';
     if (path === '/admin') return 'Адмін-панель';
+    if (path === '/analyst-board') return 'Дошка аналітиків';
     if (path === '/notifications') return 'Сповіщення';
+    if (path === '/wiki') return 'База знань (FAQ)';
+    if (path === '/feedback') return 'Звернення користувачів';
     return '';
   };
 

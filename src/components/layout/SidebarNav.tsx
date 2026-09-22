@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 import { Button } from '@/components/ui/button';
+import { FeedbackDialog } from '@/components/feedback/FeedbackDialog';
 
 interface SidebarNavProps {
   canViewDashboard?: boolean;
@@ -90,7 +91,11 @@ export function SidebarNav({
       )}
 
       <Link href="/repository" className={linkClass('/repository')}>
-        📚 Репозиторій
+        📋 Репозиторій
+      </Link>
+
+      <Link href="/wiki" className={linkClass('/wiki')}>
+        📚 База знань
       </Link>
 
       {isAnalyst && (
@@ -115,6 +120,22 @@ export function SidebarNav({
           </Link>
         </div>
       )}
+
+      <div className="pt-4 mt-4 border-t border-[#333333] space-y-2">
+        {isAnalyst && (
+          <>
+            <Link href="/analyst-board" className={linkClass('/analyst-board')}>
+              📌 Дошка аналітиків
+            </Link>
+            <Link href="/feedback" className={linkClass('/feedback')}>
+              💬 Звернення
+            </Link>
+          </>
+        )}
+        <div className="px-3">
+          <FeedbackDialog />
+        </div>
+      </div>
     </nav>
   );
 }

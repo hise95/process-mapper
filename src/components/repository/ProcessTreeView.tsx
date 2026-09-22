@@ -59,6 +59,23 @@ export function ProcessTreeView() {
     }))
   }
 
+  // Artificial grouping
+  const getGroupedData = () => {
+    const mgmt: LevelNode = { id: 'group-m', name: 'Управлінські процеси', depth: 0, children: [] };
+    const main: LevelNode = { id: 'group-b', name: 'Основні процеси', depth: 0, children: [] };
+    const supp: LevelNode = { id: 'group-s', name: 'Сервісні процеси', depth: 0, children: [] };
+
+    treeData.forEach(l1 => {
+      if (l1.name.startsWith('M')) mgmt.children!.push(l1);
+      else if (l1.name.startsWith('S')) supp.children!.push(l1);
+      else main.children!.push(l1);
+    });
+
+    return [mgmt, main, supp].filter(g => g.children!.length > 0);
+  }
+
+  const groupedTreeData = getGroupedData();
+
   const renderProcess = (process: ProcessNode) => (
     <div key={process.id} className="flex items-center justify-between p-3 ml-6 mb-2 bg-muted/20 border rounded-md hover:bg-muted/40 transition-colors">
       <div className="flex items-center gap-3">
@@ -104,10 +121,9 @@ export function ProcessTreeView() {
     }).filter(Boolean) as LevelNode[];
   };
 
-  const filteredTree = filterTree(treeData);
+  const filteredTree = filterTree(groupedTreeData);
 
   // If query is present, we might want to auto-expand, but simple approach is just let users click or they will be empty.
-  // Actually, let's auto-expand all if query is present.
   const isAutoExpand = !!query;
 
   const renderLevel = (level: LevelNode, depth: number) => {
@@ -126,11 +142,15 @@ export function ProcessTreeView() {
             <div className="w-4 h-4" />
           )}
           <span className="font-semibold">{level.name}</span>
-          <Badge variant="secondary" className="ml-2 text-xs">
-            L{depth}
-          </Badge>
+          {depth > 0 && (
+            <Badge variant="secondary" className="ml-2 text-xs">
+              L{depth}
+            </Badge>
+          )}
           <span className="text-xs text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity">
-            {level.processes?.length || 0} процесів
+            {depth === 0 && `${level.children?.length || 0} напрямків (L1)`}
+            {depth === 1 && `${level.children?.length || 0} піднапрямків (L2)`}
+            {depth >= 2 && `${level.processes?.length || 0} процесів`}
           </span>
         </div>
 
@@ -162,8 +182,7 @@ export function ProcessTreeView() {
 
   return (
     <div className="space-y-4">
-      {filteredTree.map(l1 => renderLevel(l1, 1))}
+      {filteredTree.map(l1 => renderLevel(l1, 0))}
     </div>
   )
 }
- 

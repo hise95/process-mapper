@@ -11,15 +11,21 @@ interface Notification {
   message: string;
   date: string;
   linkUrl: string | null;
+  isRead: boolean;
 }
 
 export default function NotificationsWidget({ initialNotifications }: { initialNotifications: Notification[] }) {
   const [notifications, setNotifications] = useState(initialNotifications);
   const router = useRouter();
 
-  const markAsRead = async (id: string, linkUrl: string | null) => {
-    await fetch('/api/notifications', { method: 'PATCH', body: JSON.stringify({ id }) });
-    setNotifications(n => n.filter(x => x.id !== id));
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  const markAsRead = async (id: string, isRead: boolean, linkUrl: string | null) => {
+    if (!isRead) {
+      await fetch('/api/notifications', { method: 'PATCH', body: JSON.stringify({ id }) });
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+      router.refresh();
+    }
     if (linkUrl) {
       router.push(linkUrl);
     }
@@ -27,7 +33,8 @@ export default function NotificationsWidget({ initialNotifications }: { initialN
 
   const markAllAsRead = async () => {
     await fetch('/api/notifications/read-all', { method: 'POST' });
-    setNotifications([]);
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    router.refresh();
   };
 
   if (notifications.length === 0) return null;
@@ -35,14 +42,31 @@ export default function NotificationsWidget({ initialNotifications }: { initialN
   return (
     <div className="mb-8">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold flex items-center gap-2">Сповіщення <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{notifications.length}</span></h2>
-        <Button variant="outline" size="sm" onClick={markAllAsRead}>Прочитати все</Button>
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          Сповіщення 
+          {unreadCount > 0 && (
+            <span className="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">{unreadCount}</span>
+          )}
+        </h2>
+        {unreadCount > 0 && (
+          <Button variant="outline" size="sm" onClick={markAllAsRead}>Прочитати все</Button>
+        )}
       </div>
       <div className="grid gap-3">
         {notifications.map(n => (
-          <div key={n.id} onClick={() => markAsRead(n.id, n.linkUrl)} className="bg-card border border-border rounded-lg p-4 cursor-pointer hover:border-primary hover:shadow-sm transition-all">
+          <div 
+            key={n.id} 
+            onClick={() => markAsRead(n.id, n.isRead, n.linkUrl)} 
+            className={`border rounded-lg p-4 cursor-pointer transition-all ${
+              n.isRead 
+                ? 'bg-muted/30 border-transparent opacity-70 hover:opacity-100 hover:bg-muted/50' 
+                : 'bg-card border-l-4 border-l-primary hover:border-primary hover:shadow-sm'
+            }`}
+          >
             <div className="flex justify-between items-start mb-1">
-              <h4 className="font-semibold text-foreground">{n.title}</h4>
+              <h4 className={`font-semibold ${n.isRead ? 'text-muted-foreground' : 'text-foreground'}`}>
+                {n.title}
+              </h4>
               <span className="text-xs text-muted-foreground">{new Date(n.date).toLocaleDateString('uk-UA')}</span>
             </div>
             <p className="text-sm text-muted-foreground">{n.message}</p>

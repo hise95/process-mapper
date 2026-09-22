@@ -18,7 +18,10 @@ export default async function Sidebar() {
   if (canViewApprovals) {
     if (isAnalystOrAdmin) {
       pendingApprovalsCount = await prisma.process.count({
-        where: { status: { in: ['PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST'] } }
+        where: { status: { in: [
+          'PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST',
+          'PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'
+        ] } }
       });
     } else if (session.role === 'PROCESS_OWNER') {
       pendingApprovalsCount = await prisma.process.count({

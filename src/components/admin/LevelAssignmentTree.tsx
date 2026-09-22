@@ -58,7 +58,7 @@ export function LevelAssignmentTree() {
       const res = await fetch(`/api/process-levels/${levelId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ adminId: adminId === "none" ? null : adminId }),
+        body: JSON.stringify({ adminId: adminId === "unassigned" ? null : adminId }),
       })
       if (res.ok) {
         alert("Відповідального оновлено")
@@ -129,14 +129,20 @@ export function LevelAssignmentTree() {
           
           <div className="ml-auto w-64">
             <Select 
-              value={level.adminId || "none"} 
+              value={level.adminId || "unassigned"} 
               onValueChange={(val) => handleAssignAdmin(level.id, val)}
             >
               <SelectTrigger className="h-8 text-xs">
-                <SelectValue placeholder="Відповідальний" />
+                <SelectValue placeholder="Відповідальний">
+                  {!level.adminId || level.adminId === "unassigned" 
+                    ? "Не призначено" 
+                    : users.find(u => u.id === level.adminId)
+                      ? `${users.find(u => u.id === level.adminId)?.fullName} (${users.find(u => u.id === level.adminId)?.role})`
+                      : level.adminId}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Не призначено</SelectItem>
+                <SelectItem value="unassigned">Не призначено</SelectItem>
                 {users.map(u => (
                   <SelectItem key={u.id} value={u.id}>{u.fullName} ({u.role})</SelectItem>
                 ))}

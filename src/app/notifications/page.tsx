@@ -5,8 +5,9 @@ import NotificationsWidget from '@/components/dashboard/NotificationsWidget';
 
 async function fetchNotifications(userId: string) {
   const notifs = await prisma.notification.findMany({
-    where: { userId, isRead: false },
+    where: { userId },
     orderBy: { createdAt: 'desc' },
+    take: 50,
   });
 
   return notifs.map(n => ({
@@ -14,7 +15,8 @@ async function fetchNotifications(userId: string) {
     message: n.message,
     date: n.createdAt.toISOString(),
     title: n.title,
-    linkUrl: n.linkUrl
+    linkUrl: n.linkUrl,
+    isRead: n.isRead
   }));
 }
 
