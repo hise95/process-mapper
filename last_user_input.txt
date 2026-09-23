@@ -1,0 +1,9 @@
+<USER_REQUEST>
+Тестування відкладаємо, поки що завантаж локально перелік процесів в репозиторій, зроби їм сторінки, але хай вони будуть пусті, головне побачити як виглядатиме структура репозиторію коли він буде заповнений, в нас є коди, S-сервісні, B-основні, управлінськи поки немає 
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-09-21T16:54:00+03:00.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.8 Flash (Medium) to Gemini 3.1 Pro (Low). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
