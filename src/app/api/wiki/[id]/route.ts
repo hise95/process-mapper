@@ -3,8 +3,9 @@ import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
 
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, props: { params: Promise<{ id: string }> }) {
   try {
+    const params = await props.params;
     const session = await getSession();
     if (!session || !isAnalystOrAdmin(session.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -29,8 +30,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, props: { params: Promise<{ id: string }> }) {
   try {
+    const params = await props.params;
     const session = await getSession();
     if (!session || !isAnalystOrAdmin(session.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
