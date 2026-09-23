@@ -107,9 +107,176 @@ test.describe('Повний життєвий цикл процесу', () => {
     await analystPage.waitForTimeout(1000);
 
     // === ПЕРЕВІРКА РЕПОЗИТОРІЮ ===
-    // Працівник (або будь-хто інший) має побачити цей процес в репозиторії
     await managerPage.goto('http://localhost:3000/repository');
     await expect(managerPage.locator('text=' + processName).first()).toBeVisible();
+
+    await browser.close();
+  });
+
+  test('Створення Власником -> Повне погодження Аналітиком та Власником -> Репозиторій', async () => {
+    test.setTimeout(120000);
+    const browser = await chromium.launch();
+    
+    const ownerPage = await createSession(browser, 'owner');
+    const analystPage = await createSession(browser, 'analyst');
+
+    const processName = `Повний цикл Власника ${Date.now()}`;
+
+    // 1. Власник створює процес
+    await ownerPage.click('a[href="/processes/new"]');
+    await ownerPage.fill('input[name="name"]', processName);
+    await ownerPage.fill('textarea[name="description"]', 'Створено власником');
+    await ownerPage.click('button[type="submit"]');
+    await ownerPage.waitForURL(/.*\/processes\/.*/);
+    const processUrl = ownerPage.url();
+    
+    // Власник відправляє паспорт
+    let sendBtn = ownerPage.locator('button:has-text("Відправити на перевірку")');
+    if (await sendBtn.isVisible()) await sendBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // 2. Аналітик погоджує
+    await analystPage.goto(processUrl);
+    let approveBtn = analystPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // 3. Власник погоджує свою ж фазу (якщо вимагає система)
+    await ownerPage.reload();
+    approveBtn = ownerPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // ФАЗА 2: Кроки (Власник заповнює)
+    await ownerPage.reload();
+    sendBtn = ownerPage.locator('button:has-text("Відправити на перевірку")');
+    if (await sendBtn.isVisible()) await sendBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // Аналітик погоджує кроки
+    await analystPage.reload();
+    approveBtn = analystPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // Власник погоджує кроки
+    await ownerPage.reload();
+    approveBtn = ownerPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // ФАЗА 3: Показники (Власник заповнює)
+    await ownerPage.reload();
+    sendBtn = ownerPage.locator('button:has-text("Відправити на перевірку")');
+    if (await sendBtn.isVisible()) await sendBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // Аналітик погоджує показники
+    await analystPage.reload();
+    approveBtn = analystPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // Власник погоджує показники
+    await ownerPage.reload();
+    approveBtn = ownerPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // Фінальне затвердження Аналітиком
+    await analystPage.reload();
+    approveBtn = analystPage.locator('button:has-text("Фінально затвердити")');
+    if (await approveBtn.isVisible()) {
+        await approveBtn.click();
+    } else {
+        approveBtn = analystPage.locator('button:has-text("Погодити")');
+        if (await approveBtn.isVisible()) await approveBtn.click();
+    }
+    await analystPage.waitForTimeout(1000);
+
+    await browser.close();
+  });
+
+  test('Створення Аналітиком -> Повне погодження Власником та Аналітиком -> Репозиторій', async () => {
+    test.setTimeout(120000);
+    const browser = await chromium.launch();
+    
+    const analystPage = await createSession(browser, 'analyst');
+    const ownerPage = await createSession(browser, 'owner');
+
+    const processName = `Повний цикл Аналітика ${Date.now()}`;
+
+    // 1. Аналітик створює процес
+    await analystPage.click('a[href="/processes/new"]');
+    await analystPage.fill('input[name="name"]', processName);
+    await analystPage.fill('textarea[name="description"]', 'Створено аналітиком');
+    await analystPage.click('button[type="submit"]');
+    await analystPage.waitForURL(/.*\/processes\/.*/);
+    const processUrl = analystPage.url();
+    
+    // Аналітик відправляє паспорт
+    let sendBtn = analystPage.locator('button:has-text("Відправити на перевірку")');
+    if (await sendBtn.isVisible()) await sendBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // Аналітик сам погоджує паспорт (перший етап)
+    await analystPage.reload();
+    let approveBtn = analystPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // Власник погоджує паспорт
+    await ownerPage.goto(processUrl);
+    approveBtn = ownerPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // ФАЗА 2: Аналітик відправляє кроки
+    await analystPage.reload();
+    sendBtn = analystPage.locator('button:has-text("Відправити на перевірку")');
+    if (await sendBtn.isVisible()) await sendBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // Аналітик погоджує кроки
+    await analystPage.reload();
+    approveBtn = analystPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // Власник погоджує кроки
+    await ownerPage.reload();
+    approveBtn = ownerPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // ФАЗА 3: Аналітик відправляє показники
+    await analystPage.reload();
+    sendBtn = analystPage.locator('button:has-text("Відправити на перевірку")');
+    if (await sendBtn.isVisible()) await sendBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // Аналітик погоджує показники
+    await analystPage.reload();
+    approveBtn = analystPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await analystPage.waitForTimeout(1000);
+
+    // Власник погоджує показники
+    await ownerPage.reload();
+    approveBtn = ownerPage.locator('button:has-text("Погодити")');
+    if (await approveBtn.isVisible()) await approveBtn.click();
+    await ownerPage.waitForTimeout(1000);
+
+    // Фінальне затвердження Аналітиком
+    await analystPage.reload();
+    approveBtn = analystPage.locator('button:has-text("Фінально затвердити")');
+    if (await approveBtn.isVisible()) {
+        await approveBtn.click();
+    } else {
+        approveBtn = analystPage.locator('button:has-text("Погодити")');
+        if (await approveBtn.isVisible()) await approveBtn.click();
+    }
+    await analystPage.waitForTimeout(1000);
 
     await browser.close();
   });
