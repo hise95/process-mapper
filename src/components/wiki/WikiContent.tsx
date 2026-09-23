@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { FileText, Activity, Users, CheckCircle, HelpCircle, Edit, Plus, Trash, Save, X } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import RichTextEditor from './RichTextEditor';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   HelpCircle: <HelpCircle className="w-5 h-5" />,
@@ -165,11 +166,10 @@ export default function WikiContent({ isEditor }: { isEditor?: boolean }) {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Контент (HTML)</label>
-                <textarea 
-                  className="w-full h-96 p-3 rounded-md border bg-background"
-                  value={editForm.content || ''} 
-                  onChange={e => setEditForm({...editForm, content: e.target.value})} 
+                <label className="text-sm font-medium mb-1 block">Контент</label>
+                <RichTextEditor 
+                  content={editForm.content || ''} 
+                  onChange={content => setEditForm({...editForm, content})} 
                 />
               </div>
             </div>
@@ -182,7 +182,7 @@ export default function WikiContent({ isEditor }: { isEditor?: boolean }) {
                 </div>
               )}
               {activeSection ? (
-                <div dangerouslySetInnerHTML={{ __html: activeSection.content }} />
+                <div className="ProseMirror" dangerouslySetInnerHTML={{ __html: activeSection.content }} />
               ) : (
                 <div className="text-muted-foreground">Оберіть сторінку зліва або створіть нову.</div>
               )}
