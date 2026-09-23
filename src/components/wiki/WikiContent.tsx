@@ -159,11 +159,24 @@ export default function WikiContent({ isEditor }: { isEditor?: boolean }) {
                 />
               </div>
               <div>
-                <label className="text-sm font-medium mb-1 block">Іконка (HelpCircle, Activity, FileText, Users, CheckCircle)</label>
-                <Input 
-                  value={editForm.icon || ''} 
-                  onChange={e => setEditForm({...editForm, icon: e.target.value})} 
-                />
+                <label className="text-sm font-medium mb-2 block">Іконка</label>
+                <div className="flex gap-2 flex-wrap">
+                  {Object.keys(ICON_MAP).map(iconName => (
+                    <button
+                      key={iconName}
+                      type="button"
+                      onClick={() => setEditForm({ ...editForm, icon: iconName })}
+                      className={`p-2 rounded-md border flex items-center justify-center transition-colors ${
+                        editForm.icon === iconName 
+                          ? 'border-primary bg-primary/10 text-primary' 
+                          : 'border-border hover:bg-muted text-muted-foreground'
+                      }`}
+                      title={iconName}
+                    >
+                      {ICON_MAP[iconName]}
+                    </button>
+                  ))}
+                </div>
               </div>
               <div>
                 <label className="text-sm font-medium mb-1 block">Контент</label>
