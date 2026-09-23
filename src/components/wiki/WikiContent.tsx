@@ -4,7 +4,11 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FileText, Activity, Users, CheckCircle, HelpCircle, Edit, Plus, Trash, Save, X } from 'lucide-react';
+import { 
+  FileText, Activity, Users, CheckCircle, HelpCircle, Edit, Plus, Trash, Save, X,
+  Book, BookOpen, AlertTriangle, Shield, Settings, Server, Globe, Database, Key, 
+  Lightbulb, MessagesSquare, PlayCircle, Star, Terminal, Zap, Briefcase, GraduationCap
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import RichTextEditor from './RichTextEditor';
 
@@ -13,7 +17,24 @@ const ICON_MAP: Record<string, React.ReactNode> = {
   Activity: <Activity className="w-5 h-5" />,
   FileText: <FileText className="w-5 h-5" />,
   Users: <Users className="w-5 h-5" />,
-  CheckCircle: <CheckCircle className="w-5 h-5" />
+  CheckCircle: <CheckCircle className="w-5 h-5" />,
+  Book: <Book className="w-5 h-5" />,
+  BookOpen: <BookOpen className="w-5 h-5" />,
+  AlertTriangle: <AlertTriangle className="w-5 h-5" />,
+  Shield: <Shield className="w-5 h-5" />,
+  Settings: <Settings className="w-5 h-5" />,
+  Server: <Server className="w-5 h-5" />,
+  Globe: <Globe className="w-5 h-5" />,
+  Database: <Database className="w-5 h-5" />,
+  Key: <Key className="w-5 h-5" />,
+  Lightbulb: <Lightbulb className="w-5 h-5" />,
+  MessagesSquare: <MessagesSquare className="w-5 h-5" />,
+  PlayCircle: <PlayCircle className="w-5 h-5" />,
+  Star: <Star className="w-5 h-5" />,
+  Terminal: <Terminal className="w-5 h-5" />,
+  Zap: <Zap className="w-5 h-5" />,
+  Briefcase: <Briefcase className="w-5 h-5" />,
+  GraduationCap: <GraduationCap className="w-5 h-5" />
 };
 
 interface WikiPage {
@@ -195,7 +216,10 @@ export default function WikiContent({ isEditor }: { isEditor?: boolean }) {
                 </div>
               )}
               {activeSection ? (
-                <div className="ProseMirror" dangerouslySetInnerHTML={{ __html: activeSection.content }} />
+                <div 
+                  className="prose prose-neutral dark:prose-invert max-w-none ProseMirror" 
+                  dangerouslySetInnerHTML={{ __html: activeSection.content }} 
+                />
               ) : (
                 <div className="text-muted-foreground">Оберіть сторінку зліва або створіть нову.</div>
               )}

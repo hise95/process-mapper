@@ -100,7 +100,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           <Unlink className="w-4 h-4" />
         </Button>
       </div>
-      <div className="p-4">
+      <div className="p-4 prose prose-neutral dark:prose-invert max-w-none">
         <EditorContent editor={editor} />
       </div>
     </div>
