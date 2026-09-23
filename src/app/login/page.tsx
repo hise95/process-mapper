@@ -88,6 +88,16 @@ export default function LoginPage() {
           </CardContent>
         </Card>
 
+        <div className="mt-8 text-center text-sm text-muted-foreground bg-card p-4 rounded-xl border border-border">
+          <p className="font-semibold text-foreground mb-2">Демонстраційні акаунти (пароль: password123):</p>
+          <ul className="text-xs space-y-1">
+            <li><strong className="text-foreground">Адміністратор:</strong> admin@company.com</li>
+            <li><strong className="text-foreground">Аналітик:</strong> analyst@company.com</li>
+            <li><strong className="text-foreground">Власник:</strong> owner@company.com</li>
+            <li><strong className="text-foreground">Менеджер:</strong> manager@company.com</li>
+            <li><strong className="text-foreground">Працівник:</strong> employee@company.com</li>
+          </ul>
+        </div>
       </div>
     </div>
   )
