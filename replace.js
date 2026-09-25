@@ -1,1 +1,0 @@
-const fs = require("fs"); const cp = require("child_process"); cp.execSync("git grep -l ADMIN_ANALYST").toString().split("\n").filter(Boolean).forEach(file => { let c = fs.readFileSync(file, "utf8"); c = c.replace(/ADMIN_ANALYST/g, "PROCESS_ANALYST"); fs.writeFileSync(file, c); });
