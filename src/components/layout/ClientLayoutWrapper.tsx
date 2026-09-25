@@ -48,7 +48,6 @@ export function ClientLayoutWrapper({
   const ROLES_UA: Record<string, string> = {
     ADMIN: 'Адміністратор',
     PROCESS_ANALYST: 'Процесний аналітик',
-    ADMIN_ANALYST: 'Процесний аналітик',
     PROCESS_MANAGER: 'Менеджер процесу',
     PROCESS_OWNER: 'Власник процесу',
     EMPLOYEE: 'Працівник',

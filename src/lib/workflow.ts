@@ -82,7 +82,7 @@ export function canExecuteTransition(
   user: SessionUser,
   process: { ownerId: string | null; managerId: string | null }
 ): boolean {
-  const isAnalyst = user.role === Role.PROCESS_ANALYST || user.role === Role.ADMIN_ANALYST || user.role === Role.ADMIN;
+  const isAnalyst = user.role === Role.PROCESS_ANALYST || user.role === Role.PROCESS_ANALYST || user.role === Role.ADMIN;
   const isOwner = isAnalyst || (user.role === Role.PROCESS_OWNER && process.ownerId === user.id);
   const isManager = isAnalyst || (user.role === Role.PROCESS_MANAGER && process.managerId === user.id);
 
@@ -201,7 +201,7 @@ export async function applyTransition(
 
     if (processData) {
       if (transition.includes('SUBMIT_') || transition === 'APPROVE_KPIS_OWNER') {
-        const analysts = await tx.user.findMany({ where: { role: { in: [Role.PROCESS_ANALYST, Role.ADMIN_ANALYST, Role.ADMIN] } } })
+        const analysts = await tx.user.findMany({ where: { role: { in: [Role.PROCESS_ANALYST, Role.PROCESS_ANALYST, Role.ADMIN] } } })
         if (analysts.length > 0) {
           await tx.notification.createMany({
             data: analysts.map(a => ({

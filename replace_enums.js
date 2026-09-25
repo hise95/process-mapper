@@ -5,7 +5,7 @@ const filePath = path.join(__dirname, 'prisma', 'seed.ts');
 let content = fs.readFileSync(filePath, 'utf-8');
 
 const replacements = {
-    'Role.ADMIN_ANALYST': '"ADMIN_ANALYST"',
+    'Role.PROCESS_ANALYST': '"PROCESS_ANALYST"',
     'Role.PROCESS_MANAGER': '"PROCESS_MANAGER"',
     'Role.PROCESS_OWNER': '"PROCESS_OWNER"',
     'ProcessType.ОСНОВНИЙ': '"MAIN"',

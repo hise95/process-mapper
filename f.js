@@ -1,0 +1,1 @@
+const fs = require('fs'); let c = fs.readFileSync('src/components/admin/UserRoleTable.tsx', 'utf8'); c = c.split('\n').filter((l, i, a) => !(l.includes('PROCESS_ANALYST') && a[i-1] && a[i-1].includes('PROCESS_ANALYST'))).join('\n'); fs.writeFileSync('src/components/admin/UserRoleTable.tsx', c); console.log('Done');

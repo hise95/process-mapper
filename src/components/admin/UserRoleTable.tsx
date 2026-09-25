@@ -69,7 +69,6 @@ export function UserRoleTable({ currentUser }: { currentUser: any }) {
   const roleLabels: Record<string, string> = {
     "ADMIN": "Адміністратор",
     "PROCESS_ANALYST": "Процесний аналітик",
-    "ADMIN_ANALYST": "Процесний аналітик",
     "PROCESS_OWNER": "Власник процесу",
     "PROCESS_MANAGER": "Менеджер процесу",
     "EMPLOYEE": "Працівник",

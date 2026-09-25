@@ -349,7 +349,7 @@ async function main() {
         id: 'workflow-003-1',
         processId: reviewProcess.id,
         stage: "PASSPORT_ANALYST_REVIEW",
-        assignedToRole: "ADMIN_ANALYST",
+        assignedToRole: "PROCESS_ANALYST",
         isCompleted: false,
       },
     ],
@@ -402,7 +402,7 @@ async function main() {
         id: 'workflow-004-1',
         processId: reviewOwnerProcess.id,
         stage: "PASSPORT_ANALYST_REVIEW",
-        assignedToRole: "ADMIN_ANALYST",
+        assignedToRole: "PROCESS_ANALYST",
         isCompleted: true,
         completedAt: new Date('2026-09-06'),
         comment: 'Аналітик погодив',
@@ -538,7 +538,7 @@ async function main() {
   console.log('🎉 Seed завершено успішно!')
   console.log('')
   console.log('📋 Облікові дані для входу (mock auth):')
-  console.log('   ADMIN_ANALYST  → analyst@company.com')
+  console.log('   PROCESS_ANALYST  → analyst@company.com')
   console.log('   PROCESS_MANAGER → manager@company.com')
   console.log('   PROCESS_OWNER  → owner@company.com')
   console.log('   EMPLOYEE       → employee@company.com')

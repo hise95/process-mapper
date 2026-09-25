@@ -8,7 +8,7 @@ export default async function Sidebar() {
 
   const user = session;
 
-  const isAnalystOrAdmin = session.role === 'PROCESS_ANALYST' || session.role === 'ADMIN_ANALYST' || session.role === 'ADMIN';
+  const isAnalystOrAdmin = session.role === 'PROCESS_ANALYST' || session.role === 'PROCESS_ANALYST' || session.role === 'ADMIN';
   const canViewProcesses = session.role === 'PROCESS_MANAGER' || isAnalystOrAdmin || session.role === 'PROCESS_OWNER';
   const canViewApprovals = session.role === 'PROCESS_OWNER' || isAnalystOrAdmin;
   const isAdmin = session.role === 'ADMIN';

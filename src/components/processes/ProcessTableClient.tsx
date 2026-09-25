@@ -263,7 +263,7 @@ export function ProcessTableClient({
             >
               Переглянути
             </Link>
-            {(session.role === 'ADMIN_ANALYST' || process.managerId === session.id || process.ownerId === session.id) && (
+            {(session.role === 'ADMIN' || session.role === 'PROCESS_ANALYST' || process.managerId === session.id || process.ownerId === session.id) && (
               <Link
                 href={`/processes/${process.id}/edit`}
                 className={buttonVariants({ variant: 'outline', size: 'sm' }) + ' h-7 px-2.5 text-xs text-[#fa4616] border-orange-200 hover:bg-orange-50'}

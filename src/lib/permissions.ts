@@ -8,7 +8,6 @@ import { Role } from './enums';
 export const ROLES_UA: Record<string, string> = {
   ADMIN: 'Адміністратор',
   PROCESS_ANALYST: 'Процесний аналітик',
-  ADMIN_ANALYST: 'Процесний аналітик',
   PROCESS_MANAGER: 'Менеджер процесу',
   PROCESS_OWNER: 'Власник процесу',
   EMPLOYEE: 'Працівник',
@@ -16,7 +15,7 @@ export const ROLES_UA: Record<string, string> = {
 
 // ── Допоміжна перевірка аналітика ──
 export const isAnalystOrAdmin = (role: string) => 
-  role === Role.PROCESS_ANALYST || role === Role.ADMIN_ANALYST || role === Role.ADMIN
+  role === Role.PROCESS_ANALYST || role === Role.PROCESS_ANALYST || role === Role.ADMIN
 
 export const isAnalystRole = isAnalystOrAdmin;
 

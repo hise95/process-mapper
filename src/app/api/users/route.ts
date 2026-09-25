@@ -1,6 +1,6 @@
 // src/app/api/users/route.ts
 // GET — список користувачів (для вибору owner/manager)
-// PATCH — змінити роль або рівень (тільки ADMIN_ANALYST)
+// PATCH — змінити роль або рівень (тільки PROCESS_ANALYST)
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'

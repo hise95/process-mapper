@@ -26,7 +26,7 @@ async function main() {
   // Fetch users and levels
   const manager = await prisma.user.findFirst({ where: { role: 'PROCESS_MANAGER' } })
   const owner = await prisma.user.findFirst({ where: { role: 'PROCESS_OWNER' } })
-  const analyst = await prisma.user.findFirst({ where: { role: { in: ['PROCESS_ANALYST', 'ADMIN_ANALYST', 'ADMIN'] } } })
+  const analyst = await prisma.user.findFirst({ where: { role: { in: ['PROCESS_ANALYST', 'PROCESS_ANALYST', 'ADMIN'] } } })
   
   if (!manager || !owner || !analyst) {
     throw new Error('Користувачів не знайдено, спочатку запустіть базовий seed')

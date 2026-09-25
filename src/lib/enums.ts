@@ -2,7 +2,6 @@
 export const Role = {
   ADMIN: 'ADMIN',
   PROCESS_ANALYST: 'PROCESS_ANALYST',
-  ADMIN_ANALYST: 'ADMIN_ANALYST', // для зворотної сумісності
   PROCESS_MANAGER: 'PROCESS_MANAGER',
   PROCESS_OWNER: 'PROCESS_OWNER',
   EMPLOYEE: 'EMPLOYEE',
@@ -13,7 +12,6 @@ export type Role = typeof Role[keyof typeof Role];
 export const ROLES_UA: Record<string, string> = {
   ADMIN: 'Адміністратор',
   PROCESS_ANALYST: 'Процесний аналітик',
-  ADMIN_ANALYST: 'Процесний аналітик',
   PROCESS_MANAGER: 'Менеджер процесу',
   PROCESS_OWNER: 'Власник процесу',
   EMPLOYEE: 'Працівник',

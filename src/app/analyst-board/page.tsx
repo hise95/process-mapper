@@ -18,7 +18,7 @@ export default async function AnalystBoardPage() {
   });
 
   const analysts = await prisma.user.findMany({
-    where: { role: { in: ['PROCESS_ANALYST', 'ADMIN_ANALYST', 'ADMIN'] } },
+    where: { role: { in: ['PROCESS_ANALYST', 'PROCESS_ANALYST', 'ADMIN'] } },
     select: { id: true, fullName: true }
   });
 

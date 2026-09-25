@@ -17,7 +17,7 @@ export default async function ProcessesPage() {
   const where =
     session.role === 'PROCESS_MANAGER' ? { managerId: session.id } :
     session.role === 'PROCESS_OWNER'   ? { ownerId: session.id }   :
-    {};  // ADMIN_ANALYST — бачить усі
+    {};  // PROCESS_ANALYST — бачить усі
 
   const processes = await prisma.process.findMany({
     where,

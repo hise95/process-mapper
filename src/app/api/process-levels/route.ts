@@ -1,6 +1,6 @@
 // src/app/api/process-levels/route.ts
 // GET — дерево рівнів (L1 → L2 → L3)
-// POST — створити рівень (тільки ADMIN_ANALYST)
+// POST — створити рівень (тільки PROCESS_ANALYST)
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'

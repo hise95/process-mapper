@@ -18,7 +18,7 @@ export default async function WikiPage() {
       </div>
 
       <WikiContent 
-        isEditor={session.role === 'ADMIN' || session.role === 'PROCESS_ANALYST' || session.role === 'ADMIN_ANALYST'} 
+        isEditor={session.role === 'ADMIN' || session.role === 'PROCESS_ANALYST' || session.role === 'PROCESS_ANALYST'} 
       />
     </div>
   );
