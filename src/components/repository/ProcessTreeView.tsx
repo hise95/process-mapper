@@ -36,8 +36,12 @@ export function ProcessTreeView() {
           const data = await res.json()
           setTreeData(data)
           
-          // За замовчуванням відкриваємо тільки L1
-          const initialExpanded: Record<string, boolean> = {}
+          // За замовчуванням відкриваємо кореневі групи та L1
+          const initialExpanded: Record<string, boolean> = {
+            'group-m': true,
+            'group-b': true,
+            'group-s': true,
+          }
           data.forEach((l1: LevelNode) => {
             initialExpanded[l1.id] = true
           })

@@ -76,7 +76,7 @@ export async function PATCH(
     // Перевірити рівень якщо змінюється
     if (data.levelId) {
       const level = await prisma.processLevel.findUnique({ where: { id: data.levelId as string } })
-      if (level && level.depth < 2) {
+      if (level && level.depth < 1) {
         return NextResponse.json({ error: 'Процес можна прив\'язати тільки до рівня L2 або L3' }, { status: 400 })
       }
     }

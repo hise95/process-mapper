@@ -19,6 +19,7 @@ interface ProcessLevel {
   id: string;
   name: string;
   depth: number;
+  parentId?: string | null;
   parent?: { name: string } | null;
 }
 
@@ -36,6 +37,8 @@ export function FinalClassificationModal({ processId, isOpen, onClose, onSuccess
   const [code, setCode] = useState("")
   const [processType, setProcessType] = useState("MAIN")
   const [levelId, setLevelId] = useState("")
+  const [createNewSublevel, setCreateNewSublevel] = useState(false)
+  const [newSublevelName, setNewSublevelName] = useState("")
 
   useEffect(() => {
     if (isOpen) {
@@ -47,18 +50,32 @@ export function FinalClassificationModal({ processId, isOpen, onClose, onSuccess
   }, [isOpen])
 
   const handleSubmit = async () => {
-    if (!code || !processType || !levelId) {
-      alert("Всі поля обов'язкові для заповнення")
+    if (!code || !processType || !levelId || (createNewSublevel && !newSublevelName)) {
+      alert("Всі обов'язкові поля повинні бути заповнені")
       return
     }
 
     setLoading(true)
     try {
+      let finalLevelId = levelId;
+      
+      // Якщо обрано створення підрівня
+      if (createNewSublevel && newSublevelName) {
+        const lvlRes = await fetch("/api/levels", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newSublevelName, parentId: levelId })
+        });
+        if (!lvlRes.ok) throw new Error("Помилка створення підрівня");
+        const newLvl = await lvlRes.json();
+        finalLevelId = newLvl.id;
+      }
+
       // 1. Оновлюємо класифікаційні дані
       const patchRes = await fetch(`/api/processes/${processId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, processType, levelId }),
+        body: JSON.stringify({ code, processType, levelId: finalLevelId }),
       })
       
       if (!patchRes.ok) {
@@ -88,7 +105,7 @@ export function FinalClassificationModal({ processId, isOpen, onClose, onSuccess
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !loading && !open && onClose()}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Фінальна класифікація</DialogTitle>
           <DialogDescription>
@@ -114,8 +131,10 @@ export function FinalClassificationModal({ processId, isOpen, onClose, onSuccess
               Тип процесу <span className="text-red-500">*</span>
             </Label>
             <Select value={processType} onValueChange={(val) => setProcessType(val || "MAIN")} disabled={loading}>
-              <SelectTrigger>
-                <SelectValue placeholder="Виберіть тип" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Виберіть тип">
+                  {processType === 'MANAGERIAL' ? 'Управлінський' : processType === 'SERVICE' ? 'Сервісний' : 'Основний'}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="MANAGERIAL">Управлінський</SelectItem>
@@ -130,18 +149,81 @@ export function FinalClassificationModal({ processId, isOpen, onClose, onSuccess
               Рівень процесу <span className="text-red-500">*</span>
             </Label>
             <Select value={levelId} onValueChange={(val) => setLevelId(val || "")} disabled={loading}>
-              <SelectTrigger>
-                <SelectValue placeholder="Виберіть рівень" />
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="Виберіть рівень">
+                  {(() => {
+                    if (!levelId) return null;
+                    const l = levels.find(x => x.id === levelId);
+                    if (!l) return null;
+                    return l.parent ? `${l.parent.name} → ${l.name} (L${l.depth})` : `${l.name} (L${l.depth})`;
+                  })()}
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent>
-                {levels.filter(l => l.depth >= 2).map(level => (
-                  <SelectItem key={level.id} value={level.id}>
-                    {level.parent ? `${level.parent.name} → ` : ''}{level.name} (L{level.depth})
-                  </SelectItem>
-                ))}
+              <SelectContent className="max-w-[550px]">
+                {(() => {
+                  const getRootId = (id: string): string => {
+                    let current = levels.find(l => l.id === id);
+                    while (current && current.parentId) {
+                      const parent = levels.find(l => l.id === current!.parentId);
+                      if (!parent) break;
+                      current = parent;
+                    }
+                    return current ? current.id : id;
+                  };
+
+                  const targetPrefix = processType === 'MAIN' ? 'B.'
+                                     : processType === 'SERVICE' ? 'S.'
+                                     : 'M.';
+
+                  const filtered = levels.filter(l => {
+                    const rootId = getRootId(l.id);
+                    const root = levels.find(rl => rl.id === rootId);
+                    return root && root.name.startsWith(targetPrefix);
+                  });
+                  
+                  return filtered.map(level => (
+                    <SelectItem key={level.id} value={level.id}>
+                      {level.parent ? `${level.parent.name} → ` : ''}{level.name} (L{level.depth})
+                    </SelectItem>
+                  ));
+                })()}
               </SelectContent>
             </Select>
           </div>
+          {levelId && (
+            <div className="flex flex-col gap-3 mt-2 border-t pt-4">
+              <div className="flex items-center gap-2">
+                <input 
+                  type="checkbox" 
+                  id="create-sub" 
+                  checked={createNewSublevel} 
+                  onChange={(e) => setCreateNewSublevel(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  disabled={loading}
+                />
+                <Label htmlFor="create-sub" className="font-medium cursor-pointer">
+                  Створити новий підрівень (L{(() => {
+                    const l = levels.find(x => x.id === levelId);
+                    return l ? l.depth + 1 : 2;
+                  })()}) і прив'язати процес до нього?
+                </Label>
+              </div>
+              {createNewSublevel && (
+                <div className="pl-6 grid gap-2">
+                  <Label htmlFor="subname" className="text-left text-sm text-muted-foreground">
+                    Назва нового підрівня <span className="text-red-500">*</span>
+                  </Label>
+                  <Input
+                    id="subname"
+                    placeholder="Напр. Аналітика продажів"
+                    value={newSublevelName}
+                    onChange={(e) => setNewSublevelName(e.target.value)}
+                    disabled={loading}
+                  />
+                </div>
+              )}
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={loading}>
@@ -149,7 +231,7 @@ export function FinalClassificationModal({ processId, isOpen, onClose, onSuccess
           </Button>
           <Button 
             onClick={handleSubmit} 
-            disabled={loading || !code || !levelId || !processType}
+            disabled={loading || !code || !levelId || !processType || (createNewSublevel && !newSublevelName)}
             className="bg-[#fa4616] hover:bg-[#d93a10] text-white"
           >
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

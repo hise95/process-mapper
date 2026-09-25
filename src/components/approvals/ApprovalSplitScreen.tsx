@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { ProcessReadOnlyCard } from "./ProcessReadOnlyCard"
 import { WorkflowChecklist } from "./WorkflowChecklist"
 import { Loader2 } from "lucide-react"
@@ -27,6 +28,7 @@ export function ApprovalSplitScreen({ session }: { session: SessionUser }) {
   const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
+  const router = useRouter()
   const fetchProcesses = async () => {
     setLoading(true)
     try {
@@ -38,6 +40,8 @@ export function ApprovalSplitScreen({ session }: { session: SessionUser }) {
         if (data.length > 0 && (!selectedProcessId || !data.some((p: any) => p.id === selectedProcessId))) {
           setSelectedProcessId(data[0].id)
         }
+        // Оновлюємо серверні компоненти (напр. лічильник у сайдбарі)
+        router.refresh()
       }
     } catch (error) {
       console.error(error)

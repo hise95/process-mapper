@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
     // Перевірити що рівень L2 або L3
     if (levelId) {
       const level = await prisma.processLevel.findUnique({ where: { id: levelId } })
-      if (level && level.depth < 2) {
+      if (level && level.depth < 1) {
         return NextResponse.json({ error: 'Процес можна прив\'язати тільки до рівня L2 або L3' }, { status: 400 })
       }
     }

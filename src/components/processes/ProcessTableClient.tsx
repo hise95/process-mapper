@@ -46,9 +46,9 @@ const ALL_COLUMNS: ColumnDef[] = [
   { id: 'level',       label: 'Рівень',       defaultWidth: 120, minWidth: 80,  canHide: true },
   { id: 'manager',     label: 'Менеджер',     defaultWidth: 160, minWidth: 100, canHide: true },
   { id: 'owner',       label: 'Власник',      defaultWidth: 160, minWidth: 100, canHide: true },
-  { id: 'status',      label: 'Статус',       defaultWidth: 130, minWidth: 90,  canHide: true },
+  { id: 'status',      label: 'Статус',       defaultWidth: 200, minWidth: 150, canHide: true },
   { id: 'updatedAt',   label: 'Оновлено',     defaultWidth: 110, minWidth: 80,  canHide: true },
-  { id: 'actions',     label: 'Дії',          defaultWidth: 180, minWidth: 130, canHide: false },
+  { id: 'actions',     label: 'Дії',          defaultWidth: 220, minWidth: 200, canHide: false },
 ];
 
 const DEFAULT_ORDER = ALL_COLUMNS.map(c => c.id);
@@ -73,7 +73,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
   ARCHIVED:                { label: 'В архіві',                 variant: 'secondary' },
 };
 
-const STORAGE_KEY = 'process_mapper_table_settings_v1';
+const STORAGE_KEY = 'process_mapper_table_settings_v2';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -217,6 +217,8 @@ export function ProcessTableClient({
     .map(id => ALL_COLUMNS.find(c => c.id === id)!)
     .filter(Boolean);
 
+  const totalTableWidth = orderedVisibleColumns.reduce((sum, col) => sum + (columnWidths[col.id] || col.defaultWidth), 0);
+
   // Рендеринг вмісту клітинки
   const renderCellContent = (colId: string, process: ProcessTableRow) => {
     switch (colId) {
@@ -280,7 +282,7 @@ export function ProcessTableClient({
     <div className="space-y-4">
       {/* Таблиця */}
       <div className="rounded-xl border border-border shadow-sm bg-card overflow-x-auto">
-        <Table className="w-full table-fixed">
+        <Table className="w-full table-fixed" style={{ minWidth: totalTableWidth }}>
           <TableHeader>
             <TableRow className="bg-muted/50 border-b border-border select-none">
               {orderedVisibleColumns.map((col, index) => {

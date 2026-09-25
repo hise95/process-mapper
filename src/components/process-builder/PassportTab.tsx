@@ -53,6 +53,16 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
     }, 600);
   };
 
+  const getUserDisplayName = (userId?: string | null, fallbackUser?: { fullName?: string; email?: string } | null) => {
+    if (!userId || userId === 'none') return 'Не призначено';
+    const found = users.find(u => u.id === userId);
+    if (found) return `${found.fullName} (${found.email})`;
+    if (fallbackUser?.fullName) {
+      return fallbackUser.email ? `${fallbackUser.fullName} (${fallbackUser.email})` : fallbackUser.fullName;
+    }
+    return userId;
+  };
+
   return (
     <div className="space-y-6">
       {/* Інформаційна плашка про автозбереження */}
@@ -101,14 +111,17 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm flex items-center gap-1.5">
                 <User className="w-3.5 h-3.5 text-primary" />
-                <span>Менеджер процесу</span>
+                <span>Менеджер процесу (автоматично)</span>
               </Label>
               <Select
                 value={data.managerId || 'none'}
                 onValueChange={val => handleChange('managerId', !val || val === 'none' ? '' : val)}
+                disabled
               >
-                <SelectTrigger className="w-full h-10">
-                  <SelectValue placeholder="Не призначено" />
+                <SelectTrigger className="w-full h-10 opacity-70 cursor-not-allowed">
+                  <SelectValue placeholder="Не призначено">
+                    {getUserDisplayName(data.managerId, (data as any).manager)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Не призначено</SelectItem>
@@ -131,7 +144,9 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
                 onValueChange={val => handleChange('ownerId', !val || val === 'none' ? '' : val)}
               >
                 <SelectTrigger className="w-full h-10">
-                  <SelectValue placeholder="Не призначено" />
+                  <SelectValue placeholder="Не призначено">
+                    {getUserDisplayName(data.ownerId, (data as any).owner)}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="none">Не призначено</SelectItem>

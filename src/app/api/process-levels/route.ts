@@ -14,6 +14,10 @@ export async function GET(_req: NextRequest) {
   const levels = await prisma.processLevel.findMany({
     where: { depth: 1 },
     include: {
+      processes: {
+        where: { status: 'APPROVED' },
+        select: { id: true, title: true, code: true, version: true },
+      },
       children: {
         include: {
           children: {

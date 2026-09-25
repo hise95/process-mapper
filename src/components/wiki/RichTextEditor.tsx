@@ -18,6 +18,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       StarterKit,
       ImageExtension.configure({
         inline: true,
+        allowBase64: true,
         HTMLAttributes: {
           class: 'rounded-md max-w-full my-4 border border-border shadow-sm',
         },

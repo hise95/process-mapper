@@ -83,8 +83,10 @@ export function ClientLayoutWrapper({
             )}
           </div>
         </header>
-        <main className="flex-1 p-8 overflow-auto">
-          {children}
+        <main className="flex-1 overflow-auto">
+          <div className="p-8 pb-16 min-h-full">
+            {children}
+          </div>
         </main>
       </div>
     </div>
