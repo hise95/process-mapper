@@ -41,7 +41,7 @@ async function main() {
   const newProcesses = []
 
   // Generate 25 more processes to have ~30 total
-  for (let i = 1; i <= 25; i++) {
+  for (let i = 1; i <= 0; i++) {
     const status = statuses[Math.floor(Math.random() * statuses.length)]
     const type = processTypes[Math.floor(Math.random() * processTypes.length)]
     const level = levels[Math.floor(Math.random() * levels.length)]
