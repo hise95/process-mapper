@@ -1,36 +1,156 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Process Mapper AS-IS — Інструкція з розгортання (Deployment Guide)
 
-## Getting Started
+Цей документ призначений для Системного Адміністратора і містить покрокову інструкцію для розгортання системи на чистому сервері (наприклад, Ubuntu 22.04/24.04).
 
-First, run the development server:
+## 🛠 Технологічний стек
+- **Frontend/Backend:** Next.js (App Router), React, Node.js
+- **База даних:** PostgreSQL
+- **ORM:** Prisma
+- **Стилізація:** Tailwind CSS
 
+---
+
+## 1. Вимоги до сервера (Dependencies)
+На сервері повинні бути встановлені:
+1. **Node.js** (версія 18.17.0 або новіша)
+2. **npm** (йде в комплекті з Node.js)
+3. **PostgreSQL** (версія 14 або новіша)
+4. **Git**
+
+### Встановлення базових залежностей (Ubuntu/Debian):
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Оновлення системи
+sudo apt update && sudo apt upgrade -y
+
+# Встановлення Git, curl та Nginx
+sudo apt install git curl nginx -y
+
+# Встановлення Node.js (v20 LTS)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+
+# Встановлення PostgreSQL
+sudo apt install postgresql postgresql-contrib -y
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 2. Налаштування Бази Даних
+Системі потрібна порожня база даних PostgreSQL.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+# Заходимо в консоль PostgreSQL
+sudo -i -u postgres psql
 
-## Learn More
+# Виконуємо SQL-команди (замініть 'your_password' на надійний пароль)
+CREATE DATABASE process_mapper;
+CREATE USER process_user WITH ENCRYPTED PASSWORD 'your_password';
+GRANT ALL PRIVILEGES ON DATABASE process_mapper TO process_user;
+\c process_mapper
+GRANT ALL ON SCHEMA public TO process_user;
+\q
+```
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 3. Завантаження коду та встановлення пакетів
+```bash
+# Клонуємо репозиторій
+git clone https://github.com/hise95/process-mapper.git
+cd process-mapper
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+# Встановлюємо всі Node.js залежності
+npm install
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 4. Налаштування змінних оточення (.env)
+Створіть файл `.env` у корені проекту:
+```bash
+nano .env
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Додайте туди рядок підключення до бази даних (використовуйте дані з Кроку 2):
+```env
+# Формат: postgresql://USER:PASSWORD@HOST:PORT/DATABASE
+POSTGRES_URL="postgresql://process_user:your_password@localhost:5432/process_mapper"
+```
+
+---
+
+## 5. Ініціалізація бази даних та Seed
+Цей крок створить таблиці та згенерує базових користувачів і рівні L1-L3.
+
+```bash
+# Створення таблиць у базі даних
+npx prisma db push
+
+# Заповнення бази базовими даними (Створює Системного Адміністратора та ієрархію)
+npm run db:seed
+```
+> **Увага:** Після seed-у логін адміністратора за замовчуванням: `admin@company.com` / `password123`. Рекомендується змінити його після першого входу.
+
+---
+
+## 6. Збірка проекту (Build)
+Перед запуском у продакшені проект потрібно скомпілювати:
+```bash
+npm run build
+```
+
+---
+
+## 7. Запуск у Production за допомогою PM2
+Щоб програма працювала у фоновому режимі та автоматично перезапускалась після перезавантаження сервера, використовуємо **PM2**.
+
+```bash
+# Встановлюємо PM2 глобально
+sudo npm install -g pm2
+
+# Запускаємо проект
+pm2 start npm --name "process-mapper" -- start
+
+# Зберігаємо налаштування для автозапуску
+pm2 save
+pm2 startup
+# (Після виконання pm2 startup скопіюйте команду, яку видасть консоль, і виконайте її)
+```
+
+Система тепер працює локально на порту **3000** (`http://localhost:3000`).
+
+---
+
+## 8. Налаштування Nginx (Reverse Proxy)
+Щоб сайт був доступний ззовні через стандартний 80 порт (або домен), налаштуємо Nginx.
+
+```bash
+sudo nano /etc/nginx/sites-available/process-mapper
+```
+
+Вставте наступну конфігурацію (замініть `your_domain_or_IP`):
+```nginx
+server {
+    listen 80;
+    server_name your_domain_or_IP;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
+```
+
+Увімкніть конфігурацію та перезапустіть Nginx:
+```bash
+sudo ln -s /etc/nginx/sites-available/process-mapper /etc/nginx/sites-enabled/
+sudo nginx -t
+sudo systemctl restart nginx
+```
+
+## Готово! 🎉
+Проект розгорнуто. Відкрийте IP адресу вашого сервера або домен у браузері.
