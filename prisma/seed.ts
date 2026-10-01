@@ -73,86 +73,53 @@ async function main() {
   console.log('✅ Користувачі створені (Всі мають пароль "password123")')
 
   // ── Ієрархія рівнів процесів (L1 → L2 → L3) ──
-  const l1_main = await prisma.processLevel.upsert({
-    where: { id: 'l1-main' },
-    update: {},
+  console.log('Creating real L1 levels...');
+const l1Names = ["B.01 - Дослідження ринку та потреб споживачів","B.02 - Формування та розвиток ціннісної пропозиції","B.03 - Забезпечення торгової точки товаром (supply chain)","B.04 - Забезпечення легкої та комфортної покупки (продажі)","B.05 - Управління лояльністю та життєвим циклом клієнта","B.06 - Розвиток бренду, простору, продукту","B.07 - Створення простору отримання цінності","M.10 - Управління даними","S.01 - Забезпечення фінансами","S.02 - Забезпечення персоналом","S.03 - Технічне забезпечення","S.04 - Забезпечення та підтримка ІТ","S.05 - Юридичний супровід","S.06 - Бухгалтерській та управлінський облік","S.07 - Кадровий облік","S.08 - Забезпечення комплексної системи безпеки","S.09 - Забезпечення внутрішнього контролю та безпеки","S.10 - Тендерний комітет","S.11 - Офіс-менеджмент"];
+let i = 1;
+for (const name of l1Names) {
+  await prisma.processLevel.upsert({
+    where: { id: 'l1-real-' + i },
+    update: { name },
     create: {
-      id: 'l1-main',
-      name: 'Основні процеси',
+      id: 'l1-real-' + i,
+      name,
       depth: 1,
-      adminId: analyst.id,
-    },
-  })
+      adminId: analyst.id
+    }
+  });
+  i++;
+}
 
-  const l1_support = await prisma.processLevel.upsert({
-    where: { id: 'l1-support' },
-    update: {},
+    where: { email: 'employee@company.com' },
+    update: { fullName: 'Петренко Анна' },
     create: {
-      id: 'l1-support',
-      name: 'Підтримуючі процеси',
-      depth: 1,
-      adminId: analyst.id,
+      email: 'employee@company.com',
+      password: 'password123',
+      fullName: 'Петренко Анна',
+      role: "EMPLOYEE",
     },
   })
 
-  const l1_mgmt = await prisma.processLevel.upsert({
-    where: { id: 'l1-mgmt' },
-    update: {},
-    create: {
-      id: 'l1-mgmt',
-      name: 'Управлінські процеси',
-      depth: 1,
-      adminId: analyst.id,
-    },
-  })
+  console.log('✅ Користувачі створені (Всі мають пароль "password123")')
 
-  // L2
-  const l2_sales = await prisma.processLevel.upsert({
-    where: { id: 'l2-sales' },
-    update: {},
-    create: {
-      id: 'l2-sales',
-      name: 'Продажі',
-      depth: 2,
-      parentId: l1_main.id,
-    },
-  })
+  // ── Ієрархія рівнів процесів (L1 → L2 → L3) ──
+    console.log("Creating real L1 levels...");
+  const l1Names = ["B.01 - Дослідження ринку та потреб споживачів","B.02 - Формування та розвиток ціннісної пропозиції","B.03 - Забезпечення торгової точки товаром (supply chain)","B.04 - Забезпечення легкої та комфортної покупки (продажі)","B.05 - Управління лояльністю та життєвим циклом клієнта","B.06 - Розвиток бренду, простору, продукту","B.07 - Створення простору отримання цінності","M.10 - Управління даними","S.01 - Забезпечення фінансами","S.02 - Забезпечення персоналом","S.03 - Технічне забезпечення","S.04 - Забезпечення та підтримка ІТ","S.05 - Юридичний супровід","S.06 - Бухгалтерській та управлінський облік","S.07 - Кадровий облік","S.08 - Забезпечення комплексної системи безпеки","S.09 - Забезпечення внутрішнього контролю та безпеки","S.10 - Тендерний комітет","S.11 - Офіс-менеджмент"];
+  let i = 1;
+  for (const name of l1Names) {
+    await prisma.processLevel.upsert({
+      where: { id: "l1-real-" + i },
+      update: { name },
+      create: {
+        id: "l1-real-" + i,
+        name,
+        depth: 1,
+        adminId: analyst.id
+      }
+    });
+    i++;
+  }
 
-  const l2_hr = await prisma.processLevel.upsert({
-    where: { id: 'l2-hr' },
-    update: {},
-    create: {
-      id: 'l2-hr',
-      name: 'Управління персоналом',
-      depth: 2,
-      parentId: l1_support.id,
-    },
-  })
-
-  const l2_finance = await prisma.processLevel.upsert({
-    where: { id: 'l2-finance' },
-    update: {},
-    create: {
-      id: 'l2-finance',
-      name: 'Фінанси та бухгалтерія',
-      depth: 2,
-      parentId: l1_support.id,
-    },
-  })
-
-  // L3
-  const l3_retail = await prisma.processLevel.upsert({
-    where: { id: 'l3-retail' },
-    update: {},
-    create: {
-      id: 'l3-retail',
-      name: 'Роздрібні продажі',
-      depth: 3,
-      parentId: l2_sales.id,
-    },
-  })
-
-  console.log('   EMPLOYEE       → employee@company.com')
 }
 
 main()
