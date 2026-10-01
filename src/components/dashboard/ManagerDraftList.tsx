@@ -34,7 +34,8 @@ export default function ManagerDraftList({ processes }: ManagerDraftListProps) {
       if (res.ok) {
         router.refresh();
       } else {
-        alert('Помилка при видаленні чернетки');
+        const data = await res.json().catch(() => ({}));
+        alert(data.error || 'Помилка при видаленні чернетки');
       }
     } catch (e) {
       console.error(e);
