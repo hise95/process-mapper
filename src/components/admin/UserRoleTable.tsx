@@ -214,10 +214,10 @@ export function UserRoleTable({ currentUser }: { currentUser: any }) {
                     
                     {isAdmin && !isSelf && (
                       <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="sm" className="w-8 h-8 p-0">
+                        <DropdownMenuTrigger>
+                          <div className="hover:bg-muted p-1 rounded-md cursor-pointer inline-flex items-center justify-center w-8 h-8">
                             <MoreVertical className="w-4 h-4" />
-                          </Button>
+                          </div>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => { setSelectedUser(user); setIsPasswordOpen(true); }}>
@@ -261,7 +261,7 @@ export function UserRoleTable({ currentUser }: { currentUser: any }) {
             </div>
             <div className="space-y-2">
               <Label>Роль</Label>
-              <Select value={formData.role} onValueChange={role => setFormData({...formData, role})}>
+              <Select value={formData.role} onValueChange={role => setFormData({...formData, role: role || 'EMPLOYEE'})}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
