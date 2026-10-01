@@ -7,7 +7,7 @@ import './globals.css'
 const roboto = Roboto({ subsets: ['latin', 'cyrillic'], weight: ['300', '400', '500', '700', '900'] })
 
 export const metadata: Metadata = {
-  title: 'Process Mapper AS-IS',
+  title: 'BeeProcess',
   description: 'Внутрішня система управління та картографування бізнес-процесів',
   robots: 'noindex, nofollow',
 }

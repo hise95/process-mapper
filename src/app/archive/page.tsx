@@ -5,7 +5,7 @@ import { ArchiveView } from '@/components/archive/ArchiveView';
 import { Archive } from 'lucide-react';
 
 export const metadata = {
-  title: 'Архів процесів | Process Mapper',
+  title: 'Архів процесів | BeeProcess',
   description: 'Архів застарілих та деактивованих бізнес-процесів',
 };
 

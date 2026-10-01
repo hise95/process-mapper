@@ -40,7 +40,7 @@ export default async function Sidebar() {
   return (
     <aside className="fixed left-0 top-0 h-screen w-64 bg-[#1f1f1f] text-white flex flex-col shadow-xl z-20">
       <div className="flex items-center px-4 h-[57px] border-b border-[#333333] shrink-0">
-        <h1 className="font-bold text-base text-[#ffd100] whitespace-nowrap tracking-tight">🗺️ Process Mapper AS-IS</h1>
+        <h1 className="font-bold text-base text-[#ffd100] whitespace-nowrap tracking-tight">🐝 BeeProcess</h1>
       </div>
       
       <SidebarNav 
