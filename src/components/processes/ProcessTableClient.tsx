@@ -13,7 +13,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
-import { SlidersHorizontal, RotateCcw, Settings, Filter, ChevronLeft, ChevronRight, MoreHorizontal } from 'lucide-react';
+import { SlidersHorizontal, RotateCcw, Settings, Filter, ChevronLeft, ChevronRight, MoreHorizontal, Trash2 } from 'lucide-react';
 import type { SessionUser } from '@/lib/types';
 import { PROCESS_TYPE_LABELS } from '@/lib/enums';
 
@@ -75,7 +75,7 @@ const STATUS_CONFIG: Record<string, { label: string; variant: 'default' | 'secon
 
 const STORAGE_KEY = 'process_mapper_table_settings_v2';
 
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 
 export function ProcessTableClient({
   processes,
@@ -84,8 +84,25 @@ export function ProcessTableClient({
   processes: ProcessTableRow[];
   session: SessionUser;
 }) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const query = (searchParams.get('q') || '').toLowerCase();
+
+  const handleDeleteProcess = async (id: string, title: string) => {
+    if (!confirm(`Ви впевнені, що хочете остаточно видалити процес "${title}"?`)) return;
+    try {
+      const res = await fetch(`/api/processes/${id}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        router.refresh();
+      } else {
+        alert(data.error || 'Помилка при видаленні процесу');
+      }
+    } catch (e) {
+      console.error(e);
+      alert('Виникла помилка при видаленні');
+    }
+  };
 
   const [columnOrder, setColumnOrder] = useState<string[]>(DEFAULT_ORDER);
   const [visibleColumns, setVisibleColumns] = useState<string[]>(DEFAULT_VISIBLE);
@@ -270,6 +287,17 @@ export function ProcessTableClient({
               >
                 Редагувати
               </Link>
+            )}
+            {session.role === 'ADMIN' && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                onClick={() => handleDeleteProcess(process.id, process.title)}
+                title="Видалити процес"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
             )}
           </div>
         );

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Loader2, Plus, ChevronRight, ChevronDown } from "lucide-react"
+import { Loader2, Plus, ChevronRight, ChevronDown, Trash2, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
@@ -22,14 +22,14 @@ export function LevelAssignmentTree() {
     setLoading(true)
     try {
       const [levelsRes, usersRes] = await Promise.all([
-        fetch("/api/process-levels"),
+        fetch("/api/process-levels?all=true"),
         fetch("/api/users")
       ])
       if (levelsRes.ok && usersRes.ok) {
         const levelsData = await levelsRes.json()
         const usersData = await usersRes.json()
         setLevels(levelsData)
-        setUsers(usersData.filter((u: any) => u.role === "PROCESS_ANALYST" || u.role === "PROCESS_ANALYST" || u.role === "ADMIN" || u.role === "PROCESS_OWNER"))
+        setUsers(usersData.filter((u: any) => u.role === "PROCESS_ANALYST" || u.role === "ADMIN" || u.role === "PROCESS_OWNER"))
         
         // Expand L1 by default
         const initialExpanded: Record<string, boolean> = {}
@@ -94,6 +94,42 @@ export function LevelAssignmentTree() {
     }
   }
 
+  const handleDeleteLevel = async (levelId: string, levelName: string) => {
+    if (!confirm(`Ви впевнені, що хочете видалити рівень "${levelName}"?`)) return
+    try {
+      const res = await fetch(`/api/process-levels/${levelId}`, {
+        method: "DELETE",
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        fetchData()
+      } else {
+        alert(data.error || "Помилка при видаленні рівня")
+      }
+    } catch (e) {
+      console.error(e)
+      alert("Виникла помилка при видаленні")
+    }
+  }
+
+  const handleDeleteProcess = async (procId: string, procTitle: string) => {
+    if (!confirm(`Ви впевнені, що хочете остаточно видалити процес "${procTitle}"?`)) return
+    try {
+      const res = await fetch(`/api/processes/${procId}`, {
+        method: "DELETE",
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        fetchData()
+      } else {
+        alert(data.error || "Помилка при видаленні процесу")
+      }
+    } catch (e) {
+      console.error(e)
+      alert("Виникла помилка при видаленні")
+    }
+  }
+
   // Recursive flat list for the parent select dropdown
   const getFlatLevels = (nodes: any[], depth = 1): any[] => {
     let result: any[] = []
@@ -109,25 +145,30 @@ export function LevelAssignmentTree() {
 
   const renderLevel = (level: any, depth: number) => {
     const isExpanded = !!expandedNodes[level.id]
-    const hasChildren = level.children && level.children.length > 0
+    const hasSubLevels = level.children && level.children.length > 0
+    const hasProcesses = level.processes && level.processes.length > 0
+    const hasChildren = hasSubLevels || hasProcesses
     
     return (
-      <div key={level.id} className="mb-2" style={{ marginLeft: depth > 1 ? "2rem" : "0" }}>
+      <div key={level.id} className="mb-2" style={{ marginLeft: depth > 1 ? "1.5rem" : "0" }}>
         <div className="flex items-center gap-3 p-2 border rounded-md hover:bg-muted/20 transition-colors">
           <div 
-            className="flex items-center gap-2 cursor-pointer w-64"
+            className="flex items-center gap-2 cursor-pointer flex-1 min-w-0"
             onClick={() => toggleNode(level.id)}
           >
             {hasChildren ? (
-              isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />
+              isExpanded ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />
             ) : (
-              <div className="w-4 h-4" />
+              <div className="w-4 h-4 shrink-0" />
             )}
             <span className="font-medium truncate">{level.name}</span>
-            <Badge variant="secondary" className="text-[10px]">L{depth}</Badge>
+            <Badge variant="secondary" className="text-[10px] shrink-0">L{depth}</Badge>
+            {hasProcesses && (
+              <span className="text-xs text-muted-foreground shrink-0">({level.processes.length} проц.)</span>
+            )}
           </div>
           
-          <div className="ml-auto w-64">
+          <div className="w-56 shrink-0">
             <Select 
               value={level.adminId || "unassigned"} 
               onValueChange={(val) => handleAssignAdmin(level.id, val)}
@@ -149,11 +190,44 @@ export function LevelAssignmentTree() {
               </SelectContent>
             </Select>
           </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+            title="Видалити рівень"
+            onClick={() => handleDeleteLevel(level.id, level.name)}
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
         </div>
 
         {isExpanded && hasChildren && (
-          <div className="mt-2 border-l-2 ml-3 pl-3">
-            {level.children.map((child: any) => renderLevel(child, depth + 1))}
+          <div className="mt-2 border-l-2 ml-3 pl-3 space-y-1">
+            {level.children?.map((child: any) => renderLevel(child, depth + 1))}
+            {level.processes?.map((proc: any) => (
+              <div key={proc.id} className="flex items-center justify-between p-2 rounded-md bg-muted/30 border border-border/50 text-xs">
+                <div className="flex items-center gap-2 truncate">
+                  <FileText className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="font-mono text-muted-foreground shrink-0">{proc.code || '—'}</span>
+                  <span className="font-medium text-foreground truncate">{proc.title}</span>
+                  {proc.status && (
+                    <Badge variant="outline" className="text-[9px] py-0 shrink-0">
+                      {proc.status}
+                    </Badge>
+                  )}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7 text-muted-foreground hover:text-destructive hover:bg-destructive/10 shrink-0"
+                  title="Видалити процес"
+                  onClick={() => handleDeleteProcess(proc.id, proc.title)}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            ))}
           </div>
         )}
       </div>

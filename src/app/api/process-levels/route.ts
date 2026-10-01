@@ -6,31 +6,34 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
 import { canViewAdminPanel } from '@/lib/permissions'
 
-export async function GET(_req: NextRequest) {
+export async function GET(req: NextRequest) {
   const session = await requireSession().catch(() => null)
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 })
+
+  const includeAll = req.nextUrl.searchParams.get('all') === 'true'
+  const processWhere = includeAll ? {} : { status: 'APPROVED' }
 
   // Отримати тільки L1, з вкладеними L2 та їх L3
   const levels = await prisma.processLevel.findMany({
     where: { depth: 1 },
     include: {
       processes: {
-        where: { status: 'APPROVED' },
-        select: { id: true, title: true, code: true, version: true },
+        where: processWhere,
+        select: { id: true, title: true, code: true, version: true, status: true },
       },
       children: {
         include: {
           children: {
             include: {
               processes: {
-                where: { status: 'APPROVED' },
-                select: { id: true, title: true, code: true, version: true },
+                where: processWhere,
+                select: { id: true, title: true, code: true, version: true, status: true },
               },
             },
           },
           processes: {
-            where: { status: 'APPROVED' },
-            select: { id: true, title: true, code: true, version: true },
+            where: processWhere,
+            select: { id: true, title: true, code: true, version: true, status: true },
           },
         },
         orderBy: { name: 'asc' },
