@@ -200,6 +200,6 @@ LDAP_BASE_DN="dc=company,dc=local"
 LDAP_USERNAME_ATTRIBUTE="userPrincipalName"
 
 # Додатковий фільтр пошуку (наприклад, для обмеження доступу певною групою)
-LDAP_SEARCH_FILTER="(&(objectClass=user)(memberOf=CN=BeeProcess,OU=GRP,OU=MGMT,DC=domain,DC=ua))"
+LDAP_SEARCH_FILTER=
 ```
 Після зміни `.env` обов'язково перезапустіть сервер: `pm2 restart process-mapper`.
