@@ -34,6 +34,13 @@ export default async function Sidebar() {
     where: { userId: session.id, isRead: false }
   });
 
+  let feedbackCount = 0;
+  if (isAnalystOrAdmin) {
+    feedbackCount = await prisma.feedback.count({
+      where: { status: 'OPEN' }
+    });
+  }
+
   const { canCreateProcess } = await import('@/lib/permissions');
   const userCanCreate = canCreateProcess(session);
 
@@ -52,6 +59,7 @@ export default async function Sidebar() {
         isAnalyst={isAnalystOrAdmin}
         pendingApprovalsCount={pendingApprovalsCount}
         notificationsCount={notificationsCount}
+        feedbackCount={feedbackCount}
         canCreate={userCanCreate}
       />
     </aside>

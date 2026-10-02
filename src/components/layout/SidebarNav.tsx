@@ -14,6 +14,7 @@ interface SidebarNavProps {
   isAdmin: boolean;
   pendingApprovalsCount?: number;
   notificationsCount?: number;
+  feedbackCount?: number;
   canCreate?: boolean;
   isAnalyst?: boolean;
 }
@@ -27,6 +28,7 @@ export function SidebarNav({
   isAnalyst = false,
   pendingApprovalsCount = 0,
   notificationsCount = 0,
+  feedbackCount = 0,
   canCreate = false
 }: SidebarNavProps) {
   const pathname = usePathname();
@@ -127,8 +129,13 @@ export function SidebarNav({
             <Link href="/analyst-board" className={linkClass('/analyst-board')}>
               📌 Дошка аналітиків
             </Link>
-            <Link href="/feedback" className={linkClass('/feedback')}>
-              💬 Звернення
+            <Link href="/feedback" className={`${linkClass('/feedback')} flex justify-between items-center`}>
+              <span>💬 Звернення</span>
+              {feedbackCount > 0 && (
+                <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                  {feedbackCount}
+                </span>
+              )}
             </Link>
           </>
         )}
