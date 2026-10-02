@@ -264,7 +264,11 @@ export function LevelAssignmentTree() {
               <div className="flex-1 min-w-[200px] space-y-1">
                 <label className="text-xs font-medium">Батьківський L1 (Тип процесу)</label>
                 <Select value={selectedL1} onValueChange={(val) => { setSelectedL1(val || ""); setSelectedL2(""); }}>
-                  <SelectTrigger><SelectValue placeholder="Оберіть L1..." /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Оберіть L1...">
+                      {selectedL1 ? levels.find(l => l.id === selectedL1)?.name : "Оберіть L1..."}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {levels.map(l1 => (
                       <SelectItem key={l1.id} value={l1.id}>{l1.name}</SelectItem>
@@ -278,7 +282,11 @@ export function LevelAssignmentTree() {
               <div className="flex-1 min-w-[200px] space-y-1">
                 <label className="text-xs font-medium">Батьківський L2</label>
                 <Select value={selectedL2} onValueChange={(val) => setSelectedL2(val || "")} disabled={!selectedL1}>
-                  <SelectTrigger><SelectValue placeholder="Оберіть L2..." /></SelectTrigger>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Оберіть L2...">
+                      {selectedL2 ? levels.find(l => l.id === selectedL1)?.children?.find((c: any) => c.id === selectedL2)?.name : "Оберіть L2..."}
+                    </SelectValue>
+                  </SelectTrigger>
                   <SelectContent>
                     {levels.find(l1 => l1.id === selectedL1)?.children?.map((l2: any) => (
                       <SelectItem key={l2.id} value={l2.id}>{l2.name}</SelectItem>
