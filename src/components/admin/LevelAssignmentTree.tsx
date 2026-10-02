@@ -263,7 +263,7 @@ export function LevelAssignmentTree() {
             {addDepth !== "L1" && (
               <div className="flex-1 min-w-[200px] space-y-1">
                 <label className="text-xs font-medium">Батьківський L1 (Тип процесу)</label>
-                <Select value={selectedL1} onValueChange={(val) => { setSelectedL1(val); setSelectedL2(""); }}>
+                <Select value={selectedL1} onValueChange={(val) => { setSelectedL1(val || ""); setSelectedL2(""); }}>
                   <SelectTrigger><SelectValue placeholder="Оберіть L1..." /></SelectTrigger>
                   <SelectContent>
                     {levels.map(l1 => (
@@ -277,7 +277,7 @@ export function LevelAssignmentTree() {
             {addDepth === "L3" && (
               <div className="flex-1 min-w-[200px] space-y-1">
                 <label className="text-xs font-medium">Батьківський L2</label>
-                <Select value={selectedL2} onValueChange={setSelectedL2} disabled={!selectedL1}>
+                <Select value={selectedL2} onValueChange={(val) => setSelectedL2(val || "")} disabled={!selectedL1}>
                   <SelectTrigger><SelectValue placeholder="Оберіть L2..." /></SelectTrigger>
                   <SelectContent>
                     {levels.find(l1 => l1.id === selectedL1)?.children?.map((l2: any) => (
