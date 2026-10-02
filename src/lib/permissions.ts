@@ -72,3 +72,25 @@ export function canCreateNewVersion(user: SessionUser, process: Pick<Process, 'm
   if (user.role === Role.PROCESS_OWNER && process.ownerId === user.id) return true
   return false
 }
+
+const PHASE_1_STATUSES = ['DRAFT', 'PASSPORT_REVIEW_ANALYST', 'PASSPORT_REVIEW_OWNER'];
+const PHASE_2_STATUSES = ['STEPS_DRAFT', 'STEPS_REVIEW_ANALYST', 'STEPS_REVIEW_OWNER'];
+const PHASE_3_STATUSES = ['KPIS_DRAFT', 'KPIS_REVIEW_ANALYST', 'KPIS_REVIEW_OWNER', 'FINAL_APPROVAL_ANALYST'];
+
+export function canEditPassport(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (!canEditProcess(user, process)) return false;
+  if (isAnalystOrAdmin(user.role)) return true;
+  return PHASE_1_STATUSES.includes(process.status);
+}
+
+export function canEditSteps(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (!canEditProcess(user, process)) return false;
+  if (isAnalystOrAdmin(user.role)) return true;
+  return PHASE_2_STATUSES.includes(process.status);
+}
+
+export function canEditKpis(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (!canEditProcess(user, process)) return false;
+  if (isAnalystOrAdmin(user.role)) return true;
+  return PHASE_3_STATUSES.includes(process.status);
+}

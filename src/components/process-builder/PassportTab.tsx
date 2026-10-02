@@ -16,7 +16,7 @@ interface UserOption {
   role: string;
 }
 
-export default function PassportTab({ process }: { process: ProcessForEdit }) {
+export default function PassportTab({ process, readonly = false }: { process: ProcessForEdit, readonly?: boolean }) {
   const [data, setData] = useState(process);
   const [savingField, setSavingField] = useState<string | null>(null);
   const [lastSaved, setLastSaved] = useState<boolean>(true);
@@ -99,7 +99,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
             <Label className="font-semibold text-foreground text-sm">
               Назва процесу <span className="text-destructive">*</span>
             </Label>
-            <Input
+            <Input disabled={readonly}
               value={data.title || ''}
               onChange={e => handleChange('title', e.target.value)}
               placeholder="Введіть назву процесу"
@@ -113,7 +113,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
                 <User className="w-3.5 h-3.5 text-primary" />
                 <span>Менеджер процесу (автоматично)</span>
               </Label>
-              <Select
+              <Select disabled={readonly}
                 value={data.managerId || 'none'}
                 onValueChange={val => handleChange('managerId', !val || val === 'none' ? '' : val)}
                 disabled
@@ -139,7 +139,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
                 <User className="w-3.5 h-3.5 text-secondary" />
                 <span>Власник процесу</span>
               </Label>
-              <Select
+              <Select disabled={readonly}
                 value={data.ownerId || 'none'}
                 onValueChange={val => handleChange('ownerId', !val || val === 'none' ? '' : val)}
               >
@@ -165,7 +165,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
               <Target className="w-3.5 h-3.5 text-primary" />
               <span>Мета процесу</span>
             </Label>
-            <Textarea
+            <Textarea disabled={readonly}
               value={data.objective || ''}
               onChange={e => handleChange('objective', e.target.value)}
               placeholder="Чого має досягти цей бізнес-процес, для чого він існує?"
@@ -176,7 +176,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
 
           <div className="space-y-2">
             <Label className="font-semibold text-foreground text-sm">Учасники процесу</Label>
-            <Textarea
+            <Textarea disabled={readonly}
               value={data.participants || ''}
               onChange={e => handleChange('participants', e.target.value)}
               placeholder="Які підрозділи, посади чи ролі задіяні у виконанні процесу?"
@@ -201,7 +201,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Вхід (матеріали, інформація, документи)</Label>
-              <Textarea
+              <Textarea disabled={readonly}
                 value={data.input || ''}
                 onChange={e => handleChange('input', e.target.value)}
                 placeholder="Що запускає процес (заявка, дзвінок, звіт, сировина тощо)?"
@@ -211,7 +211,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
             </div>
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Постачальник входу</Label>
-              <Textarea
+              <Textarea disabled={readonly}
                 value={data.inputSupplier || ''}
                 onChange={e => handleChange('inputSupplier', e.target.value)}
                 placeholder="Хто передає цей вхід (клієнт, суміжний відділ, постачальник)?"
@@ -223,7 +223,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
 
           <div className="space-y-2">
             <Label className="font-semibold text-foreground text-sm">Який бізнес-процес іде перед ним (Upstream)</Label>
-            <Input
+            <Input disabled={readonly}
               value={data.upstreamProcesses || ''}
               onChange={e => handleChange('upstreamProcesses', e.target.value)}
               placeholder="Попередній процес (якщо є зв'язок)"
@@ -247,7 +247,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Вихід (результат роботи)</Label>
-              <Textarea
+              <Textarea disabled={readonly}
                 value={data.output || ''}
                 onChange={e => handleChange('output', e.target.value)}
                 placeholder="Готовий результат (підписаний договір, надана послуга, відправлений товар)?"
@@ -257,7 +257,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
             </div>
             <div className="space-y-2">
               <Label className="font-semibold text-foreground text-sm">Клієнти процесу (споживачі)</Label>
-              <Textarea
+              <Textarea disabled={readonly}
                 value={data.clients || ''}
                 onChange={e => handleChange('clients', e.target.value)}
                 placeholder="Внутрішні клієнти (відділи компанії) та зовнішні (покупці, партнери)..."
@@ -269,7 +269,7 @@ export default function PassportTab({ process }: { process: ProcessForEdit }) {
 
           <div className="space-y-2">
             <Label className="font-semibold text-foreground text-sm">Який бізнес-процес іде після нього (Downstream)</Label>
-            <Input
+            <Input disabled={readonly}
               value={data.downstreamProcesses || ''}
               onChange={e => handleChange('downstreamProcesses', e.target.value)}
               placeholder="Наступний процес, якому передається результат"

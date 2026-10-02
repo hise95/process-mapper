@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { canEditProcess } from '@/lib/permissions'
+import { canEditSteps } from '@/lib/permissions'
 
 type Params = { params: Promise<{ id: string; stepId: string }> }
 
@@ -15,7 +15,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   const { id, stepId } = await params
   const proc = await prisma.process.findUnique({ where: { id } })
   if (!proc) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-  if (!canEditProcess(session, proc)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+  if (!canEditSteps(session, proc)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
 
   const body = await req.json()
   // Дозволяємо оновлювати тільки безпечні поля
@@ -34,7 +34,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const { id, stepId } = await params
   const proc = await prisma.process.findUnique({ where: { id } })
   if (!proc) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-  if (!canEditProcess(session, proc)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+  if (!canEditSteps(session, proc)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
   await prisma.processStep.delete({ where: { id: stepId, processId: id } })
   return NextResponse.json({ success: true })
 }

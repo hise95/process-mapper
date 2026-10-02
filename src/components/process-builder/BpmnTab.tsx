@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 
-export default function BpmnTab({ processId, initialUrl }: { processId: string, initialUrl: string }) {
+export default function BpmnTab({ processId, initialUrl, readonly = false }: { processId: string, initialUrl: string, readonly?: boolean }) {
   const [url, setUrl] = useState(initialUrl || '');
 
   const handleSave = async () => {
@@ -22,11 +22,12 @@ export default function BpmnTab({ processId, initialUrl }: { processId: string, 
         <Label>Посилання на BPMN схему</Label>
         <div className="flex gap-2">
           <Input 
+            disabled={readonly}
             value={url} 
             onChange={e => setUrl(e.target.value)} 
             placeholder="https://..." 
           />
-          <Button onClick={handleSave}>Зберегти</Button>
+          {!readonly && <Button onClick={handleSave}>Зберегти</Button>}
         </div>
         <p className="text-sm text-muted-foreground">
           Намалюйте схему в Camunda або bpmn.io, збережіть на Google Диск та вставте посилання

@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-export default function KpisTab({ processId, initialKpis }: { processId: string, initialKpis: any[] }) {
+export default function KpisTab({ processId, initialKpis, readonly = false }: { processId: string, initialKpis: any[], readonly?: boolean }) {
   const [kpis, setKpis] = useState(initialKpis);
   const saveTimers = useRef<Record<string, NodeJS.Timeout>>({});
 
@@ -74,42 +74,42 @@ export default function KpisTab({ processId, initialKpis }: { processId: string,
           {kpis.map(kpi => (
             <TableRow key={kpi.id}>
               <TableCell>
-                <Input
+                <Input disabled={readonly}
                   value={kpi.name || ''}
                   onChange={e => handleUpdate(kpi.id, 'name', e.target.value)}
                   placeholder="Час виконання..."
                 />
               </TableCell>
               <TableCell>
-                <Input
+                <Input disabled={readonly}
                   value={kpi.unit || ''}
                   onChange={e => handleUpdate(kpi.id, 'unit', e.target.value)}
                   placeholder="дні, год..."
                 />
               </TableCell>
               <TableCell>
-                <Input
+                <Input disabled={readonly}
                   value={kpi.dataSource || ''}
                   onChange={e => handleUpdate(kpi.id, 'dataSource', e.target.value)}
                   placeholder="ERP, CRM..."
                 />
               </TableCell>
               <TableCell>
-                <Input
+                <Input disabled={readonly}
                   value={kpi.frequency || ''}
                   onChange={e => handleUpdate(kpi.id, 'frequency', e.target.value)}
                   placeholder="Щомісяця..."
                 />
               </TableCell>
               <TableCell>
-                <Input
+                <Input disabled={readonly}
                   value={kpi.targetValue || ''}
                   onChange={e => handleUpdate(kpi.id, 'targetValue', e.target.value)}
                   placeholder="< 2 днів..."
                 />
               </TableCell>
               <TableCell>
-                <Button variant="destructive" size="sm" onClick={() => handleDelete(kpi.id)}>
+                <Button disabled={readonly} variant="destructive" size="sm" onClick={() => handleDelete(kpi.id)}>
                   Видалити
                 </Button>
               </TableCell>
@@ -117,7 +117,9 @@ export default function KpisTab({ processId, initialKpis }: { processId: string,
           ))}
         </TableBody>
       </Table>
-      <Button onClick={handleAdd}>Додати показник процесу</Button>
+      {!readonly && (
+        <Button onClick={handleAdd}>Додати показник процесу</Button>
+      )}
     </div>
   );
 }

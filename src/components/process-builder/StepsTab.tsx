@@ -8,26 +8,26 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 
-function SortableRow({ step, onUpdate, onDelete }: { step: any, onUpdate: any, onDelete: any }) {
+function SortableRow({ step, onUpdate, onDelete, readonly }: { step: any, onUpdate: any, onDelete: any, readonly?: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: step.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
 
   return (
     <TableRow ref={setNodeRef} style={style}>
-      <TableCell {...attributes} {...listeners} className="cursor-grab text-center">⋮⋮</TableCell>
-      <TableCell><Input value={step.name || ''} onChange={e => onUpdate(step.id, 'name', e.target.value)} /></TableCell>
-      <TableCell><Input value={step.description || ''} onChange={e => onUpdate(step.id, 'description', e.target.value)} /></TableCell>
-      <TableCell><Input value={step.executorRole || ''} onChange={e => onUpdate(step.id, 'executorRole', e.target.value)} /></TableCell>
-      <TableCell><Input value={step.docUrl || ''} onChange={e => onUpdate(step.id, 'docUrl', e.target.value)} placeholder="URL" /></TableCell>
-      <TableCell><Input value={step.comment || ''} onChange={e => onUpdate(step.id, 'comment', e.target.value)} /></TableCell>
+      <TableCell {...attributes} {...listeners} className={readonly ? "text-center opacity-50" : "cursor-grab text-center"}>⋮⋮</TableCell>
+      <TableCell><Input disabled={readonly} disabled={readonly} value={step.name || ''} onChange={e => onUpdate(step.id, 'name', e.target.value)} /></TableCell>
+      <TableCell><Input disabled={readonly} value={step.description || ''} onChange={e => onUpdate(step.id, 'description', e.target.value)} /></TableCell>
+      <TableCell><Input disabled={readonly} value={step.executorRole || ''} onChange={e => onUpdate(step.id, 'executorRole', e.target.value)} /></TableCell>
+      <TableCell><Input disabled={readonly} value={step.docUrl || ''} onChange={e => onUpdate(step.id, 'docUrl', e.target.value)} placeholder="URL" /></TableCell>
+      <TableCell><Input disabled={readonly} value={step.comment || ''} onChange={e => onUpdate(step.id, 'comment', e.target.value)} /></TableCell>
       <TableCell>
-        <Button variant="destructive" size="sm" onClick={() => onDelete(step.id)}>Видалити</Button>
+        <Button disabled={readonly} variant="destructive" size="sm" onClick={() => onDelete(step.id)}>Видалити</Button>
       </TableCell>
     </TableRow>
   );
 }
 
-export default function StepsTab({ processId, initialSteps }: { processId: string, initialSteps: any[] }) {
+export default function StepsTab({ processId, initialSteps, readonly = false }: { processId: string, initialSteps: any[], readonly?: boolean }) {
   const [steps, setSteps] = useState(initialSteps);
 
   const handleDragEnd = async (event: any) => {
@@ -98,13 +98,13 @@ export default function StepsTab({ processId, initialSteps }: { processId: strin
           <TableBody>
             <SortableContext items={steps.map(s => s.id)} strategy={verticalListSortingStrategy}>
               {steps.map(step => (
-                <SortableRow key={step.id} step={step} onUpdate={handleUpdate} onDelete={handleDelete} />
+                <SortableRow key={step.id} step={step} onUpdate={handleUpdate} onDelete={handleDelete} readonly={readonly} />
               ))}
             </SortableContext>
           </TableBody>
         </Table>
       </DndContext>
-      <Button onClick={handleAdd}>Додати крок</Button>
+      {!readonly && <Button onClick={handleAdd}>Додати крок</Button>}
     </div>
   );
 }

@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { canEditProcess } from '@/lib/permissions'
+import { canEditKpis } from '@/lib/permissions'
 
 export async function GET(
   _req: NextRequest,
@@ -29,7 +29,7 @@ export async function POST(
   const { id } = await params
   const process = await prisma.process.findUnique({ where: { id } })
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-  if (!canEditProcess(session, process)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+  if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
   const body = await req.json()
   if (!body.name) return NextResponse.json({ error: 'Назва показника обов\'язкова' }, { status: 400 })
@@ -58,7 +58,7 @@ export async function PUT(
   const { id } = await params
   const process = await prisma.process.findUnique({ where: { id } })
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-  if (!canEditProcess(session, process)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+  if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
   const body: Array<{ id: string; name: string; unit?: string; dataSource?: string; frequency?: string; targetValue?: string }> = await req.json()
 
@@ -92,7 +92,7 @@ export async function DELETE(
 
   const process = await prisma.process.findUnique({ where: { id } })
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-  if (!canEditProcess(session, process)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+  if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
   await prisma.processKPI.delete({ where: { id: kpiId, processId: id } })
   return NextResponse.json({ success: true })

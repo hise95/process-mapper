@@ -4,7 +4,7 @@ import ProcessBuilderTabs from '@/components/process-builder/ProcessBuilderTabs'
 
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
-import { canEditProcess } from '@/lib/permissions';
+import { canEditProcess, canEditPassport, canEditSteps, canEditKpis } from '@/lib/permissions';
 
 export default async function ProcessEditPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -33,8 +33,12 @@ export default async function ProcessEditPage({ params }: { params: Promise<{ id
     return <div className="p-8 text-red-500">Доступ заборонено</div>;
   }
 
+  const canEditPass = canEditPassport(session, processData);
+  const canEditStp = canEditSteps(session, processData);
+  const canEditKpi = canEditKpis(session, processData);
+
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto py-8 space-y-6 flex-1 h-[calc(100vh-100px)]">
       <nav className="text-sm text-muted-foreground mb-4">
         <Link href="/processes" className="hover:underline">Процеси</Link>
         {' / '}
@@ -50,7 +54,12 @@ export default async function ProcessEditPage({ params }: { params: Promise<{ id
         </h1>
       </div>
 
-      <ProcessBuilderTabs process={processData} />
+      <ProcessBuilderTabs 
+        process={processData} 
+        canEditPassport={canEditPass} 
+        canEditSteps={canEditStp} 
+        canEditKpis={canEditKpi} 
+      />
     </div>
   );
 }

@@ -24,7 +24,17 @@ import {
 import { useRouter } from 'next/navigation';
 import { getStatusLabel, PROCESS_STATUS_LABELS } from '@/lib/enums';
 
-export default function ProcessBuilderTabs({ process }: { process: ProcessForEdit }) {
+export default function ProcessBuilderTabs({ 
+  process,
+  canEditPassport,
+  canEditSteps,
+  canEditKpis
+}: { 
+  process: ProcessForEdit,
+  canEditPassport: boolean,
+  canEditSteps: boolean,
+  canEditKpis: boolean
+}) {
   const [activeTab, setActiveTab] = useState<string>('passport');
   const [submitting, setSubmitting] = useState(false);
   const router = useRouter();
@@ -170,19 +180,19 @@ export default function ProcessBuilderTabs({ process }: { process: ProcessForEdi
           </TabsList>
 
           <TabsContent value="passport" className="mt-0">
-            <PassportTab process={process} />
+            <PassportTab process={process} readonly={!canEditPassport} />
           </TabsContent>
 
           <TabsContent value="steps" className="mt-0">
-            <StepsTab processId={process.id} initialSteps={process.steps || []} />
+            <StepsTab processId={process.id} initialSteps={process.steps || []} readonly={!canEditSteps} />
           </TabsContent>
 
           <TabsContent value="bpmn" className="mt-0">
-            <BpmnTab processId={process.id} initialUrl={process.bpmnUrl || ''} />
+            <BpmnTab processId={process.id} initialUrl={process.bpmnUrl || ''} readonly={!canEditSteps} />
           </TabsContent>
 
           <TabsContent value="kpis" className="mt-0">
-            <KpisTab processId={process.id} initialKpis={process.kpis || []} />
+            <KpisTab processId={process.id} initialKpis={process.kpis || []} readonly={!canEditKpis} />
           </TabsContent>
         </Tabs>
       </div>

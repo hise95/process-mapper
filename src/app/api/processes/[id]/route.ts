@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { canEditProcess } from '@/lib/permissions'
+import { canEditProcess, canEditPassport, canEditSteps } from '@/lib/permissions'
 
 export async function GET(
   _req: NextRequest,
@@ -61,16 +61,36 @@ export async function PATCH(
 
     const body = await req.json()
 
-    // Явно дозволені поля для оновлення (security: whitelist)
-    const allowedFields = [
+    const passportFields = [
       'title', 'processType', 'code', 'objective', 'input', 'output',
       'participants', 'clients', 'inputSupplier', 'upstreamProcesses',
-      'downstreamProcesses', 'bpmnUrl', 'levelId', 'ownerId', 'managerId',
+      'downstreamProcesses', 'levelId', 'ownerId', 'managerId',
     ]
+    const stepsFields = ['bpmnUrl']
+
+    const canPass = canEditPassport(session, process);
+    const canStp = canEditSteps(session, process);
 
     const data: Record<string, unknown> = {}
-    for (const field of allowedFields) {
-      if (field in body) data[field] = body[field]
+    
+    // Перевіряємо чи є спроба оновити поля з забороненої фази
+    let forbiddenEdit = false;
+
+    for (const field of passportFields) {
+      if (field in body) {
+        if (!canPass) forbiddenEdit = true;
+        else data[field] = body[field];
+      }
+    }
+    for (const field of stepsFields) {
+      if (field in body) {
+        if (!canStp) forbiddenEdit = true;
+        else data[field] = body[field];
+      }
+    }
+
+    if (forbiddenEdit && Object.keys(data).length === 0) {
+      return NextResponse.json({ error: 'Редагування цих даних недоступне на поточній фазі' }, { status: 403 })
     }
 
     // Перевірити рівень якщо змінюється
