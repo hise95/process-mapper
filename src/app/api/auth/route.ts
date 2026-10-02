@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { SESSION_COOKIE_NAME } from '@/lib/auth'
 import { authenticate } from 'ldap-authentication'
+import bcrypt from 'bcrypt'
 
 export async function POST(req: NextRequest) {
   try {
@@ -19,7 +20,6 @@ export async function POST(req: NextRequest) {
       try {
         const ldapUser = await authenticate({
           ldapOpts: { url: process.env.LDAP_URL },
-          // В Active Directory email (UPN) можна використовувати напряму для bind
           userDn: email,
           userPassword: password,
           userSearchBase: process.env.LDAP_BASE_DN || '',
@@ -27,13 +27,12 @@ export async function POST(req: NextRequest) {
           username: email,
         })
         authenticatedViaLdap = true
-        // Намагаємось витягнути повне ім'я з LDAP
         if (ldapUser && (ldapUser.displayName || ldapUser.cn)) {
           ldapFullName = ldapUser.displayName || ldapUser.cn
         }
       } catch (error: any) {
+        // Не логуємо пароль — тільки email та повідомлення помилки
         console.warn('LDAP auth failed for', email, ':', error?.message)
-        // Продовжуємо, щоб спробувати локальну базу
       }
     }
 
@@ -43,17 +42,18 @@ export async function POST(req: NextRequest) {
       select: { id: true, email: true, password: true, fullName: true, role: true },
     })
 
-    // Якщо база порожня або користувача немає, створюємо тестові акаунти на льоту (для демо-режиму)
+    // Автоматичне створення першого адміна якщо база порожня
     if (!user) {
       const count = await prisma.user.count()
       if (count === 0) {
+        const hashed = await bcrypt.hash('password123', 12)
         await prisma.user.createMany({
           data: [
-            { email: 'admin@company.com', password: 'password123', fullName: 'Системний Адміністратор', role: 'ADMIN' },
-            { email: 'analyst@company.com', password: 'password123', fullName: 'Іваненко Олена (Процесний аналітик)', role: 'PROCESS_ANALYST' },
-            { email: 'owner@company.com', password: 'password123', fullName: 'Шевченко Василь (Власник процесу)', role: 'PROCESS_OWNER' },
-            { email: 'manager@company.com', password: 'password123', fullName: 'Коваленко Микола (Менеджер процесу)', role: 'PROCESS_MANAGER' },
-            { email: 'employee@company.com', password: 'password123', fullName: 'Петренко Анна (Працівник)', role: 'EMPLOYEE' },
+            { email: 'admin@company.com', password: hashed, fullName: 'Системний Адміністратор', role: 'ADMIN' },
+            { email: 'analyst@company.com', password: hashed, fullName: 'Іваненко Олена (Процесний аналітик)', role: 'PROCESS_ANALYST' },
+            { email: 'owner@company.com', password: hashed, fullName: 'Шевченко Василь (Власник процесу)', role: 'PROCESS_OWNER' },
+            { email: 'manager@company.com', password: hashed, fullName: 'Коваленко Микола (Менеджер процесу)', role: 'PROCESS_MANAGER' },
+            { email: 'employee@company.com', password: hashed, fullName: 'Петренко Анна (Працівник)', role: 'EMPLOYEE' },
           ],
         })
         user = await prisma.user.findUnique({
@@ -64,26 +64,40 @@ export async function POST(req: NextRequest) {
     }
 
     if (authenticatedViaLdap) {
-      // Якщо авторизувались через LDAP, але користувача немає в локальній базі, створюємо його
+      // LDAP: якщо користувача немає в локальній БД — створюємо
       if (!user) {
+        const placeholderHash = await bcrypt.hash(`ldap-${Date.now()}`, 12)
         user = await prisma.user.create({
           data: {
             email,
-            password: 'ldap-managed', // пароль не використовується, бо є LDAP
+            password: placeholderHash, // Не використовується, вхід тільки через LDAP
             fullName: ldapFullName || email.split('@')[0],
-            role: 'EMPLOYEE', // базова роль за замовчуванням
+            role: 'EMPLOYEE',
           },
+          select: { id: true, email: true, password: true, fullName: true, role: true },
         })
       }
     } else {
-      // Якщо LDAP вимкнено або не спрацювало, перевіряємо локальний пароль
-      if (!user || user.password !== password) {
+      // Локальна авторизація: перевіряємо bcrypt-хеш
+      if (!user) {
+        return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+      }
+      // Підтримка старих записів (plaintext) та нових (bcrypt)
+      const isValidPassword = user.password.startsWith('$2')
+        ? await bcrypt.compare(password, user.password)
+        : user.password === password // Fallback для існуючих записів у БД
+
+      if (!isValidPassword) {
         return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
       }
     }
 
-    const response = NextResponse.json({ success: true, user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role } })
-    response.cookies.set(SESSION_COOKIE_NAME, user.id, {
+    const response = NextResponse.json({
+      success: true,
+      user: { id: user!.id, email: user!.email, fullName: user!.fullName, role: user!.role }
+    })
+
+    response.cookies.set(SESSION_COOKIE_NAME, user!.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -93,8 +107,8 @@ export async function POST(req: NextRequest) {
 
     return response
   } catch (error: any) {
-    console.error('Auth error:', error)
-    return NextResponse.json({ error: error?.message || 'Помилка авторизації на сервері' }, { status: 500 })
+    console.error('Auth error:', error?.message)
+    return NextResponse.json({ error: 'Помилка авторизації на сервері' }, { status: 500 })
   }
 }
 

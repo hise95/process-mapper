@@ -1,13 +1,9 @@
-// src/app/api/users/route.ts
-// GET — список користувачів (для вибору owner/manager)
-// POST — створити нового користувача (Тільки ADMIN)
-// PATCH — змінити роль або іншу інформацію
-// DELETE — видалити користувача (Тільки ADMIN)
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
 import { canViewAdminPanel } from '@/lib/permissions'
-import { Role } from '../../../lib/enums';
+import { Role } from '../../../lib/enums'
+import bcrypt from 'bcrypt'
 
 export async function GET(_req: NextRequest) {
   const session = await requireSession().catch(() => null)
@@ -41,8 +37,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Користувач з таким email вже існує' }, { status: 400 })
   }
 
+  const hashedPassword = await bcrypt.hash(password, 12)
+
   const user = await prisma.user.create({
-    data: { email, password, fullName, role },
+    data: { email, password: hashedPassword, fullName, role },
     select: { id: true, email: true, fullName: true, role: true },
   })
 
@@ -76,7 +74,7 @@ export async function PATCH(req: NextRequest) {
     if (session.role !== 'ADMIN') {
        return NextResponse.json({ error: 'Тільки системний адміністратор може змінювати дані користувача' }, { status: 403 })
     }
-    if (password) dataToUpdate.password = password
+    if (password) dataToUpdate.password = await bcrypt.hash(password, 12)
     if (email) dataToUpdate.email = email
     if (fullName) dataToUpdate.fullName = fullName
   }

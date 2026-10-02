@@ -14,8 +14,8 @@ export const ROLES_UA: Record<string, string> = {
 }
 
 // ── Допоміжна перевірка аналітика ──
-export const isAnalystOrAdmin = (role: string) => 
-  role === Role.PROCESS_ANALYST || role === Role.PROCESS_ANALYST || role === Role.ADMIN
+export const isAnalystOrAdmin = (role: string) =>
+  role === Role.PROCESS_ANALYST || role === Role.ADMIN
 
 export const isAnalystRole = isAnalystOrAdmin;
 

@@ -11,6 +11,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   const { id } = await params;
   const { status, adminComment } = await req.json();
 
+  const existing = await prisma.feedback.findUnique({ where: { id } });
+  if (!existing) return NextResponse.json({ error: 'Звернення не знайдено' }, { status: 404 });
+
   const feedback = await prisma.feedback.update({
     where: { id },
     data: {
