@@ -15,7 +15,7 @@ function SortableRow({ step, onUpdate, onDelete, readonly }: { step: any, onUpda
   return (
     <TableRow ref={setNodeRef} style={style}>
       <TableCell {...attributes} {...listeners} className={readonly ? "text-center opacity-50" : "cursor-grab text-center"}>⋮⋮</TableCell>
-      <TableCell><Input disabled={readonly} disabled={readonly} value={step.name || ''} onChange={e => onUpdate(step.id, 'name', e.target.value)} /></TableCell>
+      <TableCell><Input disabled={readonly} value={step.name || ''} onChange={e => onUpdate(step.id, 'name', e.target.value)} /></TableCell>
       <TableCell><Input disabled={readonly} value={step.description || ''} onChange={e => onUpdate(step.id, 'description', e.target.value)} /></TableCell>
       <TableCell><Input disabled={readonly} value={step.executorRole || ''} onChange={e => onUpdate(step.id, 'executorRole', e.target.value)} /></TableCell>
       <TableCell><Input disabled={readonly} value={step.docUrl || ''} onChange={e => onUpdate(step.id, 'docUrl', e.target.value)} placeholder="URL" /></TableCell>

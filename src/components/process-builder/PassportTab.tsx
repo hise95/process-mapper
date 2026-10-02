@@ -113,10 +113,9 @@ export default function PassportTab({ process, readonly = false }: { process: Pr
                 <User className="w-3.5 h-3.5 text-primary" />
                 <span>Менеджер процесу (автоматично)</span>
               </Label>
-              <Select disabled={readonly}
+              <Select disabled={readonly || true}
                 value={data.managerId || 'none'}
                 onValueChange={val => handleChange('managerId', !val || val === 'none' ? '' : val)}
-                disabled
               >
                 <SelectTrigger className="w-full h-10 opacity-70 cursor-not-allowed">
                   <SelectValue placeholder="Не призначено">
