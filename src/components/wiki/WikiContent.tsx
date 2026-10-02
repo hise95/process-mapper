@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
+import DOMPurify from 'dompurify';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -218,7 +219,13 @@ export default function WikiContent({ isEditor }: { isEditor?: boolean }) {
               {activeSection ? (
                 <div 
                   className="prose prose-neutral dark:prose-invert max-w-none ProseMirror" 
-                  dangerouslySetInnerHTML={{ __html: activeSection.content }} 
+                  dangerouslySetInnerHTML={{ 
+                    __html: DOMPurify.sanitize(activeSection.content, {
+                      ALLOWED_TAGS: ['h1','h2','h3','h4','p','ul','ol','li','strong','em','a','br','div','span','code','pre','blockquote','table','thead','tbody','tr','th','td'],
+                      ALLOWED_ATTR: ['href','class','target','rel'],
+                      ALLOW_DATA_ATTR: false,
+                    })
+                  }} 
                 />
               ) : (
                 <div className="text-muted-foreground">Оберіть сторінку зліва або створіть нову.</div>
