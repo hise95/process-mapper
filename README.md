@@ -198,5 +198,8 @@ LDAP_BASE_DN="dc=company,dc=local"
 
 # РђС‚СЂРёР±СѓС‚ РґР»СЏ Р»РѕРіС–РЅСѓ (Р·Р°Р·РІРёС‡Р°Р№ userPrincipalName)
 LDAP_USERNAME_ATTRIBUTE="userPrincipalName"
+
+# Додатковий фільтр пошуку (для обмеження доступу певною групою)
+LDAP_SEARCH_FILTER="(&(objectClass=user)(memberOf=CN=BeeProcess,OU=GRP,OU=MGMT,DC=domain,DC=ua))"
 ```
 РџС–СЃР»СЏ Р·РјС–РЅРё `.env` РѕР±РѕРІ'СЏР·РєРѕРІРѕ РїРµСЂРµР·Р°РїСѓСЃС‚С–С‚СЊ СЃРµСЂРІРµСЂ: `pm2 restart process-mapper`.

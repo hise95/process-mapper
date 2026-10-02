@@ -18,12 +18,23 @@ export async function POST(req: NextRequest) {
     // 1. Спроба авторизації через LDAP (якщо налаштовано)
     if (process.env.LDAP_URL) {
       try {
+        const usernameAttribute = process.env.LDAP_USERNAME_ATTRIBUTE || 'userPrincipalName'
+        const baseFilter = process.env.LDAP_SEARCH_FILTER
+        
+        let usernameFilter: string | undefined = undefined
+        if (baseFilter) {
+          // Якщо вказаний додатковий фільтр (напр. членство в групі), поєднуємо його з логіном
+          // (&(&(objectClass=user)(memberOf=CN=...))(userPrincipalName={{username}}))
+          usernameFilter = `(&${baseFilter}(${usernameAttribute}={{username}}))`
+        }
+
         const ldapUser = await authenticate({
           ldapOpts: { url: process.env.LDAP_URL },
           userDn: email,
           userPassword: password,
           userSearchBase: process.env.LDAP_BASE_DN || '',
-          usernameAttribute: process.env.LDAP_USERNAME_ATTRIBUTE || 'userPrincipalName',
+          usernameAttribute,
+          usernameFilter,
           username: email,
         })
         authenticatedViaLdap = true
@@ -117,3 +128,4 @@ export async function DELETE() {
   response.cookies.delete(SESSION_COOKIE_NAME)
   return response
 }
+
