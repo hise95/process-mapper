@@ -28,15 +28,25 @@ export async function POST(req: NextRequest) {
           usernameFilter = `(&${baseFilter}(${usernameAttribute}={{username}}))`
         }
 
-        const ldapUser = await authenticate({
+        const authOptions: any = {
           ldapOpts: { url: process.env.LDAP_URL },
-          userDn: email,
           userPassword: password,
           userSearchBase: process.env.LDAP_BASE_DN || '',
           usernameAttribute,
           usernameFilter,
           username: email,
-        })
+        }
+
+        // Якщо вказані дані службового юзера - використовуємо Admin mode,
+        // інакше пробуємо Self mode (userDn = email)
+        if (process.env.LDAP_BIND_DN && process.env.LDAP_BIND_PASSWORD) {
+          authOptions.adminDn = process.env.LDAP_BIND_DN
+          authOptions.adminPassword = process.env.LDAP_BIND_PASSWORD
+        } else {
+          authOptions.userDn = email
+        }
+
+        const ldapUser = await authenticate(authOptions)
         authenticatedViaLdap = true
         if (ldapUser && (ldapUser.displayName || ldapUser.cn)) {
           ldapFullName = ldapUser.displayName || ldapUser.cn

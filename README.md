@@ -193,6 +193,10 @@ pm2 restart process-mapper # Перезапуск сервера
 # URL сервера Active Directory (ldap:// або ldaps://)
 LDAP_URL="ldap://192.168.x.x" 
 
+# Обліковий запис службового користувача для пошуку (якщо необхідно)
+LDAP_BIND_DN="CN=LDAP_User,OU=ServiceAccounts,DC=domain,DC=ua"
+LDAP_BIND_PASSWORD="super_secret_password"
+
 # База пошуку користувачів (опціонально, але рекомендовано)
 LDAP_BASE_DN="dc=company,dc=local"
 
