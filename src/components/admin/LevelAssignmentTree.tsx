@@ -13,9 +13,12 @@ export function LevelAssignmentTree() {
   const [loading, setLoading] = useState(true)
   const [expandedNodes, setExpandedNodes] = useState<Record<string, boolean>>({})
   
+  // Add Level Form state
   const [showAddForm, setShowAddForm] = useState(false)
+  const [addDepth, setAddDepth] = useState<"L1" | "L2" | "L3">("L1")
+  const [selectedL1, setSelectedL1] = useState<string>("")
+  const [selectedL2, setSelectedL2] = useState<string>("")
   const [newName, setNewName] = useState("")
-  const [parentId, setParentId] = useState<string>("root")
   const [savingAdd, setSavingAdd] = useState(false)
 
   const fetchData = async () => {
@@ -73,12 +76,22 @@ export function LevelAssignmentTree() {
 
   const handleAddLevel = async () => {
     if (!newName.trim()) return
+
+    let parentId = null
+    if (addDepth === "L2") {
+      if (!selectedL1) { alert("Виберіть L1 (Тип процесу)"); return }
+      parentId = selectedL1
+    } else if (addDepth === "L3") {
+      if (!selectedL2) { alert("Виберіть батьківський L2"); return }
+      parentId = selectedL2
+    }
+
     setSavingAdd(true)
     try {
       const res = await fetch("/api/process-levels", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName, parentId: parentId === "root" ? null : parentId }),
+        body: JSON.stringify({ name: newName, parentId }),
       })
       if (res.ok) {
         setNewName("")
@@ -129,19 +142,6 @@ export function LevelAssignmentTree() {
       alert("Виникла помилка при видаленні")
     }
   }
-
-  // Recursive flat list for the parent select dropdown
-  const getFlatLevels = (nodes: any[], depth = 1): any[] => {
-    let result: any[] = []
-    nodes.forEach(node => {
-      result.push({ ...node, depth })
-      if (node.children && node.children.length > 0) {
-        result = [...result, ...getFlatLevels(node.children, depth + 1)]
-      }
-    })
-    return result
-  }
-  const flatLevels = getFlatLevels(levels)
 
   const renderLevel = (level: any, depth: number) => {
     const isExpanded = !!expandedNodes[level.id]
@@ -246,34 +246,62 @@ export function LevelAssignmentTree() {
       </div>
 
       {showAddForm && (
-        <div className="p-4 mb-6 border rounded-md bg-muted/10 flex gap-4 items-end">
-          <div className="flex-1 space-y-1">
-            <label className="text-xs font-medium">Назва рівня</label>
-            <Input 
-              value={newName} 
-              onChange={e => setNewName(e.target.value)} 
-              placeholder="Наприклад: HR процеси" 
-            />
+        <div className="p-4 mb-6 border rounded-md bg-muted/10 flex flex-col gap-4">
+          <div className="flex gap-4 items-end flex-wrap">
+            <div className="w-48 space-y-1">
+              <label className="text-xs font-medium">Який рівень створюємо?</label>
+              <Select value={addDepth} onValueChange={(val: any) => { setAddDepth(val); setSelectedL1(""); setSelectedL2(""); }}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="L1">Кореневий (Тип: L1)</SelectItem>
+                  <SelectItem value="L2">Підрівень (L2)</SelectItem>
+                  <SelectItem value="L3">Підрівень (L3)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {addDepth !== "L1" && (
+              <div className="flex-1 min-w-[200px] space-y-1">
+                <label className="text-xs font-medium">Батьківський L1 (Тип процесу)</label>
+                <Select value={selectedL1} onValueChange={(val) => { setSelectedL1(val); setSelectedL2(""); }}>
+                  <SelectTrigger><SelectValue placeholder="Оберіть L1..." /></SelectTrigger>
+                  <SelectContent>
+                    {levels.map(l1 => (
+                      <SelectItem key={l1.id} value={l1.id}>{l1.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {addDepth === "L3" && (
+              <div className="flex-1 min-w-[200px] space-y-1">
+                <label className="text-xs font-medium">Батьківський L2</label>
+                <Select value={selectedL2} onValueChange={setSelectedL2} disabled={!selectedL1}>
+                  <SelectTrigger><SelectValue placeholder="Оберіть L2..." /></SelectTrigger>
+                  <SelectContent>
+                    {levels.find(l1 => l1.id === selectedL1)?.children?.map((l2: any) => (
+                      <SelectItem key={l2.id} value={l2.id}>{l2.name}</SelectItem>
+                    )) || <SelectItem value="none" disabled>Немає дочірніх рівнів</SelectItem>}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
-          <div className="flex-1 space-y-1">
-            <label className="text-xs font-medium">Батьківський рівень</label>
-            <Select value={parentId} onValueChange={(val) => setParentId(val || '')}>
-              <SelectTrigger>
-                <SelectValue placeholder="Кореневий рівень (L1)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="root">Кореневий рівень (L1)</SelectItem>
-                {flatLevels.map(fl => (
-                  <SelectItem key={fl.id} value={fl.id}>
-                    {`${"-".repeat(fl.depth - 1)} ${fl.name} (L${fl.depth})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+
+          <div className="flex gap-4 items-end">
+            <div className="flex-1 space-y-1">
+              <label className="text-xs font-medium">Назва нового рівня</label>
+              <Input 
+                value={newName} 
+                onChange={e => setNewName(e.target.value)} 
+                placeholder="Наприклад: HR процеси" 
+              />
+            </div>
+            <Button onClick={handleAddLevel} disabled={!newName.trim() || savingAdd}>
+              {savingAdd ? <Loader2 className="w-4 h-4 animate-spin" /> : "Зберегти"}
+            </Button>
           </div>
-          <Button onClick={handleAddLevel} disabled={!newName.trim() || savingAdd}>
-            {savingAdd ? <Loader2 className="w-4 h-4 animate-spin" /> : "Зберегти"}
-          </Button>
         </div>
       )}
 
