@@ -1,7 +1,7 @@
 // src/lib/auth.ts
 // Mock-авторизація через cookie. Замінюється на реальну auth без змін інтерфейсу.
 import { cookies } from 'next/headers'
-import { createHmac } from 'crypto'
+import { createHmac, timingSafeEqual } from 'crypto'
 import { prisma } from './prisma'
 import type { User } from '@prisma/client';
 import { Role } from './enums';
@@ -25,26 +25,38 @@ function requireValidSecret() {
 
 function signValue(userId: string): string {
   requireValidSecret();
-  const sig = createHmac('sha256', SESSION_SECRET).update(userId).digest('hex')
-  return `${userId}.${sig}`
+  // Server-side expiration (8 hours)
+  const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
+  const payload = `${userId}.${expiresAt}`;
+  const sig = createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+  return `${payload}.${sig}`;
 }
 
 function verifyValue(cookieValue: string): string | null {
   requireValidSecret();
-  const dotIndex = cookieValue.lastIndexOf('.')
-  if (dotIndex === -1) return null
+  const parts = cookieValue.split('.');
+  if (parts.length !== 3) return null;
 
-  const userId = cookieValue.slice(0, dotIndex)
-  const providedSig = cookieValue.slice(dotIndex + 1)
-  const expectedSig = createHmac('sha256', SESSION_SECRET).update(userId).digest('hex')
-
-  // Constant-time comparison to prevent timing attacks
-  if (providedSig.length !== expectedSig.length) return null
-  let diff = 0
-  for (let i = 0; i < expectedSig.length; i++) {
-    diff |= providedSig.charCodeAt(i) ^ expectedSig.charCodeAt(i)
+  const [userId, expiresAtStr, providedSig] = parts;
+  const expiresAt = parseInt(expiresAtStr, 10);
+  
+  if (isNaN(expiresAt) || Date.now() > expiresAt) {
+    return null; // Expired
   }
-  return diff === 0 ? userId : null
+
+  const payload = `${userId}.${expiresAt}`;
+  const expectedSig = createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+
+  try {
+    const expectedBuffer = Buffer.from(expectedSig, 'hex');
+    const providedBuffer = Buffer.from(providedSig, 'hex');
+    if (expectedBuffer.length !== providedBuffer.length) return null;
+    if (!timingSafeEqual(expectedBuffer, providedBuffer)) return null;
+  } catch (e) {
+    return null;
+  }
+  
+  return userId;
 }
 
 // ---------------------------------------------------------------------------
