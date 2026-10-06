@@ -8,6 +8,11 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
+  }
+
   try {
     const record = await prisma.architectureDataStorage.findUnique({
       where: { id: 'singleton' }
@@ -29,9 +34,12 @@ export async function GET() {
       },
     });
   } catch (error: any) {
-    console.error('Error fetching architecture data:', error);
+    // CWE-209: Information Exposure Through an Error Message
+    // Логуємо на сервері, але клієнту віддаємо лише загальне повідомлення без stacktrace та details
+    const errorId = crypto.randomUUID();
+    console.error(`[${errorId}] Error fetching architecture data:`, error);
     return NextResponse.json(
-      { error: 'DB Connection Error', details: error?.message || String(error) }, 
+      { error: 'Внутрішня помилка сервера', errorId }, 
       { status: 500, headers: { 'Cache-Control': 'no-store' } }
     );
   }
