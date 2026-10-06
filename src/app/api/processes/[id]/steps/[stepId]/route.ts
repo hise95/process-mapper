@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
+import { isValidHttpUrl } from '@/lib/validation'
 import { canEditSteps } from '@/lib/permissions'
 
 type Params = { params: Promise<{ id: string; stepId: string }> }
@@ -18,6 +19,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!canEditSteps(session, proc)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
 
   const body = await req.json()
+
+  // CWE-20/601: Validate docUrl
+  if (body.docUrl && !isValidHttpUrl(body.docUrl)) {
+    return NextResponse.json({ error: 'docUrl має бути валідним HTTP/HTTPS посиланням' }, { status: 400 })
+  }
+
   // Дозволяємо оновлювати тільки безпечні поля
   const data: Partial<Record<AllowedField, string>> = {}
   for (const field of ALLOWED_STEP_FIELDS) {

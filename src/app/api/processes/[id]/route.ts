@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
+import { isValidHttpUrl } from '@/lib/validation';
 import { canEditProcess, canEditPassport, canEditSteps, canViewProcess } from '@/lib/permissions'
 
 export async function GET(
@@ -99,6 +100,11 @@ export async function PATCH(
 
     if (forbiddenEdit && Object.keys(data).length === 0) {
       return NextResponse.json({ error: 'Редагування цих даних недоступне на поточній фазі' }, { status: 403 })
+    }
+
+    // CWE-20/601: Validate bpmnUrl
+    if ('bpmnUrl' in data && !isValidHttpUrl(data.bpmnUrl as string)) {
+      return NextResponse.json({ error: 'bpmnUrl має бути валідним HTTP/HTTPS посиланням' }, { status: 400 })
     }
 
     // Перевірити рівень якщо змінюється
