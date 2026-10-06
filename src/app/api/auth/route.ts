@@ -3,10 +3,27 @@ import { prisma } from '@/lib/prisma'
 import { SESSION_COOKIE_NAME, buildSessionCookieValue } from '@/lib/auth'
 import { authenticate } from 'ldap-authentication'
 import bcrypt from 'bcrypt'
+import { checkRateLimit, clearRateLimit } from '@/lib/rateLimit'
 
 export async function POST(req: NextRequest) {
   try {
+    // 1. Per-IP Rate Limit (захист від масового брутфорсу / DDoS)
+    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown_ip';
+    const ipLimit = await checkRateLimit(`login_ip_${ip}`, 20, 15 * 60 * 1000); // 20 спроб на 15 хв
+    
+    if (!ipLimit.allowed) {
+      return NextResponse.json({ error: 'Забагато спроб входу з цієї IP-адреси. Спробуйте пізніше.' }, { status: 429, headers: { 'Retry-After': '900' } });
+    }
+
     const { email, password } = await req.json()
+    
+    if (email) {
+      // 2. Per-Account Rate Limit (захист від password spraying для конкретного юзера)
+      const emailLimit = await checkRateLimit(`login_email_${email.toLowerCase()}`, 5, 5 * 60 * 1000); // 5 спроб на 5 хв
+      if (!emailLimit.allowed) {
+        return NextResponse.json({ error: 'Акаунт тимчасово заблоковано через велику кількість невдалих спроб. Спробуйте через 5 хвилин.' }, { status: 429, headers: { 'Retry-After': '300' } });
+      }
+    }
 
     if (!email || !password) {
       return NextResponse.json({ error: 'Email та пароль обов\'язкові' }, { status: 400 })
@@ -95,6 +112,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
       }
     }
+
+    // Очищуємо ліміт для цього акаунта після успішного входу
+    await clearRateLimit(`login_email_${email.toLowerCase()}`);
 
     const response = NextResponse.json({
       success: true,
