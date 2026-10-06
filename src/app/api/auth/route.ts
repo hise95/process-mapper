@@ -71,6 +71,13 @@ export async function POST(req: NextRequest) {
       } catch (error: any) {
         // Не логуємо пароль — тільки email та повідомлення помилки
         console.warn('LDAP auth failed for', email, ':', error?.message)
+        
+        // CWE-287/639: Якщо LDAP налаштовано, він є єдиним джерелом правди.
+        // Забороняємо fallback на локальні паролі (щоб уникнути обходу AD account-lockout),
+        // за винятком екстреного локального адміністратора.
+        if (email !== 'admin@company.com') {
+          return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+        }
       }
     }
 
