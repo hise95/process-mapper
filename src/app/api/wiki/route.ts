@@ -4,6 +4,11 @@ import { getSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
 
 export async function GET() {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
+  }
+
   try {
     let pages = await prisma.wikiPage.findMany({
       orderBy: { order: 'asc' }
