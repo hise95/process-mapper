@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
+import { wikiPageSchema } from '@/lib/schemas';
 
 export async function GET() {
   const session = await getSession();
@@ -42,14 +43,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, title, icon, content, order } = await req.json();
+    const body = await req.json();
+    
+    // CWE-20: Schema validation (Point 24)
+    const parsed = wikiPageSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json({ error: 'Некоректні дані', details: parsed.error.format() }, { status: 400 });
+    }
+    
+    const { id, title, icon, content, order } = parsed.data;
 
     const newPage = await prisma.wikiPage.create({
       data: {
-        id,
+        id: id || crypto.randomUUID(), // Якщо id не передано, генеруємо безпечно
         title,
         icon: icon || 'FileText',
-        content,
+        content: content || '',
         order: order || 0
       }
     });
