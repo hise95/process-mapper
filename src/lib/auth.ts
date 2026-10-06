@@ -11,8 +11,12 @@ export type SessionUser = Pick<User, 'id' | 'email' | 'fullName' | 'role'>
 const SESSION_COOKIE = 'pm-session'
 const SESSION_SECRET = process.env.SESSION_SECRET as string
 
-if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
-  throw new Error('FATAL: SESSION_SECRET environment variable is missing or too weak (must be at least 32 characters for HMAC-SHA256).')
+
+// ---------------------------------------------------------------------------
+function requireValidSecret() {
+  if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
+    throw new Error('FATAL: SESSION_SECRET environment variable is missing or too weak (must be at least 32 characters for HMAC-SHA256).')
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -20,11 +24,13 @@ if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
 // ---------------------------------------------------------------------------
 
 function signValue(userId: string): string {
+  requireValidSecret();
   const sig = createHmac('sha256', SESSION_SECRET).update(userId).digest('hex')
   return `${userId}.${sig}`
 }
 
 function verifyValue(cookieValue: string): string | null {
+  requireValidSecret();
   const dotIndex = cookieValue.lastIndexOf('.')
   if (dotIndex === -1) return null
 
