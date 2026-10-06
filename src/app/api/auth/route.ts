@@ -34,6 +34,10 @@ export async function POST(req: NextRequest) {
 
     // 1. Спроба авторизації через LDAP (якщо налаштовано)
     if (process.env.LDAP_URL) {
+      if (process.env.NODE_ENV === 'production' && !process.env.LDAP_URL.startsWith('ldaps://')) {
+        console.error('FATAL: Insecure LDAP (ldap://) is disabled in production. Use ldaps:// (LDAP over SSL) to prevent cleartext credential transmission (CWE-319).\);
+        return NextResponse.json({ error: 'Помилка конфігурації: Небезпечне з’єднання LDAP заборонено у production.' }, { status: 500 });
+      }
       try {
         const usernameAttribute = process.env.LDAP_USERNAME_ATTRIBUTE || 'userPrincipalName'
         const baseFilter = process.env.LDAP_SEARCH_FILTER
