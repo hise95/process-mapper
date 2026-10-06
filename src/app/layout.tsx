@@ -1,10 +1,19 @@
 // src/app/layout.tsx
 import type { Metadata } from 'next'
-import { Roboto } from 'next/font/google'
+import localFont from 'next/font/local'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import './globals.css'
 
-const roboto = Roboto({ subsets: ['latin', 'cyrillic'], weight: ['300', '400', '500', '700', '900'] })
+const roboto = localFont({
+  src: [
+    { path: '../fonts/roboto-300-normal.woff2', weight: '300', style: 'normal' },
+    { path: '../fonts/roboto-400-normal.woff2', weight: '400', style: 'normal' },
+    { path: '../fonts/roboto-500-normal.woff2', weight: '500', style: 'normal' },
+    { path: '../fonts/roboto-700-normal.woff2', weight: '700', style: 'normal' },
+    { path: '../fonts/roboto-900-normal.woff2', weight: '900', style: 'normal' },
+  ],
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'BeeProcess',
