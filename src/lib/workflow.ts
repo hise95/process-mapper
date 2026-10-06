@@ -83,8 +83,8 @@ export function canExecuteTransition(
   process: { ownerId: string | null; managerId: string | null }
 ): boolean {
   const isAnalyst = user.role === Role.PROCESS_ANALYST || user.role === Role.ADMIN;
-  const isOwner = isAnalyst || (user.role === Role.PROCESS_OWNER && process.ownerId === user.id);
-  const isManager = isAnalyst || (user.role === Role.PROCESS_MANAGER && process.managerId === user.id);
+  const isOwner = isAnalyst || process.ownerId === user.id;
+  const isManager = isAnalyst || process.managerId === user.id;
 
   switch (transition) {
     case 'SUBMIT_PASSPORT_ANALYST':
