@@ -16,8 +16,25 @@ export async function GET(_req: NextRequest) {
   const session = await requireSession().catch(() => null)
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 })
 
+  // CWE-200: Excessive Data Exposure (Point 19)
+  // Працівники не мають доступу до списку користувачів взагалі
+  if (session.role === 'EMPLOYEE') {
+    return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+  }
+
+  // Аналітики та Адміни бачать повний профіль для управління
+  if (session.role === 'ADMIN' || session.role === 'PROCESS_ANALYST') {
+    const users = await prisma.user.findMany({
+      select: { id: true, email: true, fullName: true, role: true, createdAt: true },
+      orderBy: { fullName: 'asc' },
+    })
+    return NextResponse.json(users)
+  }
+
+  // Власники та Менеджери процесів бачать лише мінімальну інформацію,
+  // необхідну для dropdown-списків (без ролей та дати створення)
   const users = await prisma.user.findMany({
-    select: { id: true, email: true, fullName: true, role: true, createdAt: true },
+    select: { id: true, email: true, fullName: true },
     orderBy: { fullName: 'asc' },
   })
 
