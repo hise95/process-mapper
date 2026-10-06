@@ -63,26 +63,8 @@ export async function POST(req: NextRequest) {
       select: { id: true, email: true, password: true, fullName: true, role: true },
     })
 
-    // Автоматичне створення першого адміна якщо база порожня
-    if (!user) {
-      const count = await prisma.user.count()
-      if (count === 0) {
-        const hashed = await bcrypt.hash('password123', 12)
-        await prisma.user.createMany({
-          data: [
-            { email: 'admin@company.com', password: hashed, fullName: 'Системний Адміністратор', role: 'ADMIN' },
-            { email: 'analyst@company.com', password: hashed, fullName: 'Іваненко Олена (Процесний аналітик)', role: 'PROCESS_ANALYST' },
-            { email: 'owner@company.com', password: hashed, fullName: 'Шевченко Василь (Власник процесу)', role: 'PROCESS_OWNER' },
-            { email: 'manager@company.com', password: hashed, fullName: 'Коваленко Микола (Менеджер процесу)', role: 'PROCESS_MANAGER' },
-            { email: 'employee@company.com', password: hashed, fullName: 'Петренко Анна (Працівник)', role: 'EMPLOYEE' },
-          ],
-        })
-        user = await prisma.user.findUnique({
-          where: { email },
-          select: { id: true, email: true, password: true, fullName: true, role: true },
-        })
-      }
-    }
+    // Прибрано автоматичне створення першого адміна. 
+    // Сисадмін повинен створити його вручну через скрипт або CLI.
 
     if (authenticatedViaLdap) {
       // LDAP: якщо користувача немає в локальній БД — створюємо

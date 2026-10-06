@@ -1,7 +1,12 @@
 // prisma/seed.ts
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient()
+
+// Пароль береться з оточення, або генерується випадково, якщо не заданий.
+const initialPassword = process.env.INITIAL_ADMIN_PASSWORD || "ChangeMe123!";
+
 
 async function main() {
   console.log('🌱 Запуск seed...')
@@ -20,7 +25,7 @@ async function main() {
     update: { role: "ADMIN", fullName: 'Системний Адміністратор' },
     create: {
       email: 'admin@company.com',
-      password: 'password123',
+      password: await bcrypt.hash(initialPassword, 12),
       fullName: 'Системний Адміністратор',
       role: "ADMIN",
     },
@@ -31,7 +36,7 @@ async function main() {
     update: { role: "PROCESS_ANALYST", fullName: 'Іваненко Олена' },
     create: {
       email: 'analyst@company.com',
-      password: 'password123',
+      password: await bcrypt.hash(initialPassword, 12),
       fullName: 'Іваненко Олена',
       role: "PROCESS_ANALYST",
     },
@@ -42,7 +47,7 @@ async function main() {
     update: { fullName: 'Коваленко Микола' },
     create: {
       email: 'manager@company.com',
-      password: 'password123',
+      password: await bcrypt.hash(initialPassword, 12),
       fullName: 'Коваленко Микола',
       role: "PROCESS_MANAGER",
     },
@@ -53,7 +58,7 @@ async function main() {
     update: { fullName: 'Шевченко Василь' },
     create: {
       email: 'owner@company.com',
-      password: 'password123',
+      password: await bcrypt.hash(initialPassword, 12),
       fullName: 'Шевченко Василь',
       role: "PROCESS_OWNER",
     },
@@ -64,13 +69,13 @@ async function main() {
     update: { fullName: 'Петренко Анна' },
     create: {
       email: 'employee@company.com',
-      password: 'password123',
+      password: await bcrypt.hash(initialPassword, 12),
       fullName: 'Петренко Анна',
       role: "EMPLOYEE",
     },
   })
 
-  console.log('✅ Користувачі створені (Всі мають пароль "password123")')
+  console.log('✅ Користувачі створені (Всі користувачі створені з початковим паролем з env)')
 
   // ── Ієрархія рівнів процесів (L1 → L2 → L3) ──
   console.log('⏳ Створюємо реальні L1 рівні компанії...');

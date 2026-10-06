@@ -15,7 +15,7 @@ datasource db {
 model User {
   id        String   @id @default(cuid())
   email     String   @unique
-  password  String   @default("password123") // Зберігаємо в plain text для демо, в реальності потрібен хеш (bcrypt)
+  password  String
   fullName  String
   role      String   @default("PROCESS_MANAGER")
   createdAt DateTime @default(now())
