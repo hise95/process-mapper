@@ -101,7 +101,7 @@ export async function POST(req: NextRequest) {
       user: { id: user!.id, email: user!.email, fullName: user!.fullName, role: user!.role }
     })
 
-    response.cookies.set(SESSION_COOKIE_NAME, buildSessionCookieValue(user!.id), {
+    response.cookies.set(SESSION_COOKIE_NAME, await buildSessionCookieValue(user!.id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -116,7 +116,24 @@ export async function POST(req: NextRequest) {
   }
 }
 
+import { cookies } from 'next/headers'
+import { verifyValue } from '@/lib/auth'
+
 export async function DELETE() {
+  // Зчитуємо поточну сесію перед видаленням куки
+  const cookieStore = await cookies()
+  const cookieValue = cookieStore.get(SESSION_COOKIE_NAME)?.value
+
+  if (cookieValue) {
+    // В lib/auth немає експортованої verifyValue, тому отримаємо sessionId через розбиття
+    // або використаємо getSession(). Але простіше:
+    const dotIndex = cookieValue.indexOf('.')
+    if (dotIndex !== -1) {
+      const sessionId = cookieValue.slice(0, dotIndex)
+      await prisma.session.deleteMany({ where: { id: sessionId } })
+    }
+  }
+
   const response = NextResponse.json({ success: true })
   response.cookies.delete(SESSION_COOKIE_NAME)
   return response

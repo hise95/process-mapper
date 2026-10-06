@@ -23,16 +23,14 @@ function requireValidSecret() {
 // HMAC helpers
 // ---------------------------------------------------------------------------
 
-function signValue(userId: string): string {
+function signValue(sessionId: string, expiresAt: number): string {
   requireValidSecret();
-  // Server-side expiration (8 hours)
-  const expiresAt = Date.now() + 1000 * 60 * 60 * 8;
-  const payload = `${userId}.${expiresAt}`;
+  const payload = `${sessionId}.${expiresAt}`;
   const sig = createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
   return `${payload}.${sig}`;
 }
 
-function verifyValue(cookieValue: string): string | null {
+export function verifyValue(cookieValue: string): string | null {
   requireValidSecret();
   const parts = cookieValue.split('.');
   if (parts.length !== 3) return null;
@@ -73,15 +71,19 @@ export async function getSession(): Promise<SessionUser | null> {
 
   if (!cookieValue) return null
 
-  const userId = verifyValue(cookieValue)
-  if (!userId) return null
+  const sessionId = verifyValue(cookieValue)
+  if (!sessionId) return null
 
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, email: true, fullName: true, role: true },
+  const sessionRecord = await prisma.session.findUnique({
+    where: { id: sessionId },
+    include: { user: { select: { id: true, email: true, fullName: true, role: true } } }
   })
 
-  return user
+  if (!sessionRecord || sessionRecord.expiresAt < new Date()) {
+    return null
+  }
+
+  return sessionRecord.user
 }
 
 /**
@@ -104,8 +106,15 @@ export function hasRole(user: SessionUser, ...roles: Role[]): boolean {
  * Встановити сесію (викликається в Route Handler після вибору ролі).
  * Повертає HMAC-підписане значення cookie.
  */
-export function buildSessionCookieValue(userId: string): string {
-  return signValue(userId)
+export async function buildSessionCookieValue(userId: string): Promise<string> {
+  const expiresAtMs = Date.now() + 1000 * 60 * 60 * 8; // 8 hours
+  const session = await prisma.session.create({
+    data: {
+      userId,
+      expiresAt: new Date(expiresAtMs)
+    }
+  });
+  return signValue(session.id, expiresAtMs);
 }
 
 export const SESSION_COOKIE_NAME = SESSION_COOKIE

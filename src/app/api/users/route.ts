@@ -85,6 +85,13 @@ export async function PATCH(req: NextRequest) {
     select: { id: true, email: true, fullName: true, role: true },
   })
 
+  // Якщо пароль або роль змінено, відкликаємо (видаляємо) всі активні сесії цього користувача (CWE-613 Revocation)
+  if (password || role) {
+    await prisma.session.deleteMany({
+      where: { userId }
+    });
+  }
+
   return NextResponse.json(updated)
 }
 
