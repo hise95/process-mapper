@@ -4,6 +4,7 @@ import { requireSession } from '@/lib/auth'
 import { canViewAdminPanel } from '@/lib/permissions'
 import { Role } from '../../../lib/enums'
 import bcrypt from 'bcrypt'
+import { logSecurityEvent } from '@/lib/audit'
 function validatePassword(password: string): string | null {
   if (password.length < 8) return 'Пароль має містити щонайменше 8 символів';
   if (password.length > 72) return 'Пароль занадто довгий (максимум 72 символи для безпеки bcrypt)';
@@ -73,6 +74,8 @@ export async function POST(req: NextRequest) {
     select: { id: true, email: true, fullName: true, role: true },
   })
 
+  await logSecurityEvent({ action: 'USER_CREATE', userId: session.id, targetId: user.id, details: `Created user ${email} with role ${role}` });
+
   return NextResponse.json(user, { status: 201 })
 }
 
@@ -118,6 +121,13 @@ export async function PATCH(req: NextRequest) {
     select: { id: true, email: true, fullName: true, role: true },
   })
 
+  if (role) {
+    await logSecurityEvent({ action: 'ROLE_CHANGE', userId: session.id, targetId: userId, details: `Role changed to ${role}` });
+  }
+  if (password) {
+    await logSecurityEvent({ action: 'PASSWORD_RESET', userId: session.id, targetId: userId, details: `Password was reset/changed` });
+  }
+
   // Якщо пароль або роль змінено, відкликаємо (видаляємо) всі активні сесії цього користувача (CWE-613 Revocation)
   if (password || role) {
     await prisma.session.deleteMany({
@@ -142,6 +152,8 @@ export async function DELETE(req: NextRequest) {
   await prisma.user.delete({
     where: { id: userId },
   })
+
+  await logSecurityEvent({ action: 'USER_DELETE', userId: session.id, targetId: userId, details: `User deleted` });
 
   return NextResponse.json({ success: true })
 }

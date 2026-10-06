@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { SESSION_COOKIE_NAME, buildSessionCookieValue } from '@/lib/auth'
 import { authenticate } from 'ldap-authentication'
 import bcrypt from 'bcrypt'
+import { logSecurityEvent } from '@/lib/audit'
 import { checkRateLimit, clearRateLimit } from '@/lib/rateLimit'
 
 export async function POST(req: NextRequest) {
@@ -74,12 +75,14 @@ export async function POST(req: NextRequest) {
         }
       } catch (error: any) {
         // Не логуємо пароль — тільки email та повідомлення помилки
-        console.warn('LDAP auth failed for', email, ':', error?.message)
+        console.warn('LDAP auth failed for', email, ':', error?.message);
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP failure for ${email}` });
         
         // CWE-287/639: Якщо LDAP налаштовано, він є єдиним джерелом правди.
         // Забороняємо fallback на локальні паролі (щоб уникнути обходу AD account-lockout),
         // за винятком екстреного локального адміністратора.
         if (email !== 'admin@company.com') {
+          await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
           return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
         }
       }
@@ -111,21 +114,26 @@ export async function POST(req: NextRequest) {
     } else {
       // Локальна авторизація: перевіряємо bcrypt-хеш
       if (!user) {
-        return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
+          return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
       }
       // Тільки bcrypt-хеші є дійсними. Якщо хеш не bcrypt — пароль недійсний.
       if (!user.password.startsWith('$2')) {
-        return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
+          return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
       }
       const isValidPassword = await bcrypt.compare(password, user.password)
 
       if (!isValidPassword) {
-        return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
+          return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
       }
     }
 
     // Очищуємо ліміт для цього акаунта після успішного входу
     await clearRateLimit(`login_email_${email.toLowerCase()}`);
+    await logSecurityEvent({ action: 'LOGIN_SUCCESS', userId: user!.id, ip, details: `User logged in` });
+    await logSecurityEvent({ action: 'SESSION_ISSUANCE', userId: user!.id, ip, details: `Session issued via POST /api/auth` });
 
     const response = NextResponse.json({
       success: true,

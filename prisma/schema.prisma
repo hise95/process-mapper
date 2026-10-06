@@ -215,3 +215,17 @@ model RateLimit {
   count     Int      @default(1)
   expiresAt DateTime
 }
+
+model SecurityAuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  userId    String?
+  targetId  String?
+  ip        String?
+  details   String?  @db.Text
+  createdAt DateTime @default(now())
+
+  @@index([action])
+  @@index([userId])
+  @@index([targetId])
+}
