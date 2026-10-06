@@ -205,8 +205,8 @@ pm2 restart process-mapper # Перезапуск сервера
 
 Додайте в `.env`:
 ```env
-# URL сервера Active Directory (ldap:// або ldaps://)
-LDAP_URL="ldap://192.168.x.x" 
+# URL сервера Active Directory (тільки ldaps:// для безпеки)
+LDAP_URL="ldaps://192.168.x.x:636" 
 
 # Обліковий запис службового користувача для пошуку (якщо необхідно)
 LDAP_BIND_DN="CN=LDAP_User,OU=ServiceAccounts,DC=domain,DC=ua"
