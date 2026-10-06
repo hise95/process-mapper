@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { SESSION_COOKIE_NAME } from '@/lib/auth'
+import { SESSION_COOKIE_NAME, buildSessionCookieValue } from '@/lib/auth'
 import { authenticate } from 'ldap-authentication'
 import bcrypt from 'bcrypt'
 
@@ -103,10 +103,11 @@ export async function POST(req: NextRequest) {
       if (!user) {
         return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
       }
-      // Підтримка старих записів (plaintext) та нових (bcrypt)
-      const isValidPassword = user.password.startsWith('$2')
-        ? await bcrypt.compare(password, user.password)
-        : user.password === password // Fallback для існуючих записів у БД
+      // Тільки bcrypt-хеші є дійсними. Якщо хеш не bcrypt — пароль недійсний.
+      if (!user.password.startsWith('$2')) {
+        return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+      }
+      const isValidPassword = await bcrypt.compare(password, user.password)
 
       if (!isValidPassword) {
         return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
@@ -118,7 +119,7 @@ export async function POST(req: NextRequest) {
       user: { id: user!.id, email: user!.email, fullName: user!.fullName, role: user!.role }
     })
 
-    response.cookies.set(SESSION_COOKIE_NAME, user!.id, {
+    response.cookies.set(SESSION_COOKIE_NAME, buildSessionCookieValue(user!.id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const where: Record<string, unknown> = {}
 
   if (pending === 'true') {
-    if (session.role === Role.PROCESS_ANALYST || session.role === Role.PROCESS_ANALYST || session.role === Role.ADMIN) {
+    if (session.role === Role.PROCESS_ANALYST || session.role === Role.ADMIN) {
       where.status = { in: [
         'PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST',
         'PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'
