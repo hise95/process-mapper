@@ -103,9 +103,11 @@ export async function PATCH(
 
     const updated = await prisma.process.update({ where: { id }, data })
 
-    await prisma.processHistoryLog.create({
-      data: { processId: id, action: 'ОНОВЛЕНО', userId: session.id },
-    })
+    if (!['DRAFT', 'STEPS_DRAFT', 'KPIS_DRAFT'].includes(process.status)) {
+      await prisma.processHistoryLog.create({
+        data: { processId: id, action: 'ОНОВЛЕНО', userId: session.id },
+      })
+    }
 
     return NextResponse.json(updated)
   } catch (error) {
