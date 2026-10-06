@@ -9,7 +9,11 @@ import { Role } from './enums';
 export type SessionUser = Pick<User, 'id' | 'email' | 'fullName' | 'role'>
 
 const SESSION_COOKIE = 'pm-session'
-const SESSION_SECRET = process.env.SESSION_SECRET || 'dev-secret-change-in-production'
+const SESSION_SECRET = process.env.SESSION_SECRET
+
+if (!SESSION_SECRET || SESSION_SECRET.length < 32) {
+  throw new Error('FATAL: SESSION_SECRET environment variable is missing or too weak (must be at least 32 characters for HMAC-SHA256).')
+}
 
 // ---------------------------------------------------------------------------
 // HMAC helpers
