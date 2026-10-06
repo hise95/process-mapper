@@ -88,7 +88,7 @@ export function canExecuteTransition(
 
   switch (transition) {
     case 'SUBMIT_PASSPORT_ANALYST':
-      return currentStatus === 'DRAFT' && isManager
+      return currentStatus === 'DRAFT' && (isManager || isOwner)
     case 'APPROVE_PASSPORT_ANALYST':
     case 'REJECT_PASSPORT_ANALYST':
       return currentStatus === 'PASSPORT_REVIEW_ANALYST' && isAnalyst
@@ -97,7 +97,7 @@ export function canExecuteTransition(
       return currentStatus === 'PASSPORT_REVIEW_OWNER' && isOwner
 
     case 'SUBMIT_STEPS_ANALYST':
-      return currentStatus === 'STEPS_DRAFT' && isManager
+      return currentStatus === 'STEPS_DRAFT' && (isManager || isOwner)
     case 'APPROVE_STEPS_ANALYST':
     case 'REJECT_STEPS_ANALYST':
       return currentStatus === 'STEPS_REVIEW_ANALYST' && isAnalyst
@@ -106,7 +106,7 @@ export function canExecuteTransition(
       return currentStatus === 'STEPS_REVIEW_OWNER' && isOwner
 
     case 'SUBMIT_KPIS_ANALYST':
-      return currentStatus === 'KPIS_DRAFT' && isManager
+      return currentStatus === 'KPIS_DRAFT' && (isManager || isOwner)
     case 'APPROVE_KPIS_ANALYST':
     case 'REJECT_KPIS_ANALYST':
       return currentStatus === 'KPIS_REVIEW_ANALYST' && isAnalyst
