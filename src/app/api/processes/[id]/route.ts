@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { canEditProcess, canEditPassport, canEditSteps } from '@/lib/permissions'
+import { canEditProcess, canEditPassport, canEditSteps, canViewProcess } from '@/lib/permissions'
 
 export async function GET(
   _req: NextRequest,
@@ -36,6 +36,10 @@ export async function GET(
 
     if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
 
+    if (!canViewProcess(session, process)) {
+      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    }
+
     return NextResponse.json(process)
   } catch (error) {
     console.error('Error fetching process details:', error)
@@ -54,6 +58,10 @@ export async function PATCH(
     const { id } = await params
     const process = await prisma.process.findUnique({ where: { id } })
     if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+
+    if (!canViewProcess(session, process)) {
+      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    }
 
     if (!canEditProcess(session, process)) {
       return NextResponse.json({ error: 'Редагування недоступне' }, { status: 403 })
@@ -128,6 +136,10 @@ export async function DELETE(
     const process = await prisma.process.findUnique({ where: { id } })
     
     if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+
+    if (!canViewProcess(session, process)) {
+      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    }
 
     const isAdmin = session.role === 'ADMIN'
     const isDraft = ['DRAFT', 'STEPS_DRAFT', 'KPIS_DRAFT'].includes(process.status)

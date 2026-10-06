@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { canEditSteps } from '@/lib/permissions'
+import { canEditSteps, canViewProcess } from '@/lib/permissions'
 
 export async function GET(
   _req: NextRequest,

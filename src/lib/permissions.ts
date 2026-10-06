@@ -94,3 +94,11 @@ export function canEditKpis(user: SessionUser, process: Pick<Process, 'managerId
   if (isAnalystOrAdmin(user.role)) return true;
   return PHASE_3_STATUSES.includes(process.status);
 }
+
+export function canViewProcess(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (isAnalystOrAdmin(user.role)) return true;
+  if (process.status === 'APPROVED') return true;
+  if (process.managerId === user.id) return true;
+  if (process.ownerId === user.id) return true;
+  return false;
+}

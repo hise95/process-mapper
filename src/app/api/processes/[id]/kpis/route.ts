@@ -5,7 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { canEditKpis } from '@/lib/permissions'
+import { canEditKpis, canViewProcess } from '@/lib/permissions'
 
 export async function GET(
   _req: NextRequest,
@@ -15,6 +15,10 @@ export async function GET(
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 })
 
   const { id } = await params
+  const process = await prisma.process.findUnique({ where: { id }, select: { status: true, ownerId: true, managerId: true } })
+  if (!process) return NextResponse.json({ error: "Процес не знайдено" }, { status: 404 })
+  if (!canViewProcess(session, process as any)) return NextResponse.json({ error: "Доступ заборонено" }, { status: 403 })
+
   const kpis = await prisma.processKPI.findMany({ where: { processId: id } })
   return NextResponse.json(kpis)
 }
