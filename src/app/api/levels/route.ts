@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
+import { isAnalystOrAdmin } from '@/lib/permissions';
 
 export async function GET() {
   const session = await requireSession().catch(() => null);
@@ -21,6 +22,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const session = await requireSession().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
+  if (!isAnalystOrAdmin(session.role)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 });
 
   try {
     const { name, parentId } = await req.json();
