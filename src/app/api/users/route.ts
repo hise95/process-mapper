@@ -4,6 +4,13 @@ import { requireSession } from '@/lib/auth'
 import { canViewAdminPanel } from '@/lib/permissions'
 import { Role } from '../../../lib/enums'
 import bcrypt from 'bcrypt'
+function validatePassword(password: string): string | null {
+  if (password.length < 8) return 'Пароль має містити щонайменше 8 символів';
+  if (password.length > 72) return 'Пароль занадто довгий (максимум 72 символи для безпеки bcrypt)';
+  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) return 'Пароль має містити щонайменше одну літеру та одну цифру';
+  return null;
+}
+
 
 export async function GET(_req: NextRequest) {
   const session = await requireSession().catch(() => null)
@@ -25,6 +32,11 @@ export async function POST(req: NextRequest) {
   const { email, password, fullName, role } = await req.json()
   if (!email || !password || !fullName || !role) {
     return NextResponse.json({ error: 'Всі поля обов\'язкові' }, { status: 400 })
+  }
+
+  const pwdError = validatePassword(password)
+  if (pwdError) {
+    return NextResponse.json({ error: pwdError }, { status: 400 })
   }
 
   const validRoles = Object.values(Role)
@@ -74,7 +86,11 @@ export async function PATCH(req: NextRequest) {
     if (session.role !== 'ADMIN') {
        return NextResponse.json({ error: 'Тільки системний адміністратор може змінювати дані користувача' }, { status: 403 })
     }
-    if (password) dataToUpdate.password = await bcrypt.hash(password, 12)
+    if (password) {
+      const pwdError = validatePassword(password)
+      if (pwdError) return NextResponse.json({ error: pwdError }, { status: 400 })
+      dataToUpdate.password = await bcrypt.hash(password, 12)
+    }
     if (email) dataToUpdate.email = email
     if (fullName) dataToUpdate.fullName = fullName
   }
