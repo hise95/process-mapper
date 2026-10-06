@@ -18,32 +18,46 @@ export async function GET(req: NextRequest) {
   const pending = searchParams.get('pending')
 
   // Побудова фільтра за роллю
-  const where: Record<string, unknown> = {}
+  const where: any = {}
 
+  // 1. Жорсткі обмеження видимості за роллю (Base Object Level Authorization)
+  if (!isAnalystOrAdmin(session.role)) {
+    if (session.role === Role.PROCESS_MANAGER) {
+      where.managerId = session.id
+    } else if (session.role === Role.PROCESS_OWNER) {
+      where.ownerId = session.id
+    } else if (session.role === Role.EMPLOYEE) {
+      where.status = 'APPROVED'
+    } else {
+      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    }
+  }
+
+  // 2. Додаткові фільтри (status / pending)
   if (pending === 'true') {
-    if (session.role === Role.PROCESS_ANALYST || session.role === Role.ADMIN) {
+    if (isAnalystOrAdmin(session.role)) {
       where.status = { in: [
         'PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST',
         'PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'
       ] }
     } else if (session.role === Role.PROCESS_OWNER) {
       where.status = { in: ['PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'] }
-      where.ownerId = session.id
+    } else {
+      // Інші ролі не мають pending-процесів
+      where.id = 'NO_ACCESS_PENDING'
     }
   } else if (status) {
     if (status === 'ARCHIVED' && !isAnalystOrAdmin(session.role)) {
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
     }
-    where.status = status
+    if (session.role === Role.EMPLOYEE && status !== 'APPROVED') {
+      where.id = 'NO_ACCESS_STATUS'
+    } else {
+      where.status = status
+    }
   } else {
-    // Якщо статус не вказано, ховаємо архівовані версії з загальних списків
-    where.status = { not: 'ARCHIVED' }
-    if (session.role === Role.PROCESS_MANAGER) {
-      // Менеджер бачить тільки свої процеси
-      where.managerId = session.id
-    } else if (session.role === Role.PROCESS_OWNER) {
-      // Власник бачить свої процеси
-      where.ownerId = session.id
+    if (session.role !== Role.EMPLOYEE) {
+      where.status = { not: 'ARCHIVED' }
     }
   }
 
