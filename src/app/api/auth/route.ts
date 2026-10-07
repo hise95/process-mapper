@@ -84,7 +84,10 @@ export async function POST(req: NextRequest) {
         }
 
         const authOptions: any = {
-          ldapOpts: { url: process.env.LDAP_URL },
+          ldapOpts: { 
+            url: process.env.LDAP_URL,
+            tlsOptions: { rejectUnauthorized: true } // CWE-295: Enforce strict peer certificate verification for LDAPS
+          },
           userPassword: password,
           userSearchBase: process.env.LDAP_BASE_DN || '',
           usernameAttribute,
