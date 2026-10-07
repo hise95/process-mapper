@@ -202,11 +202,12 @@ model WikiPage {
 }
 
 model Session {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  expiresAt DateTime
-  createdAt DateTime @default(now())
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt      DateTime
+  lastAccessedAt DateTime @default(now())
+  createdAt      DateTime @default(now())
 
   @@index([userId])
 }
