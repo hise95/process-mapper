@@ -209,8 +209,6 @@ pm2 restart process-mapper # Перезапуск сервера
 LDAP_URL="ldaps://192.168.x.x:636"
 
 # Break-glass екстрений акаунт, якому дозволено логінитись повз LDAP у разі падіння AD (Опціонально)
-EMERGENCY_LOCAL_ADMIN_EMAIL="admin@company.com" 
-
 # Обліковий запис службового користувача для пошуку (якщо необхідно)
 LDAP_BIND_DN="CN=LDAP_User,OU=ServiceAccounts,DC=domain,DC=ua"
 LDAP_BIND_PASSWORD="super_secret_password"
