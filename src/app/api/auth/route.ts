@@ -173,16 +173,13 @@ import { cookies } from 'next/headers'
 import { verifyValue } from '@/lib/auth'
 
 export async function DELETE() {
-  // Зчитуємо поточну сесію перед видаленням куки
   const cookieStore = await cookies()
   const cookieValue = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
   if (cookieValue) {
-    // В lib/auth немає експортованої verifyValue, тому отримаємо sessionId через розбиття
-    // або використаємо getSession(). Але простіше:
-    const dotIndex = cookieValue.indexOf('.')
-    if (dotIndex !== -1) {
-      const sessionId = cookieValue.slice(0, dotIndex)
+    // Верифікуємо HMAC підпис перед тим, як довіряти ID для видалення (CWE-345)
+    const sessionId = verifyValue(cookieValue)
+    if (sessionId) {
       await prisma.session.deleteMany({ where: { id: sessionId } })
     }
   }
