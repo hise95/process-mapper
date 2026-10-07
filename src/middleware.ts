@@ -127,20 +127,33 @@ export async function middleware(req: NextRequest) {
       headers: { cookie: req.headers.get('cookie') || '' }
     })
     
+    let rotatedCookie: string | null = null;
     if (!verifyReq.ok) {
       const loginUrl = new URL('/login', req.url)
       const res = NextResponse.redirect(loginUrl, { headers: requestHeaders })
       res.cookies.delete(SESSION_COOKIE)
       res.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue)
       return res
+    } else {
+      // Якщо auth/me ініціював Session Rotation, забираємо новий Set-Cookie
+      rotatedCookie = verifyReq.headers.get('set-cookie');
     }
+    
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue);
+    
+    if (rotatedCookie) {
+      // Прокидуємо новий cookie клієнту (CWE-384)
+      response.headers.set('Set-Cookie', rotatedCookie);
+    }
+    
+    return response;
   } catch (e) {
-    // У разі мережевої помилки пропускаємо далі (fallback) – захист спрацює на рівні Server Component
+    // У разі мережевої помилки пропускаємо далі (fallback)
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+    response.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue);
+    return response;
   }
-
-  const response = NextResponse.next({ request: { headers: requestHeaders } });
-  response.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue);
-  return response;
 }
 
 export const config = {
