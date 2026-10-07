@@ -18,11 +18,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Забагато спроб входу з цієї IP-адреси. Спробуйте пізніше.' }, { status: 429, headers: { 'Retry-After': '900' } });
     }
 
-    const { email, password } = await req.json()
+    const body = await req.json();
+    let email = body.email;
+    if (email) email = email.trim().toLowerCase(); // CWE-178: Canonicalize email
+    const password = body.password;
     
     if (email) {
       // 2. Per-Account Rate Limit (захист від password spraying для конкретного юзера)
-      const emailLimit = await checkRateLimit(`login_email_${email.toLowerCase()}`, 5, 5 * 60 * 1000); // 5 спроб на 5 хв
+      const emailLimit = await checkRateLimit(`login_email_${email}`, 5, 5 * 60 * 1000); // 5 спроб на 5 хв
       if (!emailLimit.allowed) {
         // CWE-204: Generic error to prevent lockout enumeration
         return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
@@ -165,7 +168,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Очищуємо ліміт для цього акаунта після успішного входу
-    await clearRateLimit(`login_email_${email.toLowerCase()}`);
+    await clearRateLimit(`login_email_${email}`);
     await logSecurityEvent({ action: 'LOGIN_SUCCESS', userId: user!.id, ip, details: `User logged in` });
     await logSecurityEvent({ action: 'SESSION_ISSUANCE', userId: user!.id, ip, details: `Session issued via POST /api/auth` });
 

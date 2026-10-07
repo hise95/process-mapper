@@ -48,7 +48,9 @@ export async function POST(req: NextRequest) {
   if (sudoRequired) return NextResponse.json({ error: 'Для виконання критичної операції потрібно знову підтвердити особу (Step-up Auth). Будь ласка, перезайдіть в систему.' }, { status: 403 });
   if (!canManageUsers(session)) return NextResponse.json({ error: 'Тільки системний адміністратор може створювати користувачів' }, { status: 403 })
 
-  const { email, password, fullName, role, currentPassword } = await req.json()
+  const body = await req.json();
+  let { email, password, fullName, role, currentPassword } = body;
+  if (email) email = email.trim().toLowerCase(); // CWE-178
   if (!email || !password || !fullName || !role) {
     return NextResponse.json({ error: 'Всі поля обов\'язкові' }, { status: 400 })
   }
@@ -93,7 +95,9 @@ export async function PATCH(req: NextRequest) {
   if (sudoRequired) return NextResponse.json({ error: 'Для виконання критичної операції потрібно знову підтвердити особу (Step-up Auth). Будь ласка, перезайдіть в систему.' }, { status: 403 });
   if (!canViewAdminPanel(session)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
 
-  const { userId, role, password, email, fullName, currentPassword } = await req.json()
+  const bodyPatch = await req.json();
+  let { userId, role, password, email, fullName, currentPassword } = bodyPatch;
+  if (email) email = email.trim().toLowerCase(); // CWE-178
   if (!userId) return NextResponse.json({ error: 'userId обов\'язковий' }, { status: 400 })
   
   if (!currentPassword) {
