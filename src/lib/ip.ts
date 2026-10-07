@@ -58,5 +58,5 @@ export function getClientIp(req: NextRequest): string {
   const realIp = req.headers.get('x-real-ip');
   if (realIp) return realIp.trim();
 
-  return 'unknown_ip';
+  return (req as any).ip || 'unknown_ip';
 }

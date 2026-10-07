@@ -12,7 +12,10 @@ export async function POST(req: NextRequest) {
     // 1. Per-IP Rate Limit (захист від масового брутфорсу / DDoS)
         // CWE-345 / CWE-307: Безпечне отримання IP без вразливості до підміни X-Forwarded-For
     const ip = getClientIp(req);
-    const ipLimit = await checkRateLimit(`login_ip_${ip}`, 20, 15 * 60 * 1000); // 20 спроб на 15 хв
+    // CWE-400: Якщо IP невідомий (без проксі, standalone), збільшуємо ліміт або ігноруємо, 
+    // щоб не заблокувати всіх клієнтів в одному bucket (Amplification DoS)
+    const limitCount = ip === 'unknown_ip' ? 500 : 20;
+    const ipLimit = await checkRateLimit(`login_ip_${ip}`, limitCount, 15 * 60 * 1000); 
     
     if (!ipLimit.allowed) {
       return NextResponse.json({ error: 'Забагато спроб входу з цієї IP-адреси. Спробуйте пізніше.' }, { status: 429, headers: { 'Retry-After': '900' } });
