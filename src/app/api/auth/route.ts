@@ -125,18 +125,12 @@ export async function POST(req: NextRequest) {
     // Сисадмін повинен створити його вручну через скрипт або CLI.
 
     if (authenticatedViaLdap) {
-      // LDAP: якщо користувача немає в локальній БД — створюємо
+      // CWE-863 / Lifecycle: Скасовано автоматичне JIT-створення (Just-In-Time) користувачів.
+      // Користувач повинен бути попередньо зареєстрований адміністратором у локальній БД,
+      // щоб забезпечити надійний lifecycle/deprovisioning контроль.
       if (!user) {
-        const placeholderHash = await bcrypt.hash(`ldap-${Date.now()}`, 12)
-        user = await prisma.user.create({
-          data: {
-            email,
-            password: placeholderHash, // Не використовується, вхід тільки через LDAP
-            fullName: ldapFullName || email.split('@')[0],
-            role: 'EMPLOYEE',
-          },
-          select: { id: true, email: true, password: true, fullName: true, role: true },
-        })
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP success but local account missing for ${email}` });
+        return NextResponse.json({ error: 'Акаунт не знайдено в локальній базі. Зверніться до адміністратора для доступу.' }, { status: 403 })
       }
     } else {
       // Локальна авторизація: перевіряємо bcrypt-хеш
