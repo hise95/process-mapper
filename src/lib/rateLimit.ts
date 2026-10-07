@@ -37,7 +37,9 @@ export async function checkRateLimit(
     return { allowed: true, remaining: Math.max(0, limit - updated.count) };
   } catch (error) {
     console.error('Rate limit error:', error);
-    return { allowed: true, remaining: 1 };
+    // CWE-636: Not Failing Securely. Якщо БД впала, краще заблокувати доступ (Fail-Closed),
+    // ніж пропустити атакуючого (Fail-Open).
+    throw new Error('Помилка перевірки ліміту запитів');
   }
 }
 
