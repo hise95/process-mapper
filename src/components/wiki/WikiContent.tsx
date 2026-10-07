@@ -221,8 +221,8 @@ export default function WikiContent({ isEditor }: { isEditor?: boolean }) {
                   className="prose prose-neutral dark:prose-invert max-w-none ProseMirror" 
                   dangerouslySetInnerHTML={{ 
                     __html: DOMPurify.sanitize(activeSection.content, {
-                      ALLOWED_TAGS: ['h1','h2','h3','h4','p','ul','ol','li','strong','em','a','br','div','span','code','pre','blockquote','table','thead','tbody','tr','th','td'],
-                      ALLOWED_ATTR: ['href','class','target','rel'],
+                      ALLOWED_TAGS: ['h1','h2','h3','h4','p','ul','ol','li','strong','em','a','br','div','span','code','pre','blockquote','table','thead','tbody','tr','th','td', 'img'],
+                      ALLOWED_ATTR: ['href','class','target','rel','src','alt','title','width','height'],
                       ALLOW_DATA_ATTR: false,
                     })
                   }} 

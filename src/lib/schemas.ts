@@ -1,15 +1,23 @@
 import { z } from 'zod';
 import sanitizeHtml from 'sanitize-html';
 
+// CWE-79: Strict sanitize-html configuration 
+// Усунуто iframe, style, id, та data-схеми, щоб уникнути UI redress та XSS
 const sanitizeHtmlOptions = {
-  allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'iframe', 'span', 'h1', 'h2', 'h3' ]),
+  allowedTags: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'p', 'a', 'ul', 'ol',
+    'nl', 'li', 'b', 'i', 'strong', 'em', 'strike', 'code', 'hr', 'br', 'div',
+    'table', 'thead', 'caption', 'tbody', 'tr', 'th', 'td', 'pre', 'span', 'img'
+  ],
   allowedAttributes: {
-    '*': ['class', 'id', 'style'],
-    'a': ['href', 'name', 'target', 'rel'],
-    'img': ['src', 'alt', 'title', 'width', 'height'],
-    'iframe': ['src', 'width', 'height', 'allow', 'allowfullscreen']
+    '*': ['class'],
+    'a': ['href', 'target', 'rel'],
+    'img': ['src', 'alt', 'title', 'width', 'height']
   },
-  allowedSchemes: ['http', 'https', 'mailto', 'data']
+  allowedSchemes: ['http', 'https', 'mailto'],
+  allowedSchemesByTag: {
+    // Дозволяємо data-схему ТІЛЬКИ для картинок, щоб підтримувати base64
+    img: ['http', 'https', 'data']
+  }
 };
 
 export const wikiPageSchema = z.object({
