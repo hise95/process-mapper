@@ -1,7 +1,29 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
-import DOMPurify from 'dompurify';
+import { useEditor, EditorContent } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import ImageExtension from '@tiptap/extension-image';
+import LinkExtension from '@tiptap/extension-link';
+
+// CWE-79: Safe JSON AST Viewer (Replaces dangerouslySetInnerHTML)
+function ReadOnlyViewer({ content }: { content: string }) {
+  const isJson = content && (content.trim().startsWith('{') || content.trim().startsWith('['));
+  
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      ImageExtension.configure({ inline: true, allowBase64: true, HTMLAttributes: { class: 'rounded-md max-w-full my-4 border border-border shadow-sm' } }),
+      LinkExtension.configure({ openOnClick: true, HTMLAttributes: { class: 'text-primary underline underline-offset-4' } })
+    ],
+    content: isJson ? JSON.parse(content) : content,
+    editable: false,
+  }, [content]);
+
+  if (!editor) return null;
+  return <EditorContent editor={editor} className="prose prose-neutral dark:prose-invert max-w-none ProseMirror" />;
+}
+
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -217,16 +239,7 @@ export default function WikiContent({ isEditor }: { isEditor?: boolean }) {
                 </div>
               )}
               {activeSection ? (
-                <div 
-                  className="prose prose-neutral dark:prose-invert max-w-none ProseMirror" 
-                  dangerouslySetInnerHTML={{ 
-                    __html: DOMPurify.sanitize(activeSection.content, {
-                      ALLOWED_TAGS: ['h1','h2','h3','h4','p','ul','ol','li','strong','em','a','br','div','span','code','pre','blockquote','table','thead','tbody','tr','th','td', 'img'],
-                      ALLOWED_ATTR: ['href','class','target','rel','src','alt','title','width','height'],
-                      ALLOW_DATA_ATTR: false,
-                    })
-                  }} 
-                />
+                <ReadOnlyViewer content={activeSection.content} />
               ) : (
                 <div className="text-muted-foreground">Оберіть сторінку зліва або створіть нову.</div>
               )}

@@ -30,9 +30,10 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         },
       })
     ],
-    content,
+    content: (content && (content.trim().startsWith('{') || content.trim().startsWith('['))) ? JSON.parse(content) : content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      // CWE-79: Зберігаємо JSON AST замість сирого HTML
+      onChange(JSON.stringify(editor.getJSON()));
     },
   });
 
