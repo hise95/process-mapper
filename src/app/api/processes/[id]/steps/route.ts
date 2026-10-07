@@ -16,6 +16,15 @@ export async function GET(
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 })
 
   const { id } = await params
+  
+  // Перевірка BOLA (IDOR) - чи має користувач право переглядати цей процес
+  const process = await prisma.process.findUnique({ 
+    where: { id },
+    select: { status: true, ownerId: true, managerId: true }
+  })
+  if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+  if (!canViewProcess(session, process)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+
   const steps = await prisma.processStep.findMany({
     where: { processId: id },
     orderBy: { orderIndex: 'asc' },
