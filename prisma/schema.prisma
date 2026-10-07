@@ -208,6 +208,9 @@ model Session {
   expiresAt      DateTime
   lastAccessedAt DateTime @default(now())
   createdAt      DateTime @default(now())
+  ipAddress      String?
+  userAgent      String?
+  authMethod     String? // LDAP або LOCAL
 
   @@index([userId])
 }

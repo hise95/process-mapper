@@ -173,7 +173,12 @@ export async function POST(req: NextRequest) {
       user: { id: user!.id, email: user!.email, fullName: user!.fullName, role: user!.role }
     })
 
-    response.cookies.set(SESSION_COOKIE_NAME, await buildSessionCookieValue(user!.id), {
+    // CWE-xxxx: Session Context and Telemetry (вимоги аудиту)
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+    const authMethod = authenticatedViaLdap ? 'LDAP' : 'LOCAL';
+    const sessionCookieValue = await buildSessionCookieValue(user!.id, ip, userAgent, authMethod);
+    
+    response.cookies.set(SESSION_COOKIE_NAME, sessionCookieValue, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

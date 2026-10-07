@@ -126,12 +126,20 @@ export function hasRole(user: SessionUser, ...roles: Role[]): boolean {
  * Встановити сесію (викликається в Route Handler після вибору ролі).
  * Повертає HMAC-підписане значення cookie.
  */
-export async function buildSessionCookieValue(userId: string): Promise<string> {
+export async function buildSessionCookieValue(
+  userId: string, 
+  ipAddress?: string, 
+  userAgent?: string, 
+  authMethod?: string
+): Promise<string> {
   const expiresAtMs = Date.now() + 1000 * 60 * 60 * 8; // 8 hours
   const session = await prisma.session.create({
     data: {
       userId,
-      expiresAt: new Date(expiresAtMs)
+      expiresAt: new Date(expiresAtMs),
+      ipAddress,
+      userAgent,
+      authMethod
     }
   });
   return signValue(session.id, expiresAtMs);
