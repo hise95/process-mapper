@@ -67,7 +67,7 @@ export async function PUT(
   if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
   const rawBody = await req.json()
-  const parseResult = z.array(kpiSchema).safeParse(rawBody)
+  const parseResult = z.array(kpiSchema).max(100, 'Максимум 100 KPI за один раз').safeParse(rawBody)
   if (!parseResult.success) {
     return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 })
   }

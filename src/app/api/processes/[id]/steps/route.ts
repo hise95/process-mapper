@@ -95,7 +95,7 @@ export async function PUT(
   if (!canEditSteps(session, process)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
 
   const rawBody = await req.json()
-  const parseResult = z.array(stepSchema).safeParse(rawBody)
+  const parseResult = z.array(stepSchema).max(200, 'Максимум 200 кроків за один раз').safeParse(rawBody)
   if (!parseResult.success) {
     return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 })
   }
