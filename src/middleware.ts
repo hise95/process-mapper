@@ -47,32 +47,49 @@ async function verifyHmac(cookieValue: string): Promise<boolean> {
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
+  
+  // CWE-693: Nonce-based Strict CSP для Next.js
+  const nonce = btoa(crypto.randomUUID())
+  const cspHeader = process.env.NODE_ENV === "development" 
+    ? `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'unsafe-eval' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';`
+    : `default-src 'self'; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self'; connect-src 'self'; frame-ancestors 'none';`
+  
+  const contentSecurityPolicyHeaderValue = cspHeader.replace(/\s{2,}/g, ' ').trim()
+  const requestHeaders = new Headers(req.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', contentSecurityPolicyHeaderValue)
 
   if (
     PUBLIC_PATHS.some((p) => pathname.startsWith(p)) ||
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon')
   ) {
-    return NextResponse.next()
+    const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue);
+  return response;
   }
 
   const sessionCookie = req.cookies.get(SESSION_COOKIE)
 
   if (!sessionCookie?.value) {
     const loginUrl = new URL('/login', req.url)
-    return NextResponse.redirect(loginUrl)
+    const res = NextResponse.redirect(loginUrl, { headers: requestHeaders })
+    res.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue)
+    return res
   }
 
   const isValid = await verifyHmac(sessionCookie.value)
   if (!isValid) {
     const loginUrl = new URL('/login', req.url)
-    // Видаляємо фальшиву/застарілу куку
-    const response = NextResponse.redirect(loginUrl)
-    response.cookies.delete(SESSION_COOKIE)
-    return response
+    const res = NextResponse.redirect(loginUrl, { headers: requestHeaders })
+    res.cookies.delete(SESSION_COOKIE)
+    res.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue)
+    return res
   }
 
-  return NextResponse.next()
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
+  response.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue);
+  return response;
 }
 
 export const config = {
