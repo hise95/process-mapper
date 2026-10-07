@@ -56,9 +56,9 @@ export default function PassportTab({ process, readonly = false }: { process: Pr
   const getUserDisplayName = (userId?: string | null, fallbackUser?: { fullName?: string; email?: string } | null) => {
     if (!userId || userId === 'none') return 'Не призначено';
     const found = users.find(u => u.id === userId);
-    if (found) return `${found.fullName} (${found.email})`;
+    if (found) return `${found.fullName}` + (found.role ? ` (${found.role})` : '');
     if (fallbackUser?.fullName) {
-      return fallbackUser.email ? `${fallbackUser.fullName} (${fallbackUser.email})` : fallbackUser.fullName;
+      return fallbackUser.fullName;
     }
     return userId;
   };
@@ -126,7 +126,7 @@ export default function PassportTab({ process, readonly = false }: { process: Pr
                   <SelectItem value="none">Не призначено</SelectItem>
                   {users.map(u => (
                     <SelectItem key={u.id} value={u.id}>
-                      {u.fullName} ({u.email})
+                      {u.fullName}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -151,7 +151,7 @@ export default function PassportTab({ process, readonly = false }: { process: Pr
                   <SelectItem value="none">Не призначено</SelectItem>
                   {users.map(u => (
                     <SelectItem key={u.id} value={u.id}>
-                      {u.fullName} ({u.email})
+                      {u.fullName}
                     </SelectItem>
                   ))}
                 </SelectContent>

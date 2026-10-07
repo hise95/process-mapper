@@ -32,8 +32,9 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
   }
 
-  // Аналітики та Адміни бачать повний профіль для управління
-  if (canViewFullUsers(session)) {
+  // CWE-200: Захист від Reconnaissance
+  // Лише адміністратор має бачити повний профіль (email, createdAt) для управління
+  if (session.role === 'ADMIN') {
     const users = await prisma.user.findMany({
       select: { id: true, email: true, fullName: true, role: true, createdAt: true },
       orderBy: { fullName: 'asc' },
@@ -41,10 +42,10 @@ export async function GET(_req: NextRequest) {
     return NextResponse.json(users)
   }
 
-  // Власники та Менеджери процесів бачать лише мінімальну інформацію,
-  // необхідну для dropdown-списків (без ролей та дати створення)
+  // Аналітики, Власники та Менеджери процесів бачать лише мінімальну інформацію,
+  // необхідну для dropdown-списків (ID, Імя, Роль). Жодних emails або дат створення.
   const users = await prisma.user.findMany({
-    select: { id: true, email: true, fullName: true },
+    select: { id: true, fullName: true, role: true },
     orderBy: { fullName: 'asc' },
   })
 
