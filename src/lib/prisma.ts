@@ -14,7 +14,7 @@ function makePrismaClient() {
         async $allOperations({ model, operation, args, query }) {
           const isMutation = ['create', 'update', 'upsert', 'delete', 'createMany', 'updateMany', 'deleteMany'].includes(operation);
           
-          if (isMutation && model !== 'SecurityAuditLog' && model !== 'RateLimit' && model !== 'Session') {
+          if (isMutation && model !== 'RateLimit' && model !== 'Session') {
             // Log as structured JSON for immutable SIEM/LogAggregator ingestion
             console.log(JSON.stringify({
               timestamp: new Date().toISOString(),

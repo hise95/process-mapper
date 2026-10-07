@@ -290,19 +290,7 @@ model RateLimit {
   expiresAt DateTime
 }
 
-model SecurityAuditLog {
-  id        String   @id @default(cuid())
-  action    String
-  userId    String?
-  targetId  String?
-  ip        String?
-  details   String?  @db.Text
-  createdAt DateTime @default(now())
 
-  @@index([action])
-  @@index([userId])
-  @@index([targetId])
-}
 
 model PasswordHistory {
   id        String   @id @default(cuid())

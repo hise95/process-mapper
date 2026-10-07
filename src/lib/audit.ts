@@ -1,4 +1,4 @@
-import { prisma } from './prisma';
+
 
 // CWE-778: Allowed action types (exhaustive enum — no free-form strings)
 export type AuditAction =
@@ -68,19 +68,5 @@ export async function logSecurityEvent(event: AuditEvent) {
     details,
   }) + '\n');
 
-  // 2. Best-effort write to application DB (for in-app admin UI)
-  //    This is NOT the authoritative audit trail — stdout/SIEM is.
-  try {
-    await prisma.securityAuditLog.create({
-      data: {
-        action,
-        userId,
-        targetId,
-        ip: maskedIp,
-        details,
-      }
-    });
-  } catch {
-    // Silent — DB failure must not mask the stdout write above
-  }
+
 }
