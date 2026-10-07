@@ -108,7 +108,8 @@ export async function POST(req: NextRequest) {
         }
       } catch (error: any) {
         // Не логуємо пароль — тільки email та повідомлення помилки
-        console.warn('LDAP auth failed for', email, ':', error?.message);
+        // CWE-209: Sanitize LDAP error to prevent internal directory information disclosure in server logs
+        console.warn('LDAP auth failed for', email, '(Details omitted for security)');
         await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP failure for ${email}` });
         
         // CWE-287/639: Якщо LDAP налаштовано, він є ЄДИНИМ джерелом правди.
