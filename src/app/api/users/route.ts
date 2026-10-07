@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireSession, getSudoSession } from '@/lib/auth'
+import { requireSession, getSudoSession, verifyCurrentPassword } from '@/lib/auth'
 import { canViewAdminPanel } from '@/lib/permissions'
 import { Role } from '../../../lib/enums'
 import bcrypt from 'bcrypt'
@@ -48,9 +48,16 @@ export async function POST(req: NextRequest) {
   if (sudoRequired) return NextResponse.json({ error: 'Для виконання критичної операції потрібно знову підтвердити особу (Step-up Auth). Будь ласка, перезайдіть в систему.' }, { status: 403 });
   if (session.role !== 'ADMIN') return NextResponse.json({ error: 'Тільки системний адміністратор може створювати користувачів' }, { status: 403 })
 
-  const { email, password, fullName, role } = await req.json()
+  const { email, password, fullName, role, currentPassword } = await req.json()
   if (!email || !password || !fullName || !role) {
     return NextResponse.json({ error: 'Всі поля обов\'язкові' }, { status: 400 })
+  }
+  if (!currentPassword) {
+    return NextResponse.json({ error: 'Для створення користувача необхідно підтвердити дію поточним паролем' }, { status: 401 });
+  }
+  const isPasswordValid = await verifyCurrentPassword(session.id, currentPassword);
+  if (!isPasswordValid) {
+    return NextResponse.json({ error: 'Невірний поточний пароль' }, { status: 401 });
   }
 
   const pwdError = validatePassword(password)
@@ -86,8 +93,16 @@ export async function PATCH(req: NextRequest) {
   if (sudoRequired) return NextResponse.json({ error: 'Для виконання критичної операції потрібно знову підтвердити особу (Step-up Auth). Будь ласка, перезайдіть в систему.' }, { status: 403 });
   if (!canViewAdminPanel(session)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
 
-  const { userId, role, password, email, fullName } = await req.json()
+  const { userId, role, password, email, fullName, currentPassword } = await req.json()
   if (!userId) return NextResponse.json({ error: 'userId обов\'язковий' }, { status: 400 })
+  
+  if (!currentPassword) {
+    return NextResponse.json({ error: 'Для виконання цієї дії необхідно ввести поточний пароль (Re-authentication)' }, { status: 401 });
+  }
+  const isPasswordValid = await verifyCurrentPassword(session.id, currentPassword);
+  if (!isPasswordValid) {
+    return NextResponse.json({ error: 'Невірний поточний пароль' }, { status: 401 });
+  }
 
   const dataToUpdate: any = {}
 
@@ -149,8 +164,21 @@ export async function DELETE(req: NextRequest) {
 
   const url = new URL(req.url)
   const userId = url.searchParams.get('userId')
-
+  
+  // Для DELETE ми не завжди маємо body, але можемо перевірити currentPassword з хедерів або body.
+  // Оскільки DELETE у Fetch API може мати body, давайте читати його.
+  const body = await req.json().catch(() => ({}));
+  const currentPassword = body.currentPassword;
+  
   if (!userId) return NextResponse.json({ error: 'userId обов\'язковий' }, { status: 400 })
+  
+  if (!currentPassword) {
+    return NextResponse.json({ error: 'Для виконання цієї дії необхідно ввести поточний пароль (Re-authentication)' }, { status: 401 });
+  }
+  const isPasswordValid = await verifyCurrentPassword(session.id, currentPassword);
+  if (!isPasswordValid) {
+    return NextResponse.json({ error: 'Невірний поточний пароль' }, { status: 401 });
+  }
   if (userId === session.id) return NextResponse.json({ error: 'Не можна видалити самого себе' }, { status: 400 })
 
   await prisma.user.delete({
