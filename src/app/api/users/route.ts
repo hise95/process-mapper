@@ -128,8 +128,9 @@ export async function PATCH(req: NextRequest) {
     await logSecurityEvent({ action: 'PASSWORD_RESET', userId: session.id, targetId: userId, details: `Password was reset/changed` });
   }
 
-  // Якщо пароль або роль змінено, відкликаємо (видаляємо) всі активні сесії цього користувача (CWE-613 Revocation)
-  if (password || role) {
+  // Якщо пароль, роль або EMAIL змінено, відкликаємо всі активні сесії цього користувача (CWE-613 Revocation)
+  // Email є основним ідентифікатором (identity/login), тому його зміна вимагає переавторизації.
+  if (password || role || email) {
     await prisma.session.deleteMany({
       where: { userId }
     });
