@@ -42,7 +42,13 @@ async function verifyHmac(cookieValue: string): Promise<boolean> {
   const hashArray = Array.from(new Uint8Array(signature))
   const hexSignature = hashArray.map(b => b.toString(16).padStart(2, '0')).join('')
   
-  return hexSignature === providedSig
+  // CWE-208: Constant-time comparison to prevent HMAC timing attacks
+  if (hexSignature.length !== providedSig.length) return false;
+  let result = 0;
+  for (let i = 0; i < hexSignature.length; i++) {
+    result |= hexSignature.charCodeAt(i) ^ providedSig.charCodeAt(i);
+  }
+  return result === 0;
 }
 
 export async function middleware(req: NextRequest) {
