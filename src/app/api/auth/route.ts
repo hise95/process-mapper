@@ -118,7 +118,7 @@ export async function POST(req: NextRequest) {
     // 2. Перевірка локальної бази
     let user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true, password: true, fullName: true, role: true },
+      select: { id: true, email: true, password: true, fullName: true, role: true, authSource: true },
     })
 
     // Прибрано автоматичне створення першого адміна. 
@@ -132,11 +132,23 @@ export async function POST(req: NextRequest) {
         await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP success but local account missing for ${email}` });
         return NextResponse.json({ error: 'Акаунт не знайдено в локальній базі. Зверніться до адміністратора для доступу.' }, { status: 403 })
       }
+      
+      // CWE-xxx: Суворе розділення ідентичностей. LOCAL-акаунти не можуть бути захоплені через LDAP.
+      if (user.authSource !== 'LDAP') {
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP success but account ${email} is marked as LOCAL` });
+        return NextResponse.json({ error: 'Цей акаунт налаштовано тільки для локального входу. Конфлікт ідентичностей.' }, { status: 403 })
+      }
     } else {
       // Локальна авторизація: перевіряємо bcrypt-хеш
       if (!user) {
         await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
           return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+      }
+      
+      // CWE-xxx: Розділення ідентичностей. LDAP-акаунти не можуть логінитися локально.
+      if (user.authSource === 'LDAP') {
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Attempt to locally login into LDAP account ${email}` });
+        return NextResponse.json({ error: 'Цей акаунт налаштовано для входу через корпоративну мережу (LDAP).' }, { status: 403 })
       }
       // Тільки bcrypt-хеші є дійсними. Якщо хеш не bcrypt — пароль недійсний.
       if (!user.password.startsWith('$2')) {

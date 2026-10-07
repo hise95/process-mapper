@@ -13,13 +13,14 @@ datasource db {
 // ─────────────────────────────────────────────
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  fullName  String
-  role      String   @default("PROCESS_MANAGER")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
+  id         String   @id @default(cuid())
+  email      String   @unique
+  password   String
+  fullName   String
+  role       String   @default("PROCESS_MANAGER")
+  authSource String   @default("LOCAL") // "LOCAL" або "LDAP"
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
 
   // Relations
   sessions         Session[]
