@@ -35,10 +35,15 @@ export async function POST(
 
   const newStatus = action === 'ARCHIVE' ? 'ARCHIVED' : 'APPROVED';
 
-  const updated = await prisma.process.update({
-    where: { id },
+  // CWE-362: OCC
+  const updateResult = await prisma.process.updateMany({
+    where: { id, status: process.status },
     data: { status: newStatus },
   });
+  
+  if (updateResult.count === 0) {
+    return NextResponse.json({ error: 'Конфлікт паралельних запитів: статус вже змінено' }, { status: 409 });
+  }
 
   await prisma.processHistoryLog.create({
     data: {
@@ -49,5 +54,5 @@ export async function POST(
     },
   });
 
-  return NextResponse.json({ success: true, status: updated.status });
+  return NextResponse.json({ success: true, status: newStatus });
 }

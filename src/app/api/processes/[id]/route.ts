@@ -149,7 +149,17 @@ export async function PATCH(
       }
     }
 
-    const updated = await prisma.process.update({ where: { id }, data })
+    // CWE-362: OCC - Оновлюємо тільки якщо статус не змінився з моменту findUnique
+    const updateResult = await prisma.process.updateMany({ 
+      where: { id, status: process.status }, 
+      data 
+    });
+    
+    if (updateResult.count === 0) {
+      return NextResponse.json({ error: 'Конфлікт паралельних запитів: статус або стан процесу був змінений' }, { status: 409 });
+    }
+    
+    const updated = { ...process, ...data }; // Повертаємо очікуваний об'єкт
 
     if (!['DRAFT', 'STEPS_DRAFT', 'KPIS_DRAFT'].includes(process.status)) {
       await prisma.processHistoryLog.create({

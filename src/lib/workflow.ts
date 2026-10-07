@@ -270,6 +270,16 @@ export async function createNewVersion(
   }
 
   const newProcess = await prisma.$transaction(async (tx) => {
+    // CWE-362: Блокуємо батьківський запис, щоб уникнути паралельного створення кількох чернеток
+    await tx.$executeRaw`SELECT id FROM "Process" WHERE id = ${processId} FOR UPDATE`;
+    
+    const existingDraft = await tx.process.findFirst({
+      where: { previousVersionId: processId, status: { not: 'ARCHIVED' } }
+    });
+    if (existingDraft) {
+      throw new Error('CONCURRENCY_CONFLICT: Чернетка вже існує');
+    }
+
     const created = await tx.process.create({
       data: {
         code: original.code,

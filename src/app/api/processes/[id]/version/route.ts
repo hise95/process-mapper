@@ -29,7 +29,15 @@ export async function POST(
     return NextResponse.json({ error: 'Чернетка нової версії вже створена', newVersionId: existingNext.id }, { status: 409 })
   }
 
-  const newId = await createNewVersion(id, session)
+  let newId;
+  try {
+    newId = await createNewVersion(id, session);
+  } catch (err: any) {
+    if (err.message && err.message.includes('CONCURRENCY_CONFLICT')) {
+      return NextResponse.json({ error: 'Чернетка нової версії вже створена іншим запитом' }, { status: 409 });
+    }
+    throw err;
+  }
 
   return NextResponse.json({ newVersionId: newId }, { status: 201 })
 }
