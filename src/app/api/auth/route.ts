@@ -24,7 +24,8 @@ export async function POST(req: NextRequest) {
       // 2. Per-Account Rate Limit (захист від password spraying для конкретного юзера)
       const emailLimit = await checkRateLimit(`login_email_${email.toLowerCase()}`, 5, 5 * 60 * 1000); // 5 спроб на 5 хв
       if (!emailLimit.allowed) {
-        return NextResponse.json({ error: 'Акаунт тимчасово заблоковано через велику кількість невдалих спроб. Спробуйте через 5 хвилин.' }, { status: 429, headers: { 'Retry-After': '300' } });
+        // CWE-204: Generic error to prevent lockout enumeration
+        return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
     }
 
@@ -111,7 +112,7 @@ export async function POST(req: NextRequest) {
         // Забороняємо будь-який fallback на локальні паролі. 
         // Break-glass вбудований в код - це security vulnerability.
         await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email} (LDAP enforced)` });
-        return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 });
+        return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
     }
 
@@ -142,7 +143,7 @@ export async function POST(req: NextRequest) {
       // Локальна авторизація: перевіряємо bcrypt-хеш
       if (!user) {
         await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
-          return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+          return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
       
       // CWE-xxx: Розділення ідентичностей. LDAP-акаунти не можуть логінитися локально.
@@ -153,13 +154,13 @@ export async function POST(req: NextRequest) {
       // Тільки bcrypt-хеші є дійсними. Якщо хеш не bcrypt — пароль недійсний.
       if (!user.password.startsWith('$2')) {
         await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
-          return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+          return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
       const isValidPassword = await bcrypt.compare(password, user.password)
 
       if (!isValidPassword) {
         await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
-          return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
+          return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
     }
 
