@@ -111,6 +111,18 @@ export async function PATCH(req: NextRequest) {
     if (userId === session.id) {
       return NextResponse.json({ error: 'Не можна змінити власну роль' }, { status: 400 })
     }
+    
+    // Захист від administrative lockout: не можна понизити останнього адміністратора
+    if (role !== 'ADMIN') {
+      const targetUser = await prisma.user.findUnique({ where: { id: userId } });
+      if (targetUser && targetUser.role === 'ADMIN') {
+        const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+        if (adminCount <= 1) {
+          return NextResponse.json({ error: 'Неможливо понизити останнього адміністратора (Administrative Lockout Protection)' }, { status: 400 });
+        }
+      }
+    }
+
     const validRoles = Object.values(Role)
     if (!validRoles.includes(role)) {
       return NextResponse.json({ error: 'Недійсна роль' }, { status: 400 })
@@ -180,6 +192,15 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ error: 'Невірний поточний пароль' }, { status: 401 });
   }
   if (userId === session.id) return NextResponse.json({ error: 'Не можна видалити самого себе' }, { status: 400 })
+
+  // Захист від administrative lockout: не можна видалити останнього адміністратора
+  const targetUserToDelete = await prisma.user.findUnique({ where: { id: userId } });
+  if (targetUserToDelete && targetUserToDelete.role === 'ADMIN') {
+    const adminCount = await prisma.user.count({ where: { role: 'ADMIN' } });
+    if (adminCount <= 1) {
+      return NextResponse.json({ error: 'Неможливо видалити останнього адміністратора (Administrative Lockout Protection)' }, { status: 400 });
+    }
+  }
 
   await prisma.user.delete({
     where: { id: userId },
