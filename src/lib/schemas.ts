@@ -1,10 +1,22 @@
 import { z } from 'zod';
+import sanitizeHtml from 'sanitize-html';
+
+const sanitizeHtmlOptions = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat([ 'img', 'iframe', 'span', 'h1', 'h2', 'h3' ]),
+  allowedAttributes: {
+    '*': ['class', 'id', 'style'],
+    'a': ['href', 'name', 'target', 'rel'],
+    'img': ['src', 'alt', 'title', 'width', 'height'],
+    'iframe': ['src', 'width', 'height', 'allow', 'allowfullscreen']
+  },
+  allowedSchemes: ['http', 'https', 'mailto', 'data']
+};
 
 export const wikiPageSchema = z.object({
   id: z.string().min(1).max(50).optional(),
   title: z.string().min(1, 'Назва обов\'язкова').max(200, 'Назва занадто довга'),
   icon: z.string().max(50).optional().nullable(),
-  content: z.string().max(100000, 'Контент занадто великий').optional().nullable(),
+  content: z.string().max(100000, 'Контент занадто великий').optional().nullable().transform(val => val ? sanitizeHtml(val, sanitizeHtmlOptions) : val),
   order: z.number().int().optional(),
 });
 
