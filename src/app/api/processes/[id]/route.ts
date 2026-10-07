@@ -107,6 +107,34 @@ export async function PATCH(
       return NextResponse.json({ error: 'bpmnUrl має бути валідним HTTP/HTTPS посиланням' }, { status: 400 })
     }
 
+    // CWE-915 / CWE-862: Validate Ownership Changes (Mass Assignment)
+    if ('ownerId' in data && data.ownerId !== process.ownerId) {
+      if (session.role !== 'ADMIN' && session.role !== 'PROCESS_ANALYST') {
+        return NextResponse.json({ error: 'Тільки аналітик або адміністратор може змінювати власника процесу' }, { status: 403 })
+      }
+      if (data.ownerId !== null) {
+        const ownerUser = await prisma.user.findUnique({ where: { id: data.ownerId as string } });
+        if (!ownerUser || (ownerUser.role !== 'PROCESS_OWNER' && ownerUser.role !== 'ADMIN' && ownerUser.role !== 'PROCESS_ANALYST')) {
+          return NextResponse.json({ error: 'Користувач для ownerId не має ролі Власника' }, { status: 400 });
+        }
+      }
+    }
+
+    if ('managerId' in data && data.managerId !== process.managerId) {
+      if (session.role !== 'ADMIN' && session.role !== 'PROCESS_ANALYST' && session.role !== 'PROCESS_OWNER') {
+        return NextResponse.json({ error: 'Тільки власник або аналітик може призначати менеджера' }, { status: 403 })
+      }
+      if (session.role === 'PROCESS_OWNER' && process.ownerId !== session.id) {
+        return NextResponse.json({ error: 'Ви можете призначати менеджера тільки для своїх процесів' }, { status: 403 })
+      }
+      if (data.managerId !== null) {
+        const managerUser = await prisma.user.findUnique({ where: { id: data.managerId as string } });
+        if (!managerUser || (managerUser.role !== 'PROCESS_MANAGER' && managerUser.role !== 'PROCESS_OWNER' && managerUser.role !== 'ADMIN' && managerUser.role !== 'PROCESS_ANALYST')) {
+          return NextResponse.json({ error: 'Користувач для managerId не має відповідної ролі' }, { status: 400 });
+        }
+      }
+    }
+
     // Перевірити рівень якщо змінюється
     if (data.levelId) {
       const level = await prisma.processLevel.findUnique({ where: { id: data.levelId as string } })

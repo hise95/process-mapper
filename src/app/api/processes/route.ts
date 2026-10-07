@@ -107,13 +107,43 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    let finalOwnerId = ownerId || null;
+    let finalManagerId = managerId || session.id;
+
+    // CWE-915 / CWE-862: Mass assignment & ownership validation
+    if (ownerId && session.role !== 'ADMIN' && session.role !== 'PROCESS_ANALYST') {
+      if (session.role === 'PROCESS_OWNER') {
+        finalOwnerId = session.id; // Owner can only assign themselves
+      } else {
+        return NextResponse.json({ error: 'Тільки аналітик або власник може призначати ownerId' }, { status: 403 })
+      }
+    }
+
+    if (managerId && managerId !== session.id && session.role !== 'ADMIN' && session.role !== 'PROCESS_ANALYST' && session.role !== 'PROCESS_OWNER') {
+      return NextResponse.json({ error: 'Ви не маєте права призначати іншого менеджера' }, { status: 403 })
+    }
+
+    if (finalOwnerId) {
+      const ownerUser = await prisma.user.findUnique({ where: { id: finalOwnerId } });
+      if (!ownerUser || (ownerUser.role !== 'PROCESS_OWNER' && ownerUser.role !== 'ADMIN' && ownerUser.role !== 'PROCESS_ANALYST')) {
+        return NextResponse.json({ error: 'Користувач для ownerId не має ролі Власника' }, { status: 400 });
+      }
+    }
+
+    if (finalManagerId) {
+      const managerUser = await prisma.user.findUnique({ where: { id: finalManagerId } });
+      if (!managerUser || (managerUser.role !== 'PROCESS_MANAGER' && managerUser.role !== 'PROCESS_OWNER' && managerUser.role !== 'ADMIN' && managerUser.role !== 'PROCESS_ANALYST')) {
+        return NextResponse.json({ error: 'Користувач для managerId не має відповідної ролі' }, { status: 400 });
+      }
+    }
+
     const process = await prisma.process.create({
       data: {
         title,
         processType: processType ?? 'MAIN',
         levelId: levelId || null,
-        ownerId: ownerId || null,
-        managerId: managerId || session.id,
+        ownerId: finalOwnerId,
+        managerId: finalManagerId,
         status: 'DRAFT',
         version: 1,
       },
