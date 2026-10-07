@@ -1,11 +1,23 @@
 // prisma/seed.ts
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 
 const prisma = new PrismaClient()
 
-// Пароль береться з оточення, або генерується випадково, якщо не заданий.
-const initialPassword = process.env.INITIAL_ADMIN_PASSWORD || "ChangeMe123!";
+// CWE-1392: Заборона використання дефолтних паролів для seed-користувачів
+let initialPassword = process.env.INITIAL_ADMIN_PASSWORD as string;
+
+if (!initialPassword) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('FATAL (CWE-1392): Змінна INITIAL_ADMIN_PASSWORD обов`язкова для seed у production середовищі, щоб уникнути встановлення дефолтних паролів.');
+  }
+  
+  // Для локальної розробки - безпечний випадковий пароль замість ChangeMe123!
+  initialPassword = crypto.randomBytes(12).toString('base64');
+  console.warn('\n⚠️ УВАГА: INITIAL_ADMIN_PASSWORD не задано.');
+  console.warn(`🔑 Згенеровано тимчасовий випадковий пароль для тестових користувачів: ${initialPassword}\n`);
+}
 
 
 async function main() {
