@@ -1,3 +1,4 @@
+import { z } from "zod";
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
@@ -15,7 +16,19 @@ export async function POST(
   const process = await prisma.process.findUnique({ where: { id } })
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
 
-  const { transition, comment }: { transition: WorkflowTransition; comment?: string } = await req.json()
+  const rawBody = await req.json().catch(() => ({}));
+  const approveSchema = z.object({
+    transition: z.string(),
+    comment: z.string().max(1000, 'Коментар занадто довгий').optional().nullable()
+  });
+  
+  const parseResult = approveSchema.safeParse(rawBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 });
+  }
+  
+  const transition = parseResult.data.transition as WorkflowTransition;
+  const comment = parseResult.data.comment || undefined;
 
   if (!canExecuteTransition(transition, process.status as ProcessStatus, session, process)) {
     return NextResponse.json({ error: 'Дія заборонена для вашої ролі або поточного статусу процесу' }, { status: 403 })

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
+import { z } from 'zod';
 
 export async function POST(
   req: NextRequest,
@@ -18,9 +19,19 @@ export async function POST(
   const process = await prisma.process.findUnique({ where: { id } });
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 });
 
-  const body = await req.json().catch(() => ({}));
-  const action = body.action === 'RESTORE' ? 'RESTORE' : 'ARCHIVE';
-  const comment = body.comment || (action === 'ARCHIVE' ? 'Переміщено в архів' : 'Відновлено з архіву');
+  const rawBody = await req.json().catch(() => ({}));
+  const archiveSchema = z.object({
+    action: z.enum(['ARCHIVE', 'RESTORE']).optional(),
+    comment: z.string().max(1000, 'Коментар занадто довгий').optional()
+  });
+  
+  const parseResult = archiveSchema.safeParse(rawBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 });
+  }
+  
+  const action = parseResult.data.action === 'RESTORE' ? 'RESTORE' : 'ARCHIVE';
+  const comment = parseResult.data.comment || (action === 'ARCHIVE' ? 'Переміщено в архів' : 'Відновлено з архіву');
 
   const newStatus = action === 'ARCHIVE' ? 'ARCHIVED' : 'APPROVED';
 
