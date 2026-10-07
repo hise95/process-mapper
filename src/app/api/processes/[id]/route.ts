@@ -4,7 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { isValidHttpUrl } from '@/lib/validation';
+import { isValidHttpUrl } from '@/lib/validation'
+import { processPatchSchema } from '@/lib/schemas';
 import { canEditProcess, canEditPassport, canEditSteps, canViewProcess } from '@/lib/permissions'
 
 export async function GET(
@@ -68,7 +69,12 @@ export async function PATCH(
       return NextResponse.json({ error: 'Редагування недоступне' }, { status: 403 })
     }
 
-    const body = await req.json()
+    const rawBody = await req.json()
+    const parseResult = processPatchSchema.safeParse(rawBody)
+    if (!parseResult.success) {
+      return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 })
+    }
+    const body: Record<string, any> = parseResult.data
 
     const passportFields = [
       'title', 'processType', 'code', 'objective', 'input', 'output',

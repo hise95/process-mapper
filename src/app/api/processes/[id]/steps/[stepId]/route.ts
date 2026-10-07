@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
 import { isValidHttpUrl } from '@/lib/validation'
 import { canEditSteps } from '@/lib/permissions'
+import { stepSchema } from '@/lib/schemas'
 
 type Params = { params: Promise<{ id: string; stepId: string }> }
 
@@ -18,15 +19,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
   if (!proc) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditSteps(session, proc)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
 
-  const body = await req.json()
+  const rawBody = await req.json()
+  const parseResult = stepSchema.safeParse(rawBody)
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 })
+  }
+  const body = parseResult.data
 
-  // CWE-20/601: Validate docUrl
   if (body.docUrl && !isValidHttpUrl(body.docUrl)) {
     return NextResponse.json({ error: 'docUrl має бути валідним HTTP/HTTPS посиланням' }, { status: 400 })
   }
 
   // Дозволяємо оновлювати тільки безпечні поля
-  const data: Partial<Record<AllowedField, string>> = {}
+  const data: Record<string, any> = {}
   for (const field of ALLOWED_STEP_FIELDS) {
     if (field in body) data[field] = body[field]
   }

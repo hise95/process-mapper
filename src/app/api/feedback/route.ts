@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
+import { feedbackSchema } from '@/lib/schemas';
 
 export async function GET(req: NextRequest) {
   const session = await requireSession().catch(() => null);
@@ -20,8 +21,12 @@ export async function POST(req: NextRequest) {
   const session = await requireSession().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
 
-  const { type, message } = await req.json();
-  if (!type || !message) return NextResponse.json({ error: 'Заповніть всі поля' }, { status: 400 });
+  const rawBody = await req.json();
+  const parseResult = feedbackSchema.safeParse(rawBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 });
+  }
+  const { type, message } = parseResult.data;
 
   try {
     const feedback = await prisma.feedback.create({

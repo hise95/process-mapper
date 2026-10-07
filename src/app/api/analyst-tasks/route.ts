@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
+import { analystTaskSchema } from '@/lib/schemas';
 
 export async function GET(req: NextRequest) {
   const session = await requireSession().catch(() => null);

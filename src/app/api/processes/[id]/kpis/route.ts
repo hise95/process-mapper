@@ -6,6 +6,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
 import { canEditKpis, canViewProcess } from '@/lib/permissions'
+import { kpiSchema } from '@/lib/schemas'
+import { z } from 'zod'
 
 export async function GET(
   _req: NextRequest,
@@ -64,7 +66,12 @@ export async function PUT(
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
-  const body: Array<{ id: string; name: string; unit?: string; dataSource?: string; frequency?: string; targetValue?: string }> = await req.json()
+  const rawBody = await req.json()
+  const parseResult = z.array(kpiSchema).safeParse(rawBody)
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 })
+  }
+  const body = parseResult.data
 
   await prisma.$transaction(
     body.map((kpi) =>

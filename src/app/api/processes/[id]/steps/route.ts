@@ -7,6 +7,8 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
 import { isValidHttpUrl } from '@/lib/validation'
 import { canEditSteps, canViewProcess } from '@/lib/permissions'
+import { stepSchema } from '@/lib/schemas'
+import { z } from 'zod'
 
 export async function GET(
   _req: NextRequest,
@@ -44,9 +46,13 @@ export async function POST(
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditSteps(session, process)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
 
-  const body = await req.json()
+  const rawBody = await req.json()
+  const parseResult = stepSchema.safeParse(rawBody)
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 })
+  }
+  const body = parseResult.data
 
-  // CWE-20/601: Validate docUrl
   if (body.docUrl && !isValidHttpUrl(body.docUrl)) {
     return NextResponse.json({ error: 'docUrl має бути валідним HTTP/HTTPS посиланням' }, { status: 400 })
   }
@@ -88,9 +94,13 @@ export async function PUT(
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditSteps(session, process)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
 
-  const body: Array<{ id: string; orderIndex: number; name?: string; description?: string; executorRole?: string; participantsNote?: string; docUrl?: string; comment?: string; phase?: string }> = await req.json()
+  const rawBody = await req.json()
+  const parseResult = z.array(stepSchema).safeParse(rawBody)
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 })
+  }
+  const body = parseResult.data
 
-  // CWE-20/601: Validate docUrl for all steps
   if (body.some(step => step.docUrl && !isValidHttpUrl(step.docUrl))) {
     return NextResponse.json({ error: 'Один із кроків містить невалідний docUrl (дозволені тільки HTTP/HTTPS)' }, { status: 400 })
   }
