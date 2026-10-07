@@ -21,6 +21,31 @@ if (!initialPassword) {
 
 
 async function main() {
+  console.log('Applying Database-level CHECK constraints...');
+  try {
+    // CWE-20: Ensure ProcessLevel depth strictly invariant (1-3)
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "ProcessLevel" 
+      ADD CONSTRAINT chk_processlevel_depth 
+      CHECK (depth >= 1 AND depth <= 3);
+    `);
+    console.log('✅ Applied chk_processlevel_depth');
+  } catch (e: any) {
+    if (!e.message?.includes('already exists')) console.warn('Note:', e.message);
+  }
+
+  try {
+    // CWE-20: Ensure ArchitectureDataStorage payload is strictly a JSON Object (not array/scalar)
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "ArchitectureDataStorage" 
+      ADD CONSTRAINT chk_architecture_data 
+      CHECK (jsonb_typeof(data) = 'object' AND data ? 'cards');
+    `);
+    console.log('✅ Applied chk_architecture_data');
+  } catch (e: any) {
+    if (!e.message?.includes('already exists')) console.warn('Note:', e.message);
+  }
+
   console.log('🌱 Запуск seed...')
 
   console.log('🗑️ Очищення бази даних...')
