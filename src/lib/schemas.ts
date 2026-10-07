@@ -78,7 +78,8 @@ export const processPatchSchema = z.object({
 });
 
 export const feedbackSchema = z.object({
-  type: z.enum(['BUG', 'IDEA', 'QUESTION', 'OTHER']).default('OTHER'),
+  // Aligned with DB FeedbackType enum: BUG | SUGGESTION | OTHER
+  type: z.enum(['BUG', 'SUGGESTION', 'OTHER']).default('OTHER'),
   message: z.string().min(1).max(5000),
   route: z.string().max(500).optional().nullable(),
 });
@@ -86,7 +87,8 @@ export const feedbackSchema = z.object({
 export const analystTaskSchema = z.object({
   title: z.string().min(1).max(300),
   description: z.string().max(5000).optional().nullable(),
-  status: z.enum(['TODO', 'IN_PROGRESS', 'REVIEW', 'DONE']).default('TODO'),
+  // Aligned with DB TaskStatus enum: TODO | IN_PROGRESS | DONE (removed invalid REVIEW)
+  status: z.enum(['TODO', 'IN_PROGRESS', 'DONE']).default('TODO'),
   priority: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']).default('MEDIUM'),
   processId: z.string().max(50).optional().nullable(),
   assigneeId: z.string().max(50).optional().nullable(),

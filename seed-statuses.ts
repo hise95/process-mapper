@@ -21,7 +21,7 @@ async function main() {
       data: {
         title: `Тестовий процес (${s})`,
         code: `TEST.${i+1}`,
-        status: s,
+        status: s as any,
         managerId: admin?.id,
         ownerId: admin?.id
       }

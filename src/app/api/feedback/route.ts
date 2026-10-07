@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   try {
     const feedback = await prisma.feedback.create({
       data: {
-        type,
+        type: type as any,
         message,
         userId: session.id,
         status: 'OPEN'

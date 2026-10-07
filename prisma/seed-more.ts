@@ -55,7 +55,7 @@ async function main() {
       data: {
         code: `P-1${i.toString().padStart(2, '0')}`,
         title,
-        processType: type,
+        processType: type as any,
         objective: `Мета для ${title}`,
         input: 'Вхідні дані',
         output: 'Результат',
@@ -63,7 +63,7 @@ async function main() {
         ownerId: owner.id,
         managerId: manager.id,
         version: 1,
-        status: status,
+        status: status as any,
         approvedAt: status === 'APPROVED' ? new Date() : null,
       }
     })
@@ -103,8 +103,8 @@ async function main() {
         await prisma.approvalWorkflow.create({
           data: {
             processId: process.id,
-            stage,
-            assignedToRole: role,
+            stage: stage as any,
+            assignedToRole: role as any,
             isCompleted: false,
           }
         })

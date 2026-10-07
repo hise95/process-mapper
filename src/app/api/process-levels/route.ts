@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     where: { depth: 1 },
     include: {
       processes: {
-        where: processWhere,
+        where: processWhere as any,
         select: { id: true, title: true, code: true, version: true, status: true },
       },
       children: {
@@ -26,13 +26,13 @@ export async function GET(req: NextRequest) {
           children: {
             include: {
               processes: {
-                where: processWhere,
+                where: processWhere as any,
                 select: { id: true, title: true, code: true, version: true, status: true },
               },
             },
           },
           processes: {
-            where: processWhere,
+            where: processWhere as any,
             select: { id: true, title: true, code: true, version: true, status: true },
           },
         },

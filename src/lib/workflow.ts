@@ -141,7 +141,7 @@ export async function applyTransition(
     const updateResult = await tx.process.updateMany({
       where: { 
         id: processId,
-        ...(expectedCurrentStatus ? { status: expectedCurrentStatus } : {}) 
+        ...(expectedCurrentStatus ? { status: expectedCurrentStatus as any } : {}) 
       },
       data: {
         status: newStatus,

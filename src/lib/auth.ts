@@ -180,7 +180,7 @@ export async function buildSessionCookieValue(
       expiresAt: new Date(expiresAtMs),
       ipAddress,
       userAgent,
-      authMethod
+      authMethod: authMethod as any
     }
   });
   return signValue(session.id, expiresAtMs);

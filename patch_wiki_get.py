@@ -1,0 +1,34 @@
+import sys
+
+with open("src/app/api/wiki/route.ts", "r") as f:
+    code = f.read()
+
+import re
+
+old_block = """    let pages = await prisma.wikiPage.findMany({
+      orderBy: { order: 'asc' }
+    });
+    
+    // Auto-seed if empty
+    if (pages.length === 0) {
+      const WIKI_SECTIONS = [
+        { id: 'bpmn', title: 'Як правильно малювати BPMN', icon: 'HelpCircle', order: 1, content: '<div class="space-y-4"><h2 class="text-xl font-semibold mb-4">Основи моделювання в BPMN</h2><p>BPMN (Business Process Model and Notation) — це стандарт для моделювання бізнес-процесів.</p><ul><li>Події (Кружечки)</li><li>Задачі (Прямокутники)</li><li>Шлюзи (Ромби)</li><li>Доріжки (Pools & Lanes)</li></ul></div>' },
+        { id: 'kpis', title: 'Як визначати показники', icon: 'Activity', order: 2, content: '<div class="space-y-4"><h2 class="text-xl font-semibold mb-4">Визначення показників процесу</h2><p>Показники допомагають зрозуміти, наскільки ефективно працює процес.</p><ul><li>Показники часу</li><li>Показники якості</li><li>Показники вартості</li></ul></div>' },
+        { id: 'passport', title: 'Заповнення паспорта процесу', icon: 'FileText', order: 3, content: '<div class="space-y-4"><h2 class="text-xl font-semibold mb-4">Що таке паспорт процесу?</h2><p>Паспорт — це базовий документ, який описує суть процесу.</p></div>' },
+        { id: 'roles', title: 'Ролі та права доступу', icon: 'Users', order: 4, content: '<div class="space-y-4"><h2 class="text-xl font-semibold mb-4">Матриця ролей в системі</h2><ul><li>👑 Адміністратор / Аналітик</li><li>👔 Власник процесу</li><li>💼 Менеджер процесу</li><li>👥 Працівник</li></ul></div>' },
+        { id: 'approvals', title: 'Як працює погодження', icon: 'CheckCircle', order: 5, content: '<div class="space-y-4"><h2 class="text-xl font-semibold mb-4">Життєвий цикл процесу</h2><ol><li>Фаза 1: Паспорт.</li><li>Фаза 2: Кроки (BPMN).</li><li>Фаза 3: Показники.</li></ol></div>' }
+      ];
+      
+      await prisma.wikiPage.createMany({ data: WIKI_SECTIONS });
+      pages = await prisma.wikiPage.findMany({ orderBy: { order: 'asc' } });
+    }"""
+
+new_block = """    const pages = await prisma.wikiPage.findMany({
+      orderBy: { order: 'asc' }
+    });"""
+
+code = code.replace(old_block, new_block)
+
+with open("src/app/api/wiki/route.ts", "w") as f:
+    f.write(code)
+print("Patched Wiki GET")

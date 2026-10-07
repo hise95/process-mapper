@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const task = await prisma.analystTask.update({
     where: { id },
-    data: { status, title, description, assigneeId },
+    data: { status: status as any, title, description, assigneeId },
     include: { assignee: { select: { fullName: true } } }
   });
 

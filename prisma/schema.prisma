@@ -8,6 +8,72 @@ datasource db {
   url      = env("POSTGRES_URL")
 }
 
+
+// ─────────────────────────────────────────────
+// DB-LEVEL ENUMS (prevent invalid values at storage layer)
+// ─────────────────────────────────────────────
+
+enum Role {
+  ADMIN
+  PROCESS_ANALYST
+  PROCESS_MANAGER
+  PROCESS_OWNER
+  EMPLOYEE
+}
+
+enum AuthSource {
+  LOCAL
+  LDAP
+}
+
+enum ProcessStatus {
+  DRAFT
+  PASSPORT_REVIEW_ANALYST
+  PASSPORT_REVIEW_OWNER
+  STEPS_DRAFT
+  STEPS_REVIEW_ANALYST
+  STEPS_REVIEW_OWNER
+  KPIS_DRAFT
+  KPIS_REVIEW_ANALYST
+  KPIS_REVIEW_OWNER
+  FINAL_APPROVAL_ANALYST
+  APPROVED
+  ARCHIVED
+}
+
+enum ProcessType {
+  MAIN
+  MANAGERIAL
+  SERVICE
+}
+
+enum WorkflowStage {
+  PASSPORT_ANALYST_REVIEW
+  PASSPORT_OWNER_REVIEW
+  STEPS_ANALYST_REVIEW
+  STEPS_OWNER_REVIEW
+  KPIS_ANALYST_REVIEW
+  KPIS_OWNER_REVIEW
+  FINAL_APPROVAL
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  DONE
+}
+
+enum FeedbackStatus {
+  OPEN
+  RESOLVED
+}
+
+enum FeedbackType {
+  BUG
+  SUGGESTION
+  OTHER
+}
+
 // ─────────────────────────────────────────────
 // MODELS
 // ─────────────────────────────────────────────
@@ -17,8 +83,8 @@ model User {
   email      String   @unique
   password   String
   fullName   String
-  role       String   @default("PROCESS_MANAGER")
-  authSource String   @default("LOCAL") // "LOCAL" або "LDAP"
+  role       Role     @default(PROCESS_MANAGER)
+  authSource AuthSource @default(LOCAL)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 
@@ -54,7 +120,7 @@ model Process {
   code  String?
   title String
 
-  processType String @default("MAIN")
+  processType ProcessType @default(MAIN)
 
   objective          String?
   input              String?
@@ -75,7 +141,7 @@ model Process {
   manager   User?         @relation("ProcessManager", fields: [managerId], references: [id])
 
   version           Int           @default(1)
-  status            String        @default("DRAFT")
+  status            ProcessStatus @default(DRAFT)
   previousVersionId String?       @unique
   previousVersion   Process?      @relation("VersionChain", fields: [previousVersionId], references: [id])
   nextVersion       Process?      @relation("VersionChain")
@@ -122,8 +188,8 @@ model ApprovalWorkflow {
   processId String
   process   Process @relation(fields: [processId], references: [id], onDelete: Cascade)
 
-  stage          String
-  assignedToRole String
+  stage          WorkflowStage
+  assignedToRole Role
   isCompleted    Boolean   @default(false)
   completedAt    DateTime?
   comment        String?
@@ -167,9 +233,9 @@ model Feedback {
   id           String   @id @default(cuid())
   userId       String
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type         String   // 'BUG', 'SUGGESTION', etc.
+  type         FeedbackType
   message      String
-  status       String   @default("OPEN") // 'OPEN', 'RESOLVED'
+  status       FeedbackStatus @default(OPEN)
   adminComment String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -179,7 +245,7 @@ model AnalystTask {
   id          String   @id @default(cuid())
   title       String
   description String?
-  status      String   @default("TODO") // "TODO", "IN_PROGRESS", "DONE"
+  status      TaskStatus @default(TODO)
   
   authorId    String
   author      User     @relation("TaskAuthor", fields: [authorId], references: [id])
@@ -211,7 +277,7 @@ model Session {
   authenticatedAt DateTime @default(now()) // CWE-287: Відстеження часу останнього фактичного вводу пароля для Step-Up Auth
   ipAddress      String?
   userAgent      String?
-  authMethod     String? // LDAP або LOCAL
+  authMethod     AuthSource?
 
   @@index([userId])
 }
