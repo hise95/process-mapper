@@ -3,6 +3,7 @@ import { getSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
 import { initialArchitectureData } from '@/lib/architectureData';
 import { prisma } from '@/lib/prisma';
+import { z } from 'zod';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -45,56 +46,27 @@ export async function GET() {
   }
 }
 
+const cardSchema = z.object({
+  id: z.string().min(1).max(100),
+  group: z.enum(['mgmt', 'main', 'supp']),
+  code: z.string().max(100).optional().nullable(),
+  title: z.string().max(500).optional().nullable(),
+  owner: z.string().max(300).optional().nullable(),
+  inputs: z.array(z.string().max(1000)).max(150).optional().nullable(),
+  outputs: z.array(z.string().max(1000)).max(150).optional().nullable(),
+});
+
+const architectureDataSchema = z.object({
+  cards: z.array(cardSchema).max(1000)
+});
+
 function validateArchitectureData(body: any) {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
-    throw new Error('Очікується об`єкт JSON');
+  // Використовуємо Zod для суворої валідації і заборони unknown properties
+  const parseResult = architectureDataSchema.safeParse(body);
+  if (!parseResult.success) {
+    throw new Error('Некоректні дані: ' + parseResult.error.issues.map((e: any) => e.message).join(', '));
   }
-
-  // CWE-400: Logical size limit
-  const str = JSON.stringify(body);
-  if (str.length > 500 * 1024) {
-    throw new Error('Дані занадто великі (максимум 500KB)');
-  }
-
-  if (body.cards !== undefined && !Array.isArray(body.cards)) {
-    throw new Error('Поле cards має бути масивом');
-  }
-
-  const cards = body.cards || [];
-
-  // CWE-400: Element count limit
-  if (cards.length > 1000) {
-    throw new Error('Перевищено ліміт карток (максимум 1000)');
-  }
-
-  // Schema validation
-  for (const card of cards) {
-    if (!card || typeof card !== 'object') {
-      throw new Error('Картка має бути об`єктом');
-    }
-    if (!card.id || typeof card.id !== 'string' || card.id.length > 100) {
-      throw new Error('Некоректний або занадто довгий id картки');
-    }
-    if (!['mgmt', 'main', 'supp'].includes(card.group)) {
-      throw new Error('Некоректна група картки (має бути mgmt, main або supp)');
-    }
-    if (card.title !== undefined && (typeof card.title !== 'string' || card.title.length > 500)) {
-      throw new Error('Некоректна або занадто довга назва картки');
-    }
-    
-    // Arrays validation
-    for (const field of ['inputs', 'outputs']) {
-      if (card[field] !== undefined) {
-        if (!Array.isArray(card[field])) throw new Error(`Поле ${field} має бути масивом`);
-        if (card[field].length > 150) throw new Error(`Забагато елементів у ${field}`);
-        for (const item of card[field]) {
-          if (typeof item !== 'string' || item.length > 1000) {
-            throw new Error(`Елемент у ${field} має бути рядком до 1000 символів`);
-          }
-        }
-      }
-    }
-  }
+  return parseResult.data;
 }
 
 export async function PUT(req: Request) {
@@ -107,16 +79,17 @@ export async function PUT(req: Request) {
     const body = await req.json();
     
     // Перевірка схеми, розміру та вкладеності (CWE-400 / Point 23)
+    let validatedData;
     try {
-      validateArchitectureData(body);
+      validatedData = validateArchitectureData(body);
     } catch (valErr: any) {
       return NextResponse.json({ error: valErr.message }, { status: 400 });
     }
     
     await prisma.architectureDataStorage.upsert({
       where: { id: 'singleton' },
-      update: { data: body as any },
-      create: { id: 'singleton', data: body as any },
+      update: { data: validatedData as any },
+      create: { id: 'singleton', data: validatedData as any },
     });
     
     return NextResponse.json({ success: true, data: body });
