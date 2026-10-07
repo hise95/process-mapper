@@ -25,8 +25,12 @@ export async function POST(req: NextRequest) {
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
   if (!isAnalystOrAdmin(session.role)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 });
 
-  const { title, description, assigneeId } = await req.json();
-  if (!title) return NextResponse.json({ error: 'Заголовок обов\'язковий' }, { status: 400 });
+  const rawBody = await req.json();
+  const parseResult = analystTaskSchema.safeParse(rawBody);
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 });
+  }
+  const { title, description, assigneeId } = parseResult.data;
 
   const task = await prisma.analystTask.create({
     data: {

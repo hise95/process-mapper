@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
+import { analystTaskSchema } from '@/lib/schemas';
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const session = await requireSession().catch(() => null);
@@ -9,7 +10,14 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (!isAnalystOrAdmin(session.role)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 });
 
   const { id } = await params;
-  const { status, title, description, assigneeId } = await req.json();
+  const rawBody = await req.json();
+  const parseResult = analystTaskSchema.partial().safeParse(rawBody);
+  
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 });
+  }
+  
+  const { status, title, description, assigneeId } = parseResult.data;
 
   const task = await prisma.analystTask.update({
     where: { id },
