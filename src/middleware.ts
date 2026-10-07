@@ -87,6 +87,25 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
+  // CWE-613: Перевіряємо, чи сесія реально існує в базі (не була відкликана/видалена)
+  // Оскільки Middleware працює на Edge, ми робимо fetch до нашого ж API, яке має доступ до Prisma
+  try {
+    const verifyUrl = new URL('/api/auth/me', req.url)
+    const verifyReq = await fetch(verifyUrl, {
+      headers: { cookie: req.headers.get('cookie') || '' }
+    })
+    
+    if (!verifyReq.ok) {
+      const loginUrl = new URL('/login', req.url)
+      const res = NextResponse.redirect(loginUrl, { headers: requestHeaders })
+      res.cookies.delete(SESSION_COOKIE)
+      res.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue)
+      return res
+    }
+  } catch (e) {
+    // У разі мережевої помилки пропускаємо далі (fallback) – захист спрацює на рівні Server Component
+  }
+
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', contentSecurityPolicyHeaderValue);
   return response;
