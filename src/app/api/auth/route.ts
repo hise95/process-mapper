@@ -117,12 +117,12 @@ export async function POST(req: NextRequest) {
         // Не логуємо пароль — тільки email та повідомлення помилки
         // CWE-209: Sanitize LDAP error to prevent internal directory information disclosure in server logs
         console.warn('LDAP auth failed for', email, '(Details omitted for security)');
-        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP failure for ${email}` });
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, meta: { reason: 'LDAP_FAILURE', authMethod: 'LDAP' } });
         
         // CWE-287/639: Якщо LDAP налаштовано, він є ЄДИНИМ джерелом правди.
         // Забороняємо будь-який fallback на локальні паролі. 
         // Break-glass вбудований в код - це security vulnerability.
-        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email} (LDAP enforced)` });
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, meta: { reason: 'LDAP_ENFORCED' } });
         return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
     }
@@ -141,44 +141,44 @@ export async function POST(req: NextRequest) {
       // Користувач повинен бути попередньо зареєстрований адміністратором у локальній БД,
       // щоб забезпечити надійний lifecycle/deprovisioning контроль.
       if (!user) {
-        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP success but local account missing for ${email}` });
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, meta: { reason: 'MISSING_LOCAL_ACCOUNT' } });
         return NextResponse.json({ error: 'Акаунт не знайдено в локальній базі. Зверніться до адміністратора для доступу.' }, { status: 403 })
       }
       
       // CWE-xxx: Суворе розділення ідентичностей. LOCAL-акаунти не можуть бути захоплені через LDAP.
       if (user.authSource !== 'LDAP') {
-        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP success but account ${email} is marked as LOCAL` });
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, meta: { reason: 'IDENTITY_CONFLICT' } });
         return NextResponse.json({ error: 'Цей акаунт налаштовано тільки для локального входу. Конфлікт ідентичностей.' }, { status: 403 })
       }
     } else {
       // Локальна авторизація: перевіряємо bcrypt-хеш
       if (!user) {
-        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, meta: { reason: 'INVALID_CREDENTIALS' } });
           return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
       
       // CWE-xxx: Розділення ідентичностей. LDAP-акаунти не можуть логінитися локально.
       if (user.authSource === 'LDAP') {
-        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Attempt to locally login into LDAP account ${email}` });
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, meta: { reason: 'IDENTITY_CONFLICT' } });
         return NextResponse.json({ error: 'Цей акаунт налаштовано для входу через корпоративну мережу (LDAP).' }, { status: 403 })
       }
       // Тільки bcrypt-хеші є дійсними. Якщо хеш не bcrypt — пароль недійсний.
       if (!user.password.startsWith('$2')) {
-        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, meta: { reason: 'INVALID_CREDENTIALS' } });
           return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
       const isValidPassword = await bcrypt.compare(password, user.password)
 
       if (!isValidPassword) {
-        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
+        await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, meta: { reason: 'INVALID_CREDENTIALS' } });
           return NextResponse.json({ error: 'Невірний email або пароль, або акаунт тимчасово заблоковано' }, { status: 401 });
       }
     }
 
     // Очищуємо ліміт для цього акаунта після успішного входу
     await clearRateLimit(`login_email_${email}`);
-    await logSecurityEvent({ action: 'LOGIN_SUCCESS', userId: user!.id, ip, details: `User logged in` });
-    await logSecurityEvent({ action: 'SESSION_ISSUANCE', userId: user!.id, ip, details: `Session issued via POST /api/auth` });
+    await logSecurityEvent({ action: 'LOGIN_SUCCESS', userId: user!.id, ip });
+    await logSecurityEvent({ action: 'SESSION_ISSUANCE', userId: user!.id, ip });
 
     const response = NextResponse.json({
       success: true,

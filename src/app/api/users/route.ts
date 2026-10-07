@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     select: { id: true, email: true, fullName: true, role: true },
   })
 
-  await logSecurityEvent({ action: 'USER_CREATE', userId: session.id, targetId: user.id, details: `Created user ${email} with role ${role}` });
+  await logSecurityEvent({ action: 'USER_CREATE', userId: session.id, targetId: user.id, meta: { newRole: role } });
 
   return NextResponse.json(user, { status: 201 })
 }
@@ -155,10 +155,10 @@ export async function PATCH(req: NextRequest) {
   })
 
   if (role) {
-    await logSecurityEvent({ action: 'ROLE_CHANGE', userId: session.id, targetId: userId, details: `Role changed to ${role}` });
+    await logSecurityEvent({ action: 'ROLE_CHANGE', userId: session.id, targetId: userId, meta: { newRole: role } });
   }
   if (password) {
-    await logSecurityEvent({ action: 'PASSWORD_RESET', userId: session.id, targetId: userId, details: `Password was reset/changed` });
+    await logSecurityEvent({ action: 'PASSWORD_RESET', userId: session.id, targetId: userId });
   }
 
   // Якщо пароль, роль або EMAIL змінено, відкликаємо всі активні сесії цього користувача (CWE-613 Revocation)
@@ -210,7 +210,7 @@ export async function DELETE(req: NextRequest) {
     where: { id: userId },
   })
 
-  await logSecurityEvent({ action: 'USER_DELETE', userId: session.id, targetId: userId, details: `User deleted` });
+  await logSecurityEvent({ action: 'USER_DELETE', userId: session.id, targetId: userId });
 
   return NextResponse.json({ success: true })
 }
