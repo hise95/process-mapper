@@ -1,34 +1,53 @@
-import { prisma } from './prisma';
-
 /**
- * Basic DB-backed Rate Limiter
+ * In-Memory Rate Limiter (Replaces DB-backed limiter to prevent DB DoS)
  * Returns { allowed: boolean, remaining: number }
  */
+
+interface RateLimitRecord {
+  count: number;
+  expiresAt: number;
+}
+
+// Use globalThis to persist the map across Next.js HMR (Hot Module Replacement)
+const rateLimitCache: Map<string, RateLimitRecord> = (globalThis as any).__rateLimitCache || new Map();
+if (!(globalThis as any).__rateLimitCache) {
+  (globalThis as any).__rateLimitCache = rateLimitCache;
+}
+
+// Періодичне очищення старих записів для запобігання витоку пам'яті (Memory Leak)
+if (!(globalThis as any).__rateLimitCleanup) {
+  const cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    for (const [key, record] of rateLimitCache.entries()) {
+      if (record.expiresAt < now) {
+        rateLimitCache.delete(key);
+      }
+    }
+  }, 5 * 60 * 1000); // Очищення кожні 5 хвилин
+  // Не блокуємо процес Node.js
+  if (cleanupInterval.unref) cleanupInterval.unref();
+  (globalThis as any).__rateLimitCleanup = true;
+}
+
 export async function checkRateLimit(
   key: string,
   limit: number,
   windowMs: number
 ): Promise<{ allowed: boolean; remaining: number }> {
   try {
-    const now = new Date();
-    // CWE-362: Виправляємо Race Condition. 
-    // Робимо атомарний upsert (increment) ПЕРЕД перевіркою ліміту.
-    const record = await prisma.rateLimit.upsert({
-      where: { key },
-      create: { key, count: 1, expiresAt: new Date(now.getTime() + windowMs) },
-      update: { count: { increment: 1 } },
-    });
+    const now = Date.now();
+    let record = rateLimitCache.get(key);
 
-    // Якщо час ліміту минув, скидаємо лічильник (починаємо нове вікно)
-    if (record.expiresAt < now) {
-      await prisma.rateLimit.update({
-        where: { key },
-        data: { count: 1, expiresAt: new Date(now.getTime() + windowMs) },
-      });
+    // Якщо запису немає або він протермінований
+    if (!record || record.expiresAt < now) {
+      record = { count: 1, expiresAt: now + windowMs };
+      rateLimitCache.set(key, record);
       return { allowed: true, remaining: limit - 1 };
     }
 
-    // Якщо після атомарного збільшення ми перейшли ліміт
+    // Атомарне збільшення в межах пам'яті
+    record.count++;
+
     if (record.count > limit) {
       return { allowed: false, remaining: 0 };
     }
@@ -36,14 +55,11 @@ export async function checkRateLimit(
     return { allowed: true, remaining: Math.max(0, limit - record.count) };
   } catch (error) {
     console.error('Rate limit error:', error);
-    // CWE-636: Not Failing Securely. Якщо БД впала, краще заблокувати доступ (Fail-Closed),
-    // ніж пропустити атакуючого (Fail-Open).
+    // CWE-636: Fail-Closed
     throw new Error('Помилка перевірки ліміту запитів');
   }
 }
 
 export async function clearRateLimit(key: string) {
-  try {
-    await prisma.rateLimit.delete({ where: { key } }).catch(() => null);
-  } catch (e) {}
+  rateLimitCache.delete(key);
 }
