@@ -208,6 +208,7 @@ model Session {
   expiresAt      DateTime
   lastAccessedAt DateTime @default(now())
   createdAt      DateTime @default(now())
+  authenticatedAt DateTime @default(now()) // CWE-287: Відстеження часу останнього фактичного вводу пароля для Step-Up Auth
   ipAddress      String?
   userAgent      String?
   authMethod     String? // LDAP або LOCAL
