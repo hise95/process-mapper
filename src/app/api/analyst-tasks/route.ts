@@ -32,6 +32,16 @@ export async function POST(req: NextRequest) {
   }
   const { title, description, assigneeId } = parseResult.data;
 
+  if (assigneeId) {
+    const assignee = await prisma.user.findUnique({ where: { id: assigneeId } });
+    if (!assignee) {
+      return NextResponse.json({ error: 'Призначений користувач не існує' }, { status: 400 });
+    }
+    if (!isAnalystOrAdmin(assignee.role)) {
+      return NextResponse.json({ error: 'Задачу можна призначити лише Аналітику або Адміністратору' }, { status: 400 });
+    }
+  }
+
   const task = await prisma.analystTask.create({
     data: {
       title,
