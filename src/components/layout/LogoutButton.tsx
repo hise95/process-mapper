@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 
 export function LogoutButton({ className }: { className?: string }) {
   const handleLogout = async () => {
-    await fetch('/api/auth', { method: 'DELETE' });
+    await fetch('/api/auth', { method: 'DELETE', headers: { 'X-CSRF-Protection': '1' } });
     window.location.href = '/login';
   };
 

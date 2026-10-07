@@ -207,7 +207,14 @@ export async function POST(req: NextRequest) {
 import { cookies } from 'next/headers'
 import { verifyValue } from '@/lib/auth'
 
-export async function DELETE() {
+export async function DELETE(req: NextRequest) {
+  // CWE-352: Захист від Logout CSRF.
+  // Перевіряємо наявність кастомного заголовка, який неможливо відправити через <form> 
+  // або крос-доменні запити без проходження CORS Preflight.
+  if (req.headers.get('X-CSRF-Protection') !== '1') {
+    return NextResponse.json({ error: 'CSRF token missing or invalid' }, { status: 403 })
+  }
+
   const cookieStore = await cookies()
   const cookieValue = cookieStore.get(SESSION_COOKIE_NAME)?.value
 
