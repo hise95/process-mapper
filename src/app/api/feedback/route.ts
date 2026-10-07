@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
 import { feedbackSchema } from '@/lib/schemas';
+import { checkRateLimit } from '@/lib/rateLimit';
 
 export async function GET(req: NextRequest) {
   const session = await requireSession().catch(() => null);
@@ -20,6 +21,13 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const session = await requireSession().catch(() => null);
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
+
+  // CWE-400: Захист від спаму фідбеком (Rate Limit)
+  // Дозволяємо не більше 5 відгуків за 10 хвилин для одного користувача
+  const limit = await checkRateLimit(`feedback_user_${session.id}`, 5, 10 * 60 * 1000);
+  if (!limit.allowed) {
+    return NextResponse.json({ error: 'Ви надсилаєте занадто багато відгуків. Спробуйте пізніше.' }, { status: 429 });
+  }
 
   const rawBody = await req.json();
   const parseResult = feedbackSchema.safeParse(rawBody);
