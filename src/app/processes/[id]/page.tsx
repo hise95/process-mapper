@@ -193,7 +193,7 @@ export default async function ProcessViewPage({ params }: { params: Promise<{ id
         <CardHeader><CardTitle>BPMN Схема</CardTitle></CardHeader>
         <CardContent>
           {process.bpmnUrl ? (
-            <a href={process.bpmnUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline font-medium">
+            <a href={`/external-redirect?url=${encodeURIComponent(process.bpmnUrl)}`} target="_blank" rel="noreferrer" className="text-primary hover:underline font-medium">
               🔗 Відкрити схему за посиланням
             </a>
           ) : (

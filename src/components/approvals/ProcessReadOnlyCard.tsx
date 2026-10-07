@@ -146,7 +146,7 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
                         <td className="p-2.5 text-foreground/80">{step.executorRole || "—"}</td>
                         <td className="p-2.5">
                           {step.docUrl ? (
-                            <a href={step.docUrl} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs">
+                            <a href={`/external-redirect?url=${encodeURIComponent(step.docUrl)}`} target="_blank" rel="noreferrer" className="text-primary hover:underline text-xs">
                               Посилання ↗
                             </a>
                           ) : (
@@ -211,7 +211,7 @@ export function ProcessReadOnlyCard({ process }: { process: any }) {
                 <Button 
                   variant="outline" 
                   size="sm"
-                  onClick={() => window.open(process.bpmnUrl || '', '_blank')}
+                  onClick={() => window.open(`/external-redirect?url=${encodeURIComponent(process.bpmnUrl || '')}`, '_blank')}
                   className="border-primary text-primary hover:bg-primary hover:text-primary-foreground"
                 >
                   Відкрити BPMN <ExternalLink className="ml-1.5 h-3.5 w-3.5" />

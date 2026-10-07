@@ -36,7 +36,7 @@ export default function BpmnTab({ processId, initialUrl, readonly = false }: { p
 
       {url && (
         <div className="mt-4 border rounded-md p-4">
-          <a href={url} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
+          <a href={`/external-redirect?url=${encodeURIComponent(url)}`} target="_blank" rel="noreferrer" className="text-blue-500 hover:underline">
             Відкрити схему
           </a>
         </div>
