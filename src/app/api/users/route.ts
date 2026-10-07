@@ -6,9 +6,16 @@ import { Role } from '../../../lib/enums'
 import bcrypt from 'bcrypt'
 import { logSecurityEvent } from '@/lib/audit'
 function validatePassword(password: string): string | null {
-  if (password.length < 8) return 'Пароль має містити щонайменше 8 символів';
+  // CWE-521: Weak Password Requirements
+  // Впроваджено сувору Enterprise-політику паролів
+  if (password.length < 12) return 'Пароль має містити щонайменше 12 символів';
   if (password.length > 72) return 'Пароль занадто довгий (максимум 72 символи для безпеки bcrypt)';
-  if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) return 'Пароль має містити щонайменше одну літеру та одну цифру';
+  
+  if (!/[a-z]/.test(password)) return 'Пароль має містити щонайменше одну малу літеру';
+  if (!/[A-Z]/.test(password)) return 'Пароль має містити щонайменше одну велику літеру';
+  if (!/[0-9]/.test(password)) return 'Пароль має містити щонайменше одну цифру';
+  if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'Пароль має містити щонайменше один спеціальний символ';
+  
   return null;
 }
 
