@@ -92,9 +92,10 @@ export async function POST(req: NextRequest) {
         await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `LDAP failure for ${email}` });
         
         // CWE-287/639: Якщо LDAP налаштовано, він є єдиним джерелом правди.
-        // Забороняємо fallback на локальні паролі (щоб уникнути обходу AD account-lockout),
-        // за винятком екстреного локального адміністратора.
-        if (email !== 'admin@company.com') {
+        // Забороняємо fallback на локальні паролі (щоб уникнути обходу AD account-lockout).
+        // Break-glass (екстрений) акаунт дозволений ТІЛЬКИ якщо він явно заданий через змінну оточення.
+        const emergencyAdmin = process.env.EMERGENCY_LOCAL_ADMIN_EMAIL;
+        if (!emergencyAdmin || email !== emergencyAdmin) {
           await logSecurityEvent({ action: 'LOGIN_FAILURE', ip, details: `Invalid credentials for ${email}` });
           return NextResponse.json({ error: 'Невірний email або пароль' }, { status: 401 })
         }
