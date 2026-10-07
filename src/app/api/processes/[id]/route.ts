@@ -37,10 +37,9 @@ export async function GET(
       },
     })
 
-    if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-
-    if (!canViewProcess(session, process)) {
-      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    // CWE-204: Запобігання Enumeration (уніфікована відповідь 404/403)
+    if (!process || !canViewProcess(session, process as any)) {
+      return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
     }
 
     return NextResponse.json(process)
@@ -59,10 +58,9 @@ export async function PATCH(
 
     const { id } = await params
     const process = await prisma.process.findUnique({ where: { id } })
-    if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-
-    if (!canViewProcess(session, process)) {
-      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    // CWE-204: Запобігання Enumeration (уніфікована відповідь 404/403)
+    if (!process || !canViewProcess(session, process as any)) {
+      return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
     }
 
     if (!canEditProcess(session, process)) {
@@ -184,10 +182,9 @@ export async function DELETE(
     const { id } = await params
     const process = await prisma.process.findUnique({ where: { id } })
     
-    if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-
-    if (!canViewProcess(session, process)) {
-      return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+    // CWE-204: Запобігання Enumeration (уніфікована відповідь 404/403)
+    if (!process || !canViewProcess(session, process as any)) {
+      return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
     }
 
     const isUserAdmin = isAdmin(session.role)

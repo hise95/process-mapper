@@ -24,8 +24,7 @@ export async function GET(
     where: { id },
     select: { status: true, ownerId: true, managerId: true }
   })
-  if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
-  if (!canViewProcess(session, process)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+  if (!process || !canViewProcess(session, process as any)) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
 
   const steps = await prisma.processStep.findMany({
     where: { processId: id },
@@ -43,7 +42,7 @@ export async function POST(
 
   const { id } = await params
   const process = await prisma.process.findUnique({ where: { id } })
-  if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+  if (!process || !canViewProcess(session, process as any)) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditSteps(session, process)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
 
   const rawBody = await req.json()
@@ -91,7 +90,7 @@ export async function PUT(
 
   const { id } = await params
   const process = await prisma.process.findUnique({ where: { id } })
-  if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+  if (!process || !canViewProcess(session, process as any)) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditSteps(session, process)) return NextResponse.json({ error: 'Редагування кроків на цій фазі недоступне' }, { status: 403 })
 
   const rawBody = await req.json()

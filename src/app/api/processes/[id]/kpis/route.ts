@@ -18,8 +18,8 @@ export async function GET(
 
   const { id } = await params
   const process = await prisma.process.findUnique({ where: { id }, select: { status: true, ownerId: true, managerId: true } })
-  if (!process) return NextResponse.json({ error: "Процес не знайдено" }, { status: 404 })
-  if (!canViewProcess(session, process as any)) return NextResponse.json({ error: "Доступ заборонено" }, { status: 403 })
+  // CWE-204: Запобігання Enumeration
+  if (!process || !canViewProcess(session, process as any)) return NextResponse.json({ error: "Процес не знайдено" }, { status: 404 })
 
   const kpis = await prisma.processKPI.findMany({ where: { processId: id } })
   return NextResponse.json(kpis)
@@ -34,7 +34,7 @@ export async function POST(
 
   const { id } = await params
   const process = await prisma.process.findUnique({ where: { id } })
-  if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+  if (!process || !canViewProcess(session, process as any)) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
   const rawBody = await req.json()
@@ -67,7 +67,7 @@ export async function PUT(
 
   const { id } = await params
   const process = await prisma.process.findUnique({ where: { id } })
-  if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+  if (!process || !canViewProcess(session, process as any)) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
   const rawBody = await req.json()
@@ -107,7 +107,7 @@ export async function DELETE(
   if (typeof kpiId !== 'string') return NextResponse.json({ error: 'kpiId має бути рядком' }, { status: 400 })
 
   const process = await prisma.process.findUnique({ where: { id } })
-  if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
+  if (!process || !canViewProcess(session, process as any)) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
   await prisma.processKPI.delete({ where: { id: kpiId, processId: id } })
