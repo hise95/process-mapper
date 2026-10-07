@@ -124,6 +124,10 @@ export async function getSession(): Promise<SessionUser | null> {
 
   // CWE-613: Absolute timeout
   if (!sessionRecord || sessionRecord.expiresAt < now) {
+    if (sessionRecord) {
+      // Lazy GC: очищуємо сесію, якщо абсолютний таймаут вичерпано
+      await prisma.session.delete({ where: { id: sessionId } }).catch(() => {});
+    }
     return null;
   }
 
@@ -174,6 +178,19 @@ export async function buildSessionCookieValue(
   authMethod?: string
 ): Promise<string> {
   const expiresAtMs = Date.now() + 1000 * 60 * 60 * 8; // 8 hours
+  // CWE-400: Global Session Garbage Collection
+  // Оскільки ми не маємо гарантованого cron, очищуємо всі прострочені/неактивні сесії під час кожного логіну.
+  // Це запобігає нескінченному накопиченню мертвих сесій у БД.
+  const idleThreshold = new Date(Date.now() - 30 * 60 * 1000); // 30 mins
+  prisma.session.deleteMany({
+    where: {
+      OR: [
+        { expiresAt: { lt: new Date() } },
+        { lastAccessedAt: { lt: idleThreshold } }
+      ]
+    }
+  }).catch(() => {}); // Fire and forget
+
   const session = await prisma.session.create({
     data: {
       userId,
