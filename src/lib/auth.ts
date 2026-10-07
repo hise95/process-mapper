@@ -6,7 +6,7 @@ import { prisma } from './prisma'
 import type { User } from '@prisma/client';
 import { Role } from './enums';
 
-export type SessionUser = Pick<User, 'id' | 'email' | 'fullName' | 'role'>
+export type SessionUser = Pick<User, 'id' | 'email' | 'fullName' | 'role' | 'forcePasswordReset'>
 
 const SESSION_COOKIE = 'pm-session'
 const SESSION_SECRET = process.env.SESSION_SECRET as string
@@ -117,7 +117,7 @@ export async function getSession(): Promise<SessionUser | null> {
 
   const sessionRecord = await prisma.session.findUnique({
     where: { id: sessionId },
-    include: { user: { select: { id: true, email: true, fullName: true, role: true } } }
+    include: { user: { select: { id: true, email: true, fullName: true, role: true, forcePasswordReset: true } } }
   })
 
   const now = new Date();
@@ -203,7 +203,7 @@ export async function getSudoSession(): Promise<{ user: SessionUser | null, sudo
   
   const sessionRecord = await prisma.session.findUnique({
     where: { id: sessionId },
-    include: { user: { select: { id: true, email: true, fullName: true, role: true } } }
+    include: { user: { select: { id: true, email: true, fullName: true, role: true, forcePasswordReset: true } } }
   })
   
   const now = new Date()

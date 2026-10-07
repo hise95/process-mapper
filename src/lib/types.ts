@@ -18,7 +18,7 @@ import type {
 export type { Process, ProcessStep, ProcessKPI, ProcessHistoryLog, User };
 
 // ── Тип сесії (з auth.ts) ─────────────────────────────────────────────────────
-export type SessionUser = Pick<User, 'id' | 'email' | 'fullName' | 'role'>;
+export type SessionUser = Pick<User, 'id' | 'email' | 'fullName' | 'role' | 'forcePasswordReset'>;
 
 // ── Вкладені об'єкти відносин ─────────────────────────────────────────────────
 

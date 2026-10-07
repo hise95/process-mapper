@@ -5,6 +5,8 @@ import { canViewAdminPanel, canManageUsers, canViewFullUsers, isEmployee } from 
 import { Role } from '../../../lib/enums'
 import bcrypt from 'bcrypt'
 import { logSecurityEvent } from '@/lib/audit'
+import { isCompromisedPassword, checkPasswordHistory, savePasswordHistory } from '@/lib/passwordChecker'
+
 function validatePassword(password: string): string | null {
   // CWE-521: Weak Password Requirements
   // Впроваджено сувору Enterprise-політику паролів
@@ -84,6 +86,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Користувач з таким email вже існує' }, { status: 400 })
   }
 
+  if (await isCompromisedPassword(password)) {
+    return NextResponse.json({ error: 'Цей пароль було скомпрометовано у відомих витоках даних. Оберіть інший.' }, { status: 400 })
+  }
   const hashedPassword = await bcrypt.hash(password, 12)
 
   const user = await prisma.user.create({
@@ -92,6 +97,7 @@ export async function POST(req: NextRequest) {
   })
 
   await logSecurityEvent({ action: 'USER_CREATE', userId: session.id, targetId: user.id, meta: { newRole: role } });
+  await savePasswordHistory(user.id, hashedPassword);
 
   return NextResponse.json(user, { status: 201 })
 }
@@ -100,10 +106,20 @@ export async function PATCH(req: NextRequest) {
   const { user: session, sudoRequired } = await getSudoSession();
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
   if (sudoRequired) return NextResponse.json({ error: 'Для виконання критичної операції потрібно знову підтвердити особу (Step-up Auth). Будь ласка, перезайдіть в систему.' }, { status: 403 });
-  if (!canViewAdminPanel(session)) return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
-
   const bodyPatch = await req.json();
   let { userId, role, password, email, fullName, currentPassword } = bodyPatch;
+
+  // Allow users to change their OWN password/info even if they are not admins (or if they have forcePasswordReset)
+  const isSelfUpdate = userId === session.id;
+  const isAdmin = session.role === 'ADMIN' && !session.forcePasswordReset;
+
+  if (!isAdmin && !isSelfUpdate) {
+    return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
+  }
+  
+  if (isSelfUpdate && role && role !== session.role) {
+    return NextResponse.json({ error: 'Не можна змінити власну роль' }, { status: 400 })
+  }
   if (email) email = email.trim().toLowerCase(); // CWE-178
   if (!userId) return NextResponse.json({ error: 'userId обов\'язковий' }, { status: 400 })
   
@@ -149,7 +165,19 @@ export async function PATCH(req: NextRequest) {
     if (password) {
       const pwdError = validatePassword(password)
       if (pwdError) return NextResponse.json({ error: pwdError }, { status: 400 })
+      if (await isCompromisedPassword(password)) {
+        return NextResponse.json({ error: 'Цей пароль було скомпрометовано у відомих витоках даних. Оберіть інший.' }, { status: 400 })
+      }
+      if (await checkPasswordHistory(userId, password)) {
+        return NextResponse.json({ error: 'Цей пароль вже використовувався нещодавно (Password History). Оберіть новий.' }, { status: 400 })
+      }
       dataToUpdate.password = await bcrypt.hash(password, 12)
+      // Forced reset on next login because admin changed it
+      if (userId !== session.id) {
+        dataToUpdate.forcePasswordReset = true
+      } else {
+        dataToUpdate.forcePasswordReset = false
+      }
     }
     if (email) dataToUpdate.email = email
     if (fullName) dataToUpdate.fullName = fullName
@@ -160,6 +188,10 @@ export async function PATCH(req: NextRequest) {
     data: dataToUpdate,
     select: { id: true, email: true, fullName: true, role: true },
   })
+  
+  if (dataToUpdate.password) {
+     await savePasswordHistory(userId, dataToUpdate.password);
+  }
 
   if (role) {
     await logSecurityEvent({ action: 'ROLE_CHANGE', userId: session.id, targetId: userId, meta: { newRole: role } });

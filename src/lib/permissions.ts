@@ -28,18 +28,22 @@ export const isEmployee = (role: string) => role === Role.EMPLOYEE;
 
 // ── Семантичні перевірки для користувачів ──
 export function canManageUsers(user: SessionUser): boolean {
+  if (user.forcePasswordReset) return false;
   return isAdmin(user.role);
 }
 
 export function canViewFullUsers(user: SessionUser): boolean {
+  if (user.forcePasswordReset) return false;
   return isAnalystOrAdmin(user.role);
 }
 
 export function canAssignProcessOwner(user: SessionUser): boolean {
+  if (user.forcePasswordReset) return false;
   return isAnalystOrAdmin(user.role) || isOwner(user.role);
 }
 
 export function canAssignProcessManager(user: SessionUser): boolean {
+  if (user.forcePasswordReset) return false;
   return isAnalystOrAdmin(user.role) || isOwner(user.role) || isManager(user.role);
 }
 
@@ -47,10 +51,12 @@ export function canAssignProcessManager(user: SessionUser): boolean {
 // ── Перевірки ──
 
 export function canCreateProcess(user: SessionUser): boolean {
+  if (user.forcePasswordReset) return false;
   return isAnalystOrAdmin(user.role) || user.role === Role.PROCESS_MANAGER || user.role === Role.PROCESS_OWNER
 }
 
 export function canEditProcess(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (user.forcePasswordReset) return false;
   if (process.status === 'APPROVED' || process.status === 'ARCHIVED') return false
   if (isAnalystOrAdmin(user.role)) return true
   if (user.role === Role.PROCESS_MANAGER) {
@@ -63,6 +69,7 @@ export function canEditProcess(user: SessionUser, process: Pick<Process, 'manage
 }
 
 export function canSubmitForReview(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (user.forcePasswordReset) return false;
   const draftStatuses = ['DRAFT', 'STEPS_DRAFT', 'KPIS_DRAFT']
   if (!draftStatuses.includes(process.status)) return false
   
@@ -75,15 +82,18 @@ export function canSubmitForReview(user: SessionUser, process: Pick<Process, 'ma
 }
 
 export function canApproveAsAnalyst(user: SessionUser): boolean {
+  if (user.forcePasswordReset) return false;
   return isAnalystOrAdmin(user.role)
 }
 
 export function canApproveAsOwner(user: SessionUser, process: Pick<Process, 'ownerId'>): boolean {
+  if (user.forcePasswordReset) return false;
   // CWE-269: Тільки призначений власник може погодити як Власник
   return process.ownerId === user.id;
 }
 
 export function canViewAdminPanel(user: SessionUser): boolean {
+  if (user.forcePasswordReset) return false;
   return user.role === Role.ADMIN
 }
 
@@ -93,6 +103,7 @@ export function canViewRepository(_user: SessionUser): boolean {
 
 /** Чи може користувач створити нову версію APPROVED процесу */
 export function canCreateNewVersion(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (user.forcePasswordReset) return false;
   if (process.status !== 'APPROVED') return false
   if (isAnalystOrAdmin(user.role)) return true
   if (user.role === Role.PROCESS_MANAGER && process.managerId === user.id) return true
@@ -105,18 +116,21 @@ const PHASE_2_STATUSES = ['STEPS_DRAFT', 'STEPS_REVIEW_ANALYST', 'STEPS_REVIEW_O
 const PHASE_3_STATUSES = ['KPIS_DRAFT', 'KPIS_REVIEW_ANALYST', 'KPIS_REVIEW_OWNER', 'FINAL_APPROVAL_ANALYST'];
 
 export function canEditPassport(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (user.forcePasswordReset) return false;
   if (!canEditProcess(user, process)) return false;
   if (isAnalystOrAdmin(user.role)) return true;
   return PHASE_1_STATUSES.includes(process.status);
 }
 
 export function canEditSteps(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (user.forcePasswordReset) return false;
   if (!canEditProcess(user, process)) return false;
   if (isAnalystOrAdmin(user.role)) return true;
   return PHASE_2_STATUSES.includes(process.status);
 }
 
 export function canEditKpis(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
+  if (user.forcePasswordReset) return false;
   if (!canEditProcess(user, process)) return false;
   if (isAnalystOrAdmin(user.role)) return true;
   return PHASE_3_STATUSES.includes(process.status);

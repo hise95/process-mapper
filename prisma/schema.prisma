@@ -85,6 +85,7 @@ model User {
   fullName   String
   role       Role     @default(PROCESS_MANAGER)
   authSource AuthSource @default(LOCAL)
+  forcePasswordReset Boolean @default(false)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @default(now()) @updatedAt
 
@@ -98,6 +99,7 @@ model User {
   feedbacks        Feedback[]
   authoredTasks    AnalystTask[] @relation("TaskAuthor")
   assignedTasks    AnalystTask[] @relation("TaskAssignee")
+  passwordHistory  PasswordHistory[]
 }
 
 model ProcessLevel {
@@ -300,4 +302,14 @@ model SecurityAuditLog {
   @@index([action])
   @@index([userId])
   @@index([targetId])
+}
+
+model PasswordHistory {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hash      String
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
