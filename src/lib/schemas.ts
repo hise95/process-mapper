@@ -28,6 +28,8 @@ export const wikiPageSchema = z.object({
   order: z.number().int().optional(),
 });
 
+const safeUrl = z.string().url('Некоректний формат URL').regex(/^https?:\/\//i, 'Дозволені лише HTTP/HTTPS посилання').max(1000).optional().nullable();
+
 export const kpiSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, 'Назва обов\'язкова').max(300),
@@ -45,7 +47,7 @@ export const stepSchema = z.object({
   description: z.string().max(5000).optional().nullable(),
   executorRole: z.string().max(200).optional().nullable(),
   participantsNote: z.string().max(1000).optional().nullable(),
-  docUrl: z.string().max(1000).optional().nullable(),
+  docUrl: safeUrl, // CWE-79: Strict URL validation to prevent javascript: XSS
   comment: z.string().max(2000).optional().nullable(),
 });
 
@@ -72,7 +74,7 @@ export const processPatchSchema = z.object({
   levelId: z.string().max(50).optional().nullable(),
   ownerId: z.string().max(50).optional().nullable(),
   managerId: z.string().max(50).optional().nullable(),
-  bpmnUrl: z.string().max(1000).optional().nullable(),
+  bpmnUrl: safeUrl, // CWE-79: Strict URL validation
 });
 
 export const feedbackSchema = z.object({
