@@ -35,6 +35,40 @@ async function main() {
   }
 
   try {
+    // CWE-20: Ensure Graph Structural Consistency (Child depth MUST be Parent depth + 1, L1 MUST NOT have a parent)
+    await prisma.$executeRawUnsafe(`
+      CREATE OR REPLACE FUNCTION check_processlevel_graph()
+      RETURNS TRIGGER AS $$
+      DECLARE
+        parent_depth INT;
+      BEGIN
+        IF NEW."parentId" IS NULL THEN
+          IF NEW.depth != 1 THEN
+            RAISE EXCEPTION 'Level without parent must have depth 1 (L1)';
+          END IF;
+        ELSE
+          SELECT depth INTO parent_depth FROM "ProcessLevel" WHERE id = NEW."parentId";
+          IF NEW.depth != parent_depth + 1 THEN
+            RAISE EXCEPTION 'Child depth (%) must be exactly parent depth (%) + 1', NEW.depth, parent_depth;
+          END IF;
+        END IF;
+        RETURN NEW;
+      END;
+      $$ LANGUAGE plpgsql;
+    `);
+    await prisma.$executeRawUnsafe(`
+      DROP TRIGGER IF EXISTS trg_check_processlevel_graph ON "ProcessLevel";
+      CREATE TRIGGER trg_check_processlevel_graph
+      BEFORE INSERT OR UPDATE ON "ProcessLevel"
+      FOR EACH ROW EXECUTE FUNCTION check_processlevel_graph();
+    `);
+    console.log('✅ Applied graph structural integrity trigger');
+  } catch (e: any) {
+    console.warn('Note trigger:', e.message);
+  }
+
+
+  try {
     // CWE-20: Ensure ArchitectureDataStorage payload is strictly a JSON Object (not array/scalar)
     await prisma.$executeRawUnsafe(`
       ALTER TABLE "ArchitectureDataStorage" 
