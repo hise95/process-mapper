@@ -129,21 +129,29 @@ export async function applyTransition(
   processId: string,
   transition: WorkflowTransition,
   user: SessionUser,
-  comment?: string
+  comment?: string,
+  expectedCurrentStatus?: string // CWE-362: Очікуваний статус для уникнення Race Conditions
 ): Promise<void> {
   const newStatus = TRANSITION_MAP[transition]
   const action = TRANSITION_LABEL[transition]
   const now = new Date()
 
   await prisma.$transaction(async (tx) => {
-    // 1. Оновлення статусу
-    await tx.process.update({
-      where: { id: processId },
+    // 1. Оновлення статусу з атомарною перевіркою (Optimistic Concurrency Control)
+    const updateResult = await tx.process.updateMany({
+      where: { 
+        id: processId,
+        ...(expectedCurrentStatus ? { status: expectedCurrentStatus } : {}) 
+      },
       data: {
         status: newStatus,
         ...(transition === 'FINAL_APPROVE' ? { approvedAt: now } : {}),
       },
     })
+    
+    if (updateResult.count === 0) {
+      throw new Error('CONCURRENCY_CONFLICT: Стан процесу вже був змінений іншим запитом (Race Condition).');
+    }
 
     // 2. Закриваємо активні workflow кроки
     if (transition.includes('REJECT') || transition.includes('APPROVE')) {

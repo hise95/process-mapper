@@ -34,7 +34,15 @@ export async function POST(
     return NextResponse.json({ error: 'Дія заборонена для вашої ролі або поточного статусу процесу' }, { status: 403 })
   }
 
-  await applyTransition(id, transition, session, comment)
+  try {
+    // Передаємо process.status як expectedCurrentStatus для OCC-захисту (CWE-362)
+    await applyTransition(id, transition, session, comment, process.status)
+  } catch (err: any) {
+    if (err.message && err.message.includes('CONCURRENCY_CONFLICT')) {
+      return NextResponse.json({ error: 'Конфлікт паралельних запитів: статус вже змінено' }, { status: 409 })
+    }
+    throw err;
+  }
 
   return NextResponse.json({ success: true })
 }
