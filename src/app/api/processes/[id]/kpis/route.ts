@@ -37,8 +37,12 @@ export async function POST(
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
   if (!canEditKpis(session, process)) return NextResponse.json({ error: 'Редагування показників на цій фазі недоступне' }, { status: 403 })
 
-  const body = await req.json()
-  if (!body.name) return NextResponse.json({ error: 'Назва показника обов\'язкова' }, { status: 400 })
+  const rawBody = await req.json()
+  const parseResult = kpiSchema.safeParse(rawBody)
+  if (!parseResult.success) {
+    return NextResponse.json({ error: 'Некоректні дані', details: parseResult.error.format() }, { status: 400 })
+  }
+  const body = parseResult.data
 
   const kpi = await prisma.processKPI.create({
     data: {
@@ -100,6 +104,7 @@ export async function DELETE(
 
   const { id } = await params
   const { kpiId } = await req.json()
+  if (typeof kpiId !== 'string') return NextResponse.json({ error: 'kpiId має бути рядком' }, { status: 400 })
 
   const process = await prisma.process.findUnique({ where: { id } })
   if (!process) return NextResponse.json({ error: 'Процес не знайдено' }, { status: 404 })
