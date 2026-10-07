@@ -40,10 +40,13 @@ export function canEditProcess(user: SessionUser, process: Pick<Process, 'manage
 export function canSubmitForReview(user: SessionUser, process: Pick<Process, 'managerId' | 'ownerId' | 'status'>): boolean {
   const draftStatuses = ['DRAFT', 'STEPS_DRAFT', 'KPIS_DRAFT']
   if (!draftStatuses.includes(process.status)) return false
-  if (isAnalystOrAdmin(user.role)) return true
-  if (user.role === Role.PROCESS_MANAGER && process.managerId === user.id) return true
-  if (user.role === Role.PROCESS_OWNER && process.ownerId === user.id) return true
-  return false
+  
+  // CWE-269: Тільки призначені особи можуть відправляти на перевірку
+  if (process.managerId === user.id) return true;
+  if (process.ownerId === user.id) return true;
+  
+  // Аналітик може відправити, тільки якщо він безпосередньо призначений менеджером
+  return false;
 }
 
 export function canApproveAsAnalyst(user: SessionUser): boolean {
@@ -51,9 +54,8 @@ export function canApproveAsAnalyst(user: SessionUser): boolean {
 }
 
 export function canApproveAsOwner(user: SessionUser, process: Pick<Process, 'ownerId'>): boolean {
-  if (isAnalystOrAdmin(user.role)) return true
-  if (user.role === Role.PROCESS_OWNER && process.ownerId === user.id) return true
-  return false
+  // CWE-269: Тільки призначений власник може погодити як Власник
+  return process.ownerId === user.id;
 }
 
 export function canViewAdminPanel(user: SessionUser): boolean {

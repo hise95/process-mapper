@@ -82,9 +82,11 @@ export function canExecuteTransition(
   user: SessionUser,
   process: { ownerId: string | null; managerId: string | null }
 ): boolean {
+  // CWE-269: Segregation of Duties (SoD)
+  // Аналітик/Адмін не може автоматично виступати Власником чи Менеджером без прямого призначення
   const isAnalyst = user.role === Role.PROCESS_ANALYST || user.role === Role.ADMIN;
-  const isOwner = isAnalyst || process.ownerId === user.id;
-  const isManager = isAnalyst || process.managerId === user.id;
+  const isOwner = process.ownerId === user.id;
+  const isManager = process.managerId === user.id;
 
   switch (transition) {
     case 'SUBMIT_PASSPORT_ANALYST':
