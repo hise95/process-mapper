@@ -1,3 +1,4 @@
+import { createHash } from 'crypto';
 /**
  * In-Memory Rate Limiter (Replaces DB-backed limiter to prevent DB DoS)
  * Returns { allowed: boolean, remaining: number }
@@ -35,13 +36,24 @@ export async function checkRateLimit(
   windowMs: number
 ): Promise<{ allowed: boolean; remaining: number }> {
   try {
+    // CWE-200: Hash the key to avoid storing raw PII (like emails) in memory/logs
+    const hashedKey = createHash('sha256').update(key).digest('hex');
     const now = Date.now();
-    let record = rateLimitCache.get(key);
+    let record = rateLimitCache.get(hashedKey);
 
     // Якщо запису немає або він протермінований
     if (!record || record.expiresAt < now) {
+      // CWE-400: Захист від роздування cardinality (OOM DoS) через довільні email-адреси
+      if (rateLimitCache.size >= 50000) {
+        // Очищаємо найстаріші 10% записів (Map зберігає порядок вставки)
+        let evicted = 0;
+        for (const [k] of rateLimitCache) {
+          rateLimitCache.delete(k);
+          if (++evicted >= 5000) break;
+        }
+      }
       record = { count: 1, expiresAt: now + windowMs };
-      rateLimitCache.set(key, record);
+      rateLimitCache.set(hashedKey, record);
       return { allowed: true, remaining: limit - 1 };
     }
 
@@ -61,5 +73,6 @@ export async function checkRateLimit(
 }
 
 export async function clearRateLimit(key: string) {
-  rateLimitCache.delete(key);
+  const hashedKey = createHash('sha256').update(key).digest('hex');
+  rateLimitCache.delete(hashedKey);
 }
