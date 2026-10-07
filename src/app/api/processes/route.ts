@@ -1,3 +1,4 @@
+import { handleApiError } from '@/lib/apiErrorHandler';
 // src/app/api/processes/route.ts
 // GET — список процесів (з фільтрацією по ролі)
 // POST — створити новий процес
@@ -82,9 +83,8 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json(processes)
-  } catch (error) {
-    console.error('Error fetching processes:', error)
-    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 })
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
@@ -155,8 +155,7 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json(process, { status: 201 })
-  } catch (error) {
-    console.error('Error creating process:', error)
-    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 })
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }

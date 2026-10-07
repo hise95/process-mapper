@@ -1,3 +1,4 @@
+import { handleApiError } from '@/lib/apiErrorHandler';
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { SESSION_COOKIE_NAME, buildSessionCookieValue } from '@/lib/auth'
@@ -199,8 +200,7 @@ export async function POST(req: NextRequest) {
 
     return response
   } catch (error: any) {
-    console.error('Auth error:', error?.message)
-    return NextResponse.json({ error: 'Помилка авторизації на сервері' }, { status: 500 })
+    return handleApiError(error);
   }
 }
 

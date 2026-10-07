@@ -1,3 +1,4 @@
+import { handleApiError } from '@/lib/apiErrorHandler';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
@@ -33,9 +34,8 @@ export async function PUT(req: Request, props: { params: Promise<{ id: string }>
     });
 
     return NextResponse.json(updatedPage);
-  } catch (error) {
-    console.error('Error updating wiki page:', error);
-    return NextResponse.json({ error: 'Failed to update wiki page' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
@@ -52,8 +52,7 @@ export async function DELETE(req: Request, props: { params: Promise<{ id: string
     });
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error('Error deleting wiki page:', error);
-    return NextResponse.json({ error: 'Failed to delete wiki page' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }

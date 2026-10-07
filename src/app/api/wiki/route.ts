@@ -1,3 +1,4 @@
+import { handleApiError } from '@/lib/apiErrorHandler';
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
@@ -30,9 +31,8 @@ export async function GET() {
     }
     
     return NextResponse.json(pages);
-  } catch (error) {
-    console.error('Error fetching wiki pages:', error);
-    return NextResponse.json({ error: 'Failed to fetch wiki pages' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
@@ -64,8 +64,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(newPage);
-  } catch (error) {
-    console.error('Error creating wiki page:', error);
-    return NextResponse.json({ error: 'Failed to create wiki page' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }

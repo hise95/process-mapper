@@ -1,3 +1,4 @@
+import { handleApiError } from '@/lib/apiErrorHandler';
 // src/app/api/processes/[id]/route.ts
 // GET — отримати процес по ID
 // PATCH — оновити процес
@@ -43,9 +44,8 @@ export async function GET(
     }
 
     return NextResponse.json(process)
-  } catch (error) {
-    console.error('Error fetching process details:', error)
-    return NextResponse.json({ error: 'Помилка сервера' }, { status: 500 })
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
@@ -168,9 +168,8 @@ export async function PATCH(
     }
 
     return NextResponse.json(updated)
-  } catch (error) {
-    console.error('Error updating process:', error)
-    return NextResponse.json({ error: 'Помилка сервера при оновленні' }, { status: 500 })
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
@@ -206,8 +205,7 @@ export async function DELETE(
     await prisma.process.delete({ where: { id } })
 
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting process:', error)
-    return NextResponse.json({ error: 'Помилка сервера при видаленні' }, { status: 500 })
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }

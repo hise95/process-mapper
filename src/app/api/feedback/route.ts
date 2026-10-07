@@ -1,3 +1,4 @@
+import { handleApiError } from '@/lib/apiErrorHandler';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
@@ -46,8 +47,7 @@ export async function POST(req: NextRequest) {
       }
     });
     return NextResponse.json(feedback);
-  } catch (error) {
-    console.error("Feedback creation error:", error);
-    return NextResponse.json({ error: 'Внутрішня помилка сервера' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }

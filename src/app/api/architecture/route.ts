@@ -1,3 +1,4 @@
+import { handleApiError } from '@/lib/apiErrorHandler';
 import { NextResponse } from 'next/server';
 import { getSession } from '@/lib/auth';
 import { isAnalystOrAdmin } from '@/lib/permissions';
@@ -129,9 +130,8 @@ export async function PUT(req: Request) {
     });
     
     return NextResponse.json({ success: true, data: body });
-  } catch (e) {
-    console.error('Error saving architecture data:', e);
-    return NextResponse.json({ error: 'Некоректні дані' }, { status: 400 });
+  } catch (e: any) {
+    return handleApiError(e);
   }
 }
 
@@ -149,8 +149,7 @@ export async function POST(req: Request) {
       create: { id: 'singleton', data: initialArchitectureData as any },
     });
     return NextResponse.json({ success: true, data: initialArchitectureData });
-  } catch (error) {
-    console.error('Error resetting architecture data:', error);
-    return NextResponse.json({ error: 'Помилка скидання даних' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }

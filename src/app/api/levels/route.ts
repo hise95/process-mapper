@@ -1,3 +1,4 @@
+import { handleApiError } from '@/lib/apiErrorHandler';
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireSession } from '@/lib/auth';
@@ -13,9 +14,8 @@ export async function GET() {
       include: { parent: { select: { name: true } } }
     });
     return NextResponse.json(levels);
-  } catch (error) {
-    console.error('Error fetching levels:', error);
-    return NextResponse.json({ error: 'Помилка завантаження рівнів' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
 
@@ -44,8 +44,7 @@ export async function POST(req: NextRequest) {
       }
     });
     return NextResponse.json(level, { status: 201 });
-  } catch (error) {
-    console.error('Error creating level:', error);
-    return NextResponse.json({ error: 'Помилка створення рівня' }, { status: 500 });
+  } catch (error: any) {
+    return handleApiError(error);
   }
 }
