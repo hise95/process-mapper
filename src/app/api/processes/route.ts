@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
-import { canCreateProcess, isAnalystOrAdmin } from '@/lib/permissions'
+import { canCreateProcess, isAnalystOrAdmin, isManager, isOwner, isEmployee, canAssignProcessOwner, canAssignProcessManager } from '@/lib/permissions'
 import { Role } from '../../../lib/enums';
 
 export async function GET(req: NextRequest) {
@@ -22,11 +22,11 @@ export async function GET(req: NextRequest) {
 
   // 1. Жорсткі обмеження видимості за роллю (Base Object Level Authorization)
   if (!isAnalystOrAdmin(session.role)) {
-    if (session.role === Role.PROCESS_MANAGER) {
+    if (isManager(session.role)) {
       where.managerId = session.id
-    } else if (session.role === Role.PROCESS_OWNER) {
+    } else if (isOwner(session.role)) {
       where.ownerId = session.id
-    } else if (session.role === Role.EMPLOYEE) {
+    } else if (isEmployee(session.role)) {
       where.status = 'APPROVED'
     } else {
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
         'PASSPORT_REVIEW_ANALYST', 'STEPS_REVIEW_ANALYST', 'KPIS_REVIEW_ANALYST', 'FINAL_APPROVAL_ANALYST',
         'PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'
       ] }
-    } else if (session.role === Role.PROCESS_OWNER) {
+    } else if (isOwner(session.role)) {
       where.status = { in: ['PASSPORT_REVIEW_OWNER', 'STEPS_REVIEW_OWNER', 'KPIS_REVIEW_OWNER'] }
     } else {
       // Інші ролі не мають pending-процесів
@@ -50,13 +50,13 @@ export async function GET(req: NextRequest) {
     if (status === 'ARCHIVED' && !isAnalystOrAdmin(session.role)) {
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
     }
-    if (session.role === Role.EMPLOYEE && status !== 'APPROVED') {
+    if (isEmployee(session.role) && status !== 'APPROVED') {
       where.id = 'NO_ACCESS_STATUS'
     } else {
       where.status = status
     }
   } else {
-    if (session.role !== Role.EMPLOYEE) {
+    if (!isEmployee(session.role)) {
       where.status = { not: 'ARCHIVED' }
     }
   }
@@ -111,15 +111,15 @@ export async function POST(req: NextRequest) {
     let finalManagerId = managerId || session.id;
 
     // CWE-915 / CWE-862: Mass assignment & ownership validation
-    if (ownerId && session.role !== 'ADMIN' && session.role !== 'PROCESS_ANALYST') {
-      if (session.role === 'PROCESS_OWNER') {
+    if (ownerId && !canAssignProcessOwner(session)) {
+      if (isOwner(session.role)) {
         finalOwnerId = session.id; // Owner can only assign themselves
       } else {
         return NextResponse.json({ error: 'Тільки аналітик або власник може призначати ownerId' }, { status: 403 })
       }
     }
 
-    if (managerId && managerId !== session.id && session.role !== 'ADMIN' && session.role !== 'PROCESS_ANALYST' && session.role !== 'PROCESS_OWNER') {
+    if (managerId && managerId !== session.id && !canAssignProcessManager(session)) {
       return NextResponse.json({ error: 'Ви не маєте права призначати іншого менеджера' }, { status: 403 })
     }
 

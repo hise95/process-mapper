@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireSession, getSudoSession, verifyCurrentPassword } from '@/lib/auth'
-import { canViewAdminPanel } from '@/lib/permissions'
+import { canViewAdminPanel, canManageUsers, canViewFullUsers, isEmployee } from '@/lib/permissions'
 import { Role } from '../../../lib/enums'
 import bcrypt from 'bcrypt'
 import { logSecurityEvent } from '@/lib/audit'
@@ -19,12 +19,12 @@ export async function GET(_req: NextRequest) {
 
   // CWE-200: Excessive Data Exposure (Point 19)
   // Працівники не мають доступу до списку користувачів взагалі
-  if (session.role === 'EMPLOYEE') {
+  if (isEmployee(session.role)) {
     return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
   }
 
   // Аналітики та Адміни бачать повний профіль для управління
-  if (session.role === 'ADMIN' || session.role === 'PROCESS_ANALYST') {
+  if (canViewFullUsers(session)) {
     const users = await prisma.user.findMany({
       select: { id: true, email: true, fullName: true, role: true, createdAt: true },
       orderBy: { fullName: 'asc' },
@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
   const { user: session, sudoRequired } = await getSudoSession();
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
   if (sudoRequired) return NextResponse.json({ error: 'Для виконання критичної операції потрібно знову підтвердити особу (Step-up Auth). Будь ласка, перезайдіть в систему.' }, { status: 403 });
-  if (session.role !== 'ADMIN') return NextResponse.json({ error: 'Тільки системний адміністратор може створювати користувачів' }, { status: 403 })
+  if (!canManageUsers(session)) return NextResponse.json({ error: 'Тільки системний адміністратор може створювати користувачів' }, { status: 403 })
 
   const { email, password, fullName, role, currentPassword } = await req.json()
   if (!email || !password || !fullName || !role) {
@@ -132,7 +132,7 @@ export async function PATCH(req: NextRequest) {
 
   // Тільки адміністратор може міняти пароль або email іншим
   if (password || email || fullName) {
-    if (session.role !== 'ADMIN') {
+    if (!canManageUsers(session)) {
        return NextResponse.json({ error: 'Тільки системний адміністратор може змінювати дані користувача' }, { status: 403 })
     }
     if (password) {
@@ -172,7 +172,7 @@ export async function DELETE(req: NextRequest) {
   const { user: session, sudoRequired } = await getSudoSession();
   if (!session) return NextResponse.json({ error: 'Не авторизовано' }, { status: 401 });
   if (sudoRequired) return NextResponse.json({ error: 'Для виконання критичної операції потрібно знову підтвердити особу (Step-up Auth). Будь ласка, перезайдіть в систему.' }, { status: 403 });
-  if (session.role !== 'ADMIN') return NextResponse.json({ error: 'Тільки системний адміністратор може видаляти користувачів' }, { status: 403 })
+  if (!canManageUsers(session)) return NextResponse.json({ error: 'Тільки системний адміністратор може видаляти користувачів' }, { status: 403 })
 
   const url = new URL(req.url)
   const userId = url.searchParams.get('userId')

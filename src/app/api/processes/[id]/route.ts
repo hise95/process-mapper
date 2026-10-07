@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { requireSession } from '@/lib/auth'
 import { isValidHttpUrl } from '@/lib/validation'
 import { processPatchSchema } from '@/lib/schemas';
-import { canEditProcess, canEditPassport, canEditSteps, canViewProcess } from '@/lib/permissions'
+import { canEditProcess, canEditPassport, canEditSteps, canViewProcess, canAssignProcessManager, canAssignProcessOwner, isAdmin, isOwner } from '@/lib/permissions'
 
 export async function GET(
   _req: NextRequest,
@@ -115,7 +115,7 @@ export async function PATCH(
 
     // CWE-915 / CWE-862: Validate Ownership Changes (Mass Assignment)
     if ('ownerId' in data && data.ownerId !== process.ownerId) {
-      if (session.role !== 'ADMIN' && session.role !== 'PROCESS_ANALYST') {
+      if (!canAssignProcessOwner(session)) {
         return NextResponse.json({ error: 'Тільки аналітик або адміністратор може змінювати власника процесу' }, { status: 403 })
       }
       if (data.ownerId !== null) {
@@ -127,10 +127,10 @@ export async function PATCH(
     }
 
     if ('managerId' in data && data.managerId !== process.managerId) {
-      if (session.role !== 'ADMIN' && session.role !== 'PROCESS_ANALYST' && session.role !== 'PROCESS_OWNER') {
+      if (!canAssignProcessManager(session)) {
         return NextResponse.json({ error: 'Тільки власник або аналітик може призначати менеджера' }, { status: 403 })
       }
-      if (session.role === 'PROCESS_OWNER' && process.ownerId !== session.id) {
+      if (isOwner(session.role) && process.ownerId !== session.id) {
         return NextResponse.json({ error: 'Ви можете призначати менеджера тільки для своїх процесів' }, { status: 403 })
       }
       if (data.managerId !== null) {
@@ -181,7 +181,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Доступ заборонено' }, { status: 403 })
     }
 
-    const isAdmin = session.role === 'ADMIN'
+    const isUserAdmin = isAdmin(session.role)
     const isDraft = ['DRAFT', 'STEPS_DRAFT', 'KPIS_DRAFT'].includes(process.status)
 
     if (!isDraft && !isAdmin) {
