@@ -222,3 +222,21 @@ LDAP_USERNAME_ATTRIBUTE="userPrincipalName"
 LDAP_SEARCH_FILTER=
 ```
 Після зміни `.env` обов'язково перезапустіть сервер: `pm2 restart process-mapper`.
+
+## Налаштування Reverse Proxy (Для Сисадміна)
+Оскільки додаток використовує обмеження частоти запитів (Rate Limiting) за IP, **КРИТИЧНО ВАЖЛИВО** правильно налаштувати ваш Nginx, HAProxy або Traefik.
+Зловмисники можуть спробувати підробити заголовок `X-Forwarded-For`. 
+
+Щоб Rate Limiting працював безпечно, ваш проксі **мусить**:
+1. Видаляти всі клієнтські заголовки `X-Forwarded-For` та `X-Real-IP`.
+2. Самостійно встановлювати `X-Real-IP` або `X-Forwarded-For` на рівні проксі.
+
+Приклад конфігурації для **Nginx**:
+```nginx
+location / {
+    proxy_pass http://localhost:3000;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+```

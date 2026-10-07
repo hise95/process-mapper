@@ -9,7 +9,20 @@ import { checkRateLimit, clearRateLimit } from '@/lib/rateLimit'
 export async function POST(req: NextRequest) {
   try {
     // 1. Per-IP Rate Limit (захист від масового брутфорсу / DDoS)
-    const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown_ip';
+        // CWE-345: Insufficient Verification of Data Authenticity
+    // Ніколи сліпо не довіряємо повному рядку X-Forwarded-For.
+    // Якщо платформа (напр. Vercel) надає req.ip - це найбезпечніше.
+    // Інакше беремо X-Real-IP (який має встановлювати ваш Nginx, попередньо видаливши клієнтський).
+    // Якщо X-Forwarded-For, парсимо тільки перший IP у ланцюжку.
+    let ip = req.headers.get('x-real-ip');
+    if (!ip) {
+      const forwardedFor = req.headers.get('x-forwarded-for');
+      if (forwardedFor) {
+        ip = forwardedFor.split(",")[0].trim();
+      } else {
+        ip = 'unknown_ip';
+      }
+    }
     const ipLimit = await checkRateLimit(`login_ip_${ip}`, 20, 15 * 60 * 1000); // 20 спроб на 15 хв
     
     if (!ipLimit.allowed) {
